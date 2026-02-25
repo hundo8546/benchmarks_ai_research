@@ -1,0 +1,26 @@
+# Large CNNDetection folders
+CNNDetection/dataset/
+CNNDetection/weights/
+CNNDetection/results/
+CNNDetection/results_runs/
+
+# External datasets
+data/
+GenImage/
+
+# HuggingFace cache
+hf_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Model files
+*.pt
+*.pth
+*.ckpt
+
+# OS
+.DS_Store
+.ipynb_checkpoints/
