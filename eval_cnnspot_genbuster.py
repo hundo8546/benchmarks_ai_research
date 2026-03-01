@@ -7,12 +7,13 @@ import csv
 import cv2
 from tqdm import tqdm
 from decord import VideoReader, cpu
+import pandas as pd
 
 from networks.resnet import resnet50
-
+bandit_rows = []
 DEVICE = "cuda"
-MODEL_PATH = "/workspace/CNNDetection/weights/blur_jpg_prob0.5.pth"
-INDEX_FILE = "/workspace/benchmark_index_with_gen.csv"
+MODEL_PATH = "/workspace/benchmarks_ai_research/CNNDetection_official/weights/blur_jpg_prob0.5.pth"
+INDEX_FILE = "/workspace/benchmarks_ai_research/benchmark_index_with_gen.csv"
 
 # Load model
 model = resnet50(num_classes=1)
@@ -46,11 +47,36 @@ for row in tqdm(rows):
     img = sample_frame(path)
 
     with torch.no_grad():
-        output = model(img)
-        prob = torch.sigmoid(output).item()
+        output = model(img)              # raw logit
+        logit = output.item()
+        prob_fake = torch.sigmoid(output).item()
+        prob_real = 1 - prob_fake
+    
+    # Confidence
+    confidence = max(prob_fake, prob_real)
+    
+    # Margin 
+    margin = abs(logit)
+    
+    # Entropy
+    eps = 1e-12
+    entropy = -(
+        prob_fake * np.log(prob_fake + eps) +
+        prob_real * np.log(prob_real + eps)
+    )
 
-    pred = 1 if prob > 0.5 else 0
+    pred = 1 if prob_fake > 0.5 else 0
     correct = (pred == label)
+    
+    bandit_rows.append({
+        "path": path
+    "c1": confidence,
+    "margin1": margin,
+    "entropy1": entropy,
+    "y_cnn": pred,
+    "y_true": label,
+    "generator": gen
+})
 
     if label == 0:
         results["real"].append(correct)
@@ -72,3 +98,7 @@ print("Overall:", overall)
 print("\n===== Per-Generator Fake Accuracy =====")
 for gen in per_gen:
     print(gen, np.mean(per_gen[gen]))
+
+df = pd.DataFrame(bandit_rows)
+df.to_csv("bandit_dataset.csv", index=False)
+print("Saved bandit_dataset.csv with", len(df), "rows")
