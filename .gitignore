@@ -1,26 +1,20 @@
-# Large CNNDetection folders
-CNNDetection/dataset/
-CNNDetection/weights/
-CNNDetection/results/
-CNNDetection/results_runs/
+# Data
+/workspace/data/
+*.7z
+*.zip
 
-# External datasets
-data/
-GenImage/
+# Model weights
+*.pth
+*.pkl
+*.bin
+*.safetensors
 
 # HuggingFace cache
-hf_cache/
+.cache/
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Model files
-*.pt
-*.pth
-*.ckpt
-
-# OS
-.DS_Store
-.ipynb_checkpoints/
+# CSV outputs
+routing/clip_features.csv
+routing/clip_preds.csv
+routing/qwen_preds.csv
+routing/bandit_dataset.csv
+routing/merged_dataset.csv
