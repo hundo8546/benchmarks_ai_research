@@ -49,12 +49,16 @@ df["target"] = (df["r_esc"] > df["r_stop"]).astype(int)
 print(df["target"].value_counts())
 
 # Context features
-X = df[["confidence", "margin1", "entropy1"]].values
+X = df[["confidence", "margin1", "entropy1", "logit", "y_cnn"]].values
 y = df["target"].values
 
-X_train, X_val, y_train, y_val = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+all_idx = np.arange(len(df))
+train_idx, val_idx = train_test_split(all_idx, test_size=0.2, random_state=42)
+val_paths = df.iloc[val_idx]["path"].values
+np.save("/workspace/benchmarks_ai_research/routing/bandit_val_paths.npy", val_paths)
+
+X_train, X_val = X[train_idx], X[val_idx]
+y_train, y_val = y[train_idx], y[val_idx]
 
 model = LogisticRegression()
 model.fit(X_train, y_train)

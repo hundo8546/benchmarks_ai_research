@@ -10,11 +10,13 @@ X = df.drop(columns=["path", "y_true", "latency_clip_ms"]).select_dtypes(include
 X = scaler.transform(X)
 
 y_clip = clf.predict(X)
+clip_proba = clf.predict_proba(X)[:, 1]
 
 df_out = pd.DataFrame({
     "path": df["path"],
     "y_clip": y_clip,
-    "latency_clip_ms":df["latency_clip_ms"]
+    "clip_proba": clip_proba,
+    "latency_clip_ms": df["latency_clip_ms"]
 })
 
 df_out.to_csv("/workspace/benchmarks_ai_research/routing/clip_preds.csv", index=False)

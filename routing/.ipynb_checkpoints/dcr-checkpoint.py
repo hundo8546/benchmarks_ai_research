@@ -17,7 +17,9 @@ df = df.merge(df_clip[["path","latency_clip_ms"]], on="path", how="left")
 df["latency_qwen_ms"] = df["latency_qwen_ms"].fillna(0)
 
 # Define escalation
-df["escalate"] = df["escalate"] if "escalate" in df.columns else 0
+df_decisions = pd.read_csv("/workspace/benchmarks_ai_research/routing/bandit_decisions.csv")
+df = df.merge(df_decisions[["path", "escalate"]], on="path", how="left")
+df["escalate"] = df["escalate"].fillna(0)
 
 # Compute per-sample total latency
 df["total_latency_ms"] = (
