@@ -24,6 +24,17 @@ df = df.merge(
     how="left"
 )
 
+#derived after merge
+df["disagree"] = (df["y_cnn"] != df["y_clip"]).astype(int)
+df["clip_margin"] = np.abs(df["clip_proba"] - 0.5)
+eps = 1e-12
+df["clip_entropy"] = -(
+    df["clip_proba"] * np.log(df["clip_proba"] + eps) +
+    (1 - df["clip_proba"]) * np.log(1 - df["clip_proba"] + eps)
+)
+df["prob_gap"] = np.abs(df["confidence"] - df["clip_proba"])
+
+
 
 # Fill missing latency if some rows not escalated yet
 df["latency_clip_ms"] = df["latency_clip_ms"].fillna(0)
