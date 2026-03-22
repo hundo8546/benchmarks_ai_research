@@ -60,7 +60,7 @@ X = df[[
 y = df["target"].values
 
 all_idx = np.arange(len(df))
-train_idx, val_idx = train_test_split(all_idx, test_size=0.2, random_state=42)
+train_idx, val_idx = train_test_split(all_idx, test_size=0.4, random_state=42)
 val_paths = df.iloc[val_idx]["path"].values
 np.save("/workspace/benchmarks_ai_research/routing/bandit_val_paths.npy", val_paths)
 
