@@ -19,7 +19,8 @@ df = df_cnn.merge(
 )
 
 df = df.merge(
-    df_qwen[["path", "y_qwen", "latency_qwen_ms"]],
+    df_qwen[["path", "y_qwen", "y_qwen_text", "p_fake_qwen", "qwen_margin",
+             "qwen_input_tokens", "qwen_output_tokens", "latency_qwen_ms"]],
     on="path",
     how="left"
 )
@@ -40,6 +41,12 @@ df["prob_gap"] = np.abs(df["confidence"] - df["clip_proba"])
 df["latency_clip_ms"] = df["latency_clip_ms"].fillna(0)
 df["latency_qwen_ms"] = df["latency_qwen_ms"].fillna(0)
 df["latency_cnn_ms"] = df["latency_cnn_ms"].fillna(0)
+df["qwen_input_tokens"] = df["qwen_input_tokens"].fillna(0)
+df["qwen_output_tokens"] = df["qwen_output_tokens"].fillna(0)
+df["p_fake_qwen"] = df["p_fake_qwen"].fillna(0.5)  # neutral if Qwen didn't run
+df["qwen_margin"] = df["qwen_margin"].fillna(0.0)
+
+
 # Sanity checks
 print("Total rows:", len(df))
 print("Missing clip preds:", df["y_clip"].isna().sum())

@@ -98,7 +98,7 @@ path,escalate
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00036751.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00008119.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/914_sdv4_00020.png,0
-/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00017867.JPEG,1
+/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00017867.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00001665.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/553_sdv4_00039.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/303_sdv4_00074.png,0
@@ -123,10 +123,10 @@ path,escalate
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/753_sdv4_00009.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00030731.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/296_sdv4_00035.png,0
-/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/826_sdv4_00143.png,1
+/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/827_sdv4_00020.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/126_sdv4_00074.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00026928.JPEG,0
-/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/634_sdv4_00020.png,0
+/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/633_sdv4_00074.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/007_sdv4_00074.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00022408.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00030297.JPEG,0
@@ -283,7 +283,7 @@ path,escalate
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/094_sdv4_00143.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00022378.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00023999.JPEG,0
-/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00015024.JPEG,0
+/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00015024.JPEG,1
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/984_sdv4_00074.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/855_sdv4_00035.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/140_sdv4_00035.png,0
@@ -370,7 +370,7 @@ path,escalate
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/129_sdv4_00020.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00030698.JPEG,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00040647.JPEG,0
-/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/058_sdv4_00074.png,1
+/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/058_sdv4_00074.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/227_sdv4_00143.png,0
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/ai/474_sdv4_00020.png,1
 /workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val/nature/ILSVRC2012_val_00041814.JPEG,0

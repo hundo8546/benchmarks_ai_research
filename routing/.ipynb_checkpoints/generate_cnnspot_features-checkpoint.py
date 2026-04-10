@@ -7,8 +7,8 @@ import torch
 import numpy as np
 import pandas as pd
 import csv
-# from decord import VideoReader, cpu
-# import cv2
+from decord import VideoReader, cpu
+import cv2
 from tqdm import tqdm
 from networks.resnet import resnet50
 from PIL import Image

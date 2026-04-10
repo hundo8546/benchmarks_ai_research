@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 from tqdm import tqdm
 from decord import VideoReader, cpu
-\import cv2
+import cv2
 import time
 from PIL import Image
 

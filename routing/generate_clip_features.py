@@ -6,8 +6,8 @@ import torch
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-#from decord import VideoReader, cpu
-#import cv2
+from decord import VideoReader, cpu
+import cv2
 from PIL import Image
 import time
 

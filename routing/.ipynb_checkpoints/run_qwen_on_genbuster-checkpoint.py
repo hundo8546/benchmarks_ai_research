@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 from tqdm import tqdm
 from decord import VideoReader, cpu
-\import cv2
+import cv2
 import time
 from PIL import Image
 
@@ -21,8 +21,8 @@ def sample_frame_pil(path):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame)
 
-def sample_frame_pil(path):
-    return Image.open(path).convert("RGB")
+# def sample_frame_pil(path):
+#     return Image.open(path).convert("RGB")
 
 def parse_yes_no(text: str) -> int:
     t = text.strip().upper()
