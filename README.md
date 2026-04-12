@@ -1,74 +1,81 @@
-how to run:
-run download_weights.py
-(could run hfgenbuster)
-run setup.sh
+# Inter-Model Disagreement as a Routing Signal for AI-Generated Media Detection
 
-Pipeline:
+Code for *"Inter-Model Disagreement as a Routing Signal for Cost-Aware AI-Generated Media Detection"* (Nayak & Madisetti).
+
+The pipeline implements a three-stage cascade for AI-generated media detection: a CNNSpot artifact detector, a CLIP logistic probe, and Qwen2.5-VL as an optional third-stage verifier. The cascade uses disagreement between the CNN and CLIP stages as a parameter-free routing signal to decide when to invoke the VLM.
+
+## Requirements
+
+- Python 3.10+
+- CUDA-capable GPU (evaluation was run on an NVIDIA RTX A4500)
+- ~30 GB disk space for weights and extracted features
+- Optional: `rclone` if pulling GenImage data from cloud storage
+
+## Setup(GO TO final_version branch)
+
+1. Download model weights:
+```bash
+   python download_weights.py
+```
+   This pulls CNNSpot weights, the CLIP ViT-B/32 backbone, and Qwen2.5-VL-7B.
+
+2. (Optional) Download the GenBuster-200K-mini benchmark:
+```bash
+   python hfgenbuster.py
+```
+
+3. Install Python dependencies:
+```bash
+   bash setup.sh
+```
+
+## Pipeline
+
+Scripts should be run in the following order. Each stage produces intermediate outputs that the next stage consumes.
 
 Input frame
-    ↓
-generate_cnnspot_features.py
-    ↓
-generate_clip_features.py
-    ↓
-train_clip_classifier.py
-    ↓
-generate_clip_preds.py
-    ↓
-run_qwen_on_genbuster.py
-    ↓
-merge_all_features.py
-    ↓
-train_bandit.py
-    ↓
-evaluate_routing.py
-    ↓
-sweep_lambda.py
-    ↓
-deployment_evaluation.py
+↓
+generate_cnnspot_features.py     # CNNSpot predictions and logits
+↓
+generate_clip_features.py        # CLIP ViT-B/32 embeddings
+↓
+train_clip_classifier.py         # Logistic regression probe on CLIP features
+↓
+generate_clip_preds.py           # CLIP probe predictions
+↓
+run_qwen_on_genbuster.py         # Qwen2.5-VL predictions (score-decoded)
+↓
+merge_all_features.py            # Join CNN / CLIP / Qwen outputs per sample
+↓
+train_bandit.py                  # Train the learned routing baseline
+↓
+evaluate_routing.py              # Evaluate all routing methods
 
 
-target
-0    1063
-1     937
-Name: count, dtype: int64
-Bandit policy accuracy (decision match): 0.5775
-Saved bandit_model.pkl
+The same pattern applies for the SD~1.4 and BigGAN datasets using the `*_sd14.py` and `*_biggan.py` variants of each script.
 
-CNN predicted fake rate: 0.052
-CNN-only accuracy: 0.522 cost: 1.0
-Always escalate accuracy: 0.603 cost: 6.0
-Bandit accuracy: 0.5755 avg cost: 3.225
-Qwen fake accuracy: 0.473
-Qwen real accuracy: 0.733
-Qwen predicted fake rate: 0.37
+## Reproducing Paper Results
 
-root@929ad88a0cb4:/workspace/benchmarks_ai_research# python routing/evaluate_routing.py 
-CNN predicted fake rate: 0.05
-CNN-only accuracy: 0.545 cost: 1.0
-Always escalate accuracy: 0.595 cost: 6.0
-Bandit accuracy: 0.605 avg cost: 3.275
-Qwen fake accuracy: 0.4731182795698925
-Qwen real accuracy: 0.7009345794392523
-Qwen predicted fake rate: 0.38
-y_true
-0    107
-1     93
-Name: count, dtype: int64
-y_cnn
-0    190
-1     10
-Name: count, dtype: int64
-root@929ad88a0cb4:/workspace/benchmarks_ai_research# python routing/dcr.py 
+To reproduce the results reported in the paper:
 
-===== DEPLOYMENT LATENCY REPORT =====
-Mean Latency (ms): 83.83
-P50 Latency (ms): 102.49
-P95 Latency (ms): 139.54
-Throughput (samples/sec): 11.93
+1. Run the full pipeline for each of the three datasets (GenBuster, SD~1.4, BigGAN).
+2. Run `retrain_bandits.py` to ensure the bandit policies are trained against the current Qwen verifier outputs.
+3. Run `analysis2.py` to produce the final tables and plots.
 
-Always Escalate Mean (ms): 416.23
-Always Throughput (samples/sec): 2.4
+The main results script (`analysis2.py`) prints LaTeX-formatted tables matching those in the paper and saves accompanying plots to the routing directory.
 
-Latency Savings: 0.7986
-=====================================
+## Repository Structure
+routing/
+├── download_weights.py             # Model weight downloader
+├── setup.sh                        # Environment setup
+├── generate_cnnspot_features*.py   # CNNSpot feature extraction
+├── generate_clip_features*.py      # CLIP feature extraction
+├── train_clip_classifier*.py       # CLIP logistic probe training
+├── generate_clip_preds*.py         # CLIP predictions
+├── run_qwen_on_genbuster.py        # Qwen VLM inference
+├── merge_all_features*.py          # Feature merging
+├── train_bandit*.py                # Bandit router training
+├── retrain_bandits.py              # Re-train all bandits on current Qwen outputs
+├── evaluate_routing.py             # Routing method evaluation
+├── cross_distribution_clip.py      # CLIP probe transfer matrix
+└── analysis2.py                    # Final table and figure generation
