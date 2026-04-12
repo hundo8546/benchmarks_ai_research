@@ -65,17 +65,19 @@ To reproduce the results reported in the paper:
 The main results script (`analysis2.py`) prints LaTeX-formatted tables matching those in the paper and saves accompanying plots to the routing directory.
 
 ## Repository Structure
-routing/
-├── download_weights.py             # Model weight downloader
-├── setup.sh                        # Environment setup
-├── generate_cnnspot_features*.py   # CNNSpot feature extraction
-├── generate_clip_features*.py      # CLIP feature extraction
-├── train_clip_classifier*.py       # CLIP logistic probe training
-├── generate_clip_preds*.py         # CLIP predictions
-├── run_qwen_on_genbuster.py        # Qwen VLM inference
-├── merge_all_features*.py          # Feature merging
-├── train_bandit*.py                # Bandit router training
-├── retrain_bandits.py              # Re-train all bandits on current Qwen outputs
-├── evaluate_routing.py             # Routing method evaluation
-├── cross_distribution_clip.py      # CLIP probe transfer matrix
-└── analysis2.py                    # Final table and figure generation
+
+| File/Script | Purpose |
+|---|---|
+| `download_weights.py` | Download pre-trained model weights |
+| `setup.sh` | Environment setup and dependencies |
+| `generate_cnnspot_features.py` | Extract CNNSpot detection features |
+| `generate_clip_features.py` | Extract CLIP model features |
+| `train_clip_classifier.py` | Train CLIP logistic regression probe |
+| `generate_clip_preds.py` | Generate CLIP model predictions |
+| `run_qwen_on_genbuster.py` | Run Qwen VLM inference on GenBuster dataset |
+| `merge_all_features.py` | Merge all extracted features |
+| `train_bandit.py` | Train multi-armed bandit router |
+| `retrain_bandits.py` | Re-train all bandits on current Qwen outputs |
+| `evaluate_routing.py` | Evaluate routing method performance |
+| `cross_distribution_clip.py` | Generate CLIP probe transfer matrix |
+| `analysis2.py` | Generate final tables and figures |
