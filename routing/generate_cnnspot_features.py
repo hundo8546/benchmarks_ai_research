@@ -11,12 +11,16 @@ from decord import VideoReader, cpu
 import cv2
 from tqdm import tqdm
 from networks.resnet import resnet50
+from PIL import Image
 
 DEVICE = "cuda"
 
 MODEL_PATH = "/workspace/benchmarks_ai_research/weights/blur_jpg_prob0.1.pth"
 INDEX_FILE = "/workspace/benchmarks_ai_research/benchmark_index_with_gen.csv"
 OUTPUT_CSV = "/workspace/benchmarks_ai_research/bandit_dataset.csv"
+
+# INDEX_FILE = "/workspace/benchmarks_ai_research/routing/sd14_index.csv"
+# OUTPUT_CSV = "/workspace/benchmarks_ai_research/routing/sd14_bandit_dataset.csv"
 
 # =============================
 # Load Model
@@ -39,6 +43,13 @@ def sample_frame(path):
     frame = frame / 255.0
     frame = torch.tensor(frame).float().unsqueeze(0)
     return frame.to(DEVICE)
+
+# def sample_frame(path):
+#     img = Image.open(path).convert("RGB")
+#     img = img.resize((224, 224))
+#     img = np.array(img).transpose(2, 0, 1)
+#     img = img / 255.0
+#     return torch.tensor(img).float().unsqueeze(0).to(DEVICE)
 
 # =============================
 # Process Dataset

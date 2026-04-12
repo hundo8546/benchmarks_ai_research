@@ -21,6 +21,9 @@ def sample_frame_pil(path):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame)
 
+# def sample_frame_pil(path):
+#     return Image.open(path).convert("RGB")
+
 def parse_yes_no(text: str) -> int:
     t = text.strip().upper()
     if t == "REAL":

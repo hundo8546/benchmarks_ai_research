@@ -2,7 +2,7 @@
 set -e
 
 echo "=== [1/8] Installing pip dependencies ==="
-pip install --upgrade torch torchvision --break-system-packages
+pip install --upgrade torch torchvision
 pip install \
   pandas \
   numpy \
@@ -17,7 +17,11 @@ pip install \
   bitsandbytes \
   accelerate \
   py7zr \
-  --break-system-packages
+  matplotlib \
+  scipy \
+  rich \
+  ipykernel \
+  typer
 
 echo ""
 echo "=== [2/8] Creating required directories ==="
@@ -72,6 +76,7 @@ echo ""
 echo "=== [8/8] Verifying imports ==="
 python -c "
 import torch, torchvision, pandas, numpy, cv2, tqdm, sklearn, joblib, PIL, py7zr
+import matplotlib, scipy, rich, typer
 from decord import VideoReader, cpu
 from transformers import (
     AutoProcessor,

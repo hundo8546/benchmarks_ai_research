@@ -18,3 +18,25 @@ routing/clip_preds.csv
 routing/qwen_preds.csv
 routing/bandit_dataset.csv
 routing/merged_dataset.csv
+
+# SD14 outputs
+routing/sd14_clip_features.csv
+routing/sd14_clip_preds.csv
+routing/sd14_qwen_preds.csv
+routing/sd14_bandit_dataset.csv
+routing/sd14_bandit_decisions.csv
+routing/sd14_merged_dataset.csv
+routing/sd14_index.csv
+
+# BigGAN outputs
+routing/biggan_clip_features.csv
+routing/biggan_clip_preds.csv
+routing/biggan_qwen_preds.csv
+routing/biggan_bandit_dataset.csv
+routing/biggan_bandit_decisions.csv
+routing/biggan_merged_dataset.csv
+routing/biggan_index.csv
+
+# NumPy splits
+routing/*.npy
+data/

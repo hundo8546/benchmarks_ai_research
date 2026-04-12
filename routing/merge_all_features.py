@@ -1,31 +1,52 @@
 import pandas as pd
+import numpy as np
 
 BASE = "/workspace/benchmarks_ai_research/routing/"
 
 # Load individual outputs
 df_cnn = pd.read_csv(BASE + "bandit_dataset.csv")
+val_idx = np.load(BASE + "clip_val_idx.npy")
+df_cnn = df_cnn.iloc[val_idx].reset_index(drop=True)
 df_cnn.head()
 df_clip = pd.read_csv(BASE + "clip_preds.csv")        # must contain path, y_clip, latency_clip_ms
 df_qwen = pd.read_csv(BASE + "qwen_preds.csv")       # must contain path, y_qwen, latency_qwen_ms
 
 # Merge step by step
 df = df_cnn.merge(
-    df_clip[["path", "y_clip", "latency_clip_ms"]],
+    df_clip[["path", "y_clip", "clip_proba", "latency_clip_ms"]],
     on="path",
     how="left"
 )
 
 df = df.merge(
-    df_qwen[["path", "y_qwen", "latency_qwen_ms"]],
+    df_qwen[["path", "y_qwen", "y_qwen_text", "p_fake_qwen", "qwen_margin",
+             "qwen_input_tokens", "qwen_output_tokens", "latency_qwen_ms"]],
     on="path",
     how="left"
 )
+
+#derived after merge
+df["disagree"] = (df["y_cnn"] != df["y_clip"]).astype(int)
+df["clip_margin"] = np.abs(df["clip_proba"] - 0.5)
+eps = 1e-12
+df["clip_entropy"] = -(
+    df["clip_proba"] * np.log(df["clip_proba"] + eps) +
+    (1 - df["clip_proba"]) * np.log(1 - df["clip_proba"] + eps)
+)
+df["prob_gap"] = np.abs(df["confidence"] - df["clip_proba"])
+
 
 
 # Fill missing latency if some rows not escalated yet
 df["latency_clip_ms"] = df["latency_clip_ms"].fillna(0)
 df["latency_qwen_ms"] = df["latency_qwen_ms"].fillna(0)
 df["latency_cnn_ms"] = df["latency_cnn_ms"].fillna(0)
+df["qwen_input_tokens"] = df["qwen_input_tokens"].fillna(0)
+df["qwen_output_tokens"] = df["qwen_output_tokens"].fillna(0)
+df["p_fake_qwen"] = df["p_fake_qwen"].fillna(0.5)  # neutral if Qwen didn't run
+df["qwen_margin"] = df["qwen_margin"].fillna(0.0)
+
+
 # Sanity checks
 print("Total rows:", len(df))
 print("Missing clip preds:", df["y_clip"].isna().sum())

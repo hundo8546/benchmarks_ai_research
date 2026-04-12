@@ -1,5 +1,8 @@
+import os
+os.environ["TRANSFORMERS_ALLOW_UNSAFE_DESERIALIZATION"] = "1"
 import csv
 import torch
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -15,7 +18,13 @@ MODEL_ID = "openai/clip-vit-base-patch32"
 INDEX_FILE = "/workspace/benchmarks_ai_research/benchmark_index_with_gen.csv"
 OUT_FILE = "/workspace/benchmarks_ai_research/routing/clip_features.csv"
 
-processor = CLIPProcessor.from_pretrained(MODEL_ID)
+# INDEX_FILE = "/workspace/benchmarks_ai_research/routing/sd14_index.csv"
+# OUT_FILE = "/workspace/benchmarks_ai_research/routing/sd14_clip_features.csv"
+
+
+
+
+processor = CLIPProcessor.from_pretrained(MODEL_ID, use_fast=False)
 model = CLIPModel.from_pretrained(MODEL_ID).to(DEVICE)
 model.eval()
 
@@ -24,6 +33,10 @@ def sample_frame_pil(path):
     frame = vr[0].asnumpy()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame)
+
+# def sample_frame_pil(path):
+#     img = Image.open(path).convert("RGB")
+#     return img
 
 rows = []
 
