@@ -1,6 +1,6 @@
 from huggingface_hub import login, snapshot_download
 
-login(token="insert token")
+login(token="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")
 
 snapshot_download(
     repo_id="l8cv/GenBuster-200K-mini",

@@ -1,10 +1,3 @@
-Train,Test,Accuracy
-GenBuster,GenBuster,0.825
-GenBuster,SD14,0.6875
-GenBuster,BigGAN,0.8819444444444444
-SD14,GenBuster,0.7333333333333333
-SD14,SD14,0.7847222222222222
-SD14,BigGAN,0.875
-BigGAN,GenBuster,0.8
-BigGAN,SD14,0.7291666666666666
-BigGAN,BigGAN,0.9027777777777778
+version https://git-lfs.github.com/spec/v1
+oid sha256:b1f7905621c92ad2a1f20fd25cf7af6a30acba4debca67326e61c7b2f1b268e5
+size 270

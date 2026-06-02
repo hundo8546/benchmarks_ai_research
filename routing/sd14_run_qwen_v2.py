@@ -20,7 +20,7 @@ MODEL_ID = "Qwen/Qwen2.5-VL-7B-Instruct"
 
 # Dataset specific settings
 INDEX_FILE = "/workspace/benchmarks_ai_research/routing/sd14_index.csv"
-OUT_FILE = "sd14_qwen_preds.csv"
+OUT_FILE = "/workspace/benchmarks_ai_research/routing/sd14_qwen_preds.csv"
 IS_VIDEO = False  # True for GenBuster, False for SD14/BigGAN
 
 # Test settings

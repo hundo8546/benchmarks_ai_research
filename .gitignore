@@ -1,42 +1,32 @@
-# Data
-/workspace/data/
-*.7z
-*.zip
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
-# Model weights
-*.pth
-*.pkl
-*.bin
-*.safetensors
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# HuggingFace cache
-.cache/
+# OS
+.DS_Store
+Thumbs.db
 
-# CSV outputs
-routing/clip_features.csv
-routing/clip_preds.csv
-routing/qwen_preds.csv
-routing/bandit_dataset.csv
-routing/merged_dataset.csv
-
-# SD14 outputs
-routing/sd14_clip_features.csv
-routing/sd14_clip_preds.csv
-routing/sd14_qwen_preds.csv
-routing/sd14_bandit_dataset.csv
-routing/sd14_bandit_decisions.csv
-routing/sd14_merged_dataset.csv
-routing/sd14_index.csv
-
-# BigGAN outputs
-routing/biggan_clip_features.csv
-routing/biggan_clip_preds.csv
-routing/biggan_qwen_preds.csv
-routing/biggan_bandit_dataset.csv
-routing/biggan_bandit_decisions.csv
-routing/biggan_merged_dataset.csv
-routing/biggan_index.csv
-
-# NumPy splits
-routing/*.npy
+# Large data (never commit raw images)
 data/
+*.tar
+*.zip
+*.gz
+
+# Exported conversation transcripts
+*.txt
+
+# Trained model binaries (can be regenerated from experiment scripts)
+*.pkl
+
+# Large model weight directories
+weights/
+CNNDetection/checkpoints/
+
+# Claude Code internal state
+.claude/

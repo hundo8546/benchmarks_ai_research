@@ -5,7 +5,7 @@ from pathlib import Path
 
 random.seed(42)
 
-VAL_ROOT = "/workspace/benchmarks_ai_research/data/genimage/sd_1_4/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val"
+VAL_ROOT = "/workspace/benchmarks_ai_research/data/genimage/sd_1_4/imagenet_ai_0419_sdv4/val"
 OUT_INDEX = "/workspace/benchmarks_ai_research/routing/sd14_index.csv"
 
 real_dir = os.path.join(VAL_ROOT, "nature")
