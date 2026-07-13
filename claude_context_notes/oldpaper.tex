@@ -1,0 +1,1194 @@
+\documentclass{ieeeaccess}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{caption}
+\usepackage{mathptmx}
+\usepackage{hyperref}
+\usepackage[english]{babel}
+\usepackage{microtype} 
+\usepackage{xurl}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{placeins}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\makeatletter
+\AtBeginDocument{\DeclareMathVersion{bold}
+\SetSymbolFont{operators}{bold}{T1}{times}{b}{n}
+\SetSymbolFont{NewLetters}{bold}{T1}{times}{b}{it}
+\SetMathAlphabet{\mathrm}{bold}{T1}{times}{b}{n}
+\SetMathAlphabet{\mathit}{bold}{T1}{times}{b}{it}
+\SetMathAlphabet{\mathbf}{bold}{T1}{times}{b}{n}
+\SetMathAlphabet{\mathtt}{bold}{OT1}{pcr}{b}{n}
+\SetSymbolFont{symbols}{bold}{OMS}{cmsy}{b}{n}
+\renewcommand\boldmath{\@nomath\boldmath\mathversion{bold}}}
+\makeatother
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+%Your document starts from here ___________________________________________________
+\begin{document}
+\history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2024.0429000}
+
+
+\title{On Reliable Detection of AI-Generated Multimedia Content}
+\author{\uppercase{Ansuman Nayak}\authorrefmark{1}, and 
+\uppercase{Vijay K. Madisetti}\authorrefmark{2}, \IEEEmembership{Fellow, IEEE}}
+
+\address[1]{College of Computing, Georgia Institute of Technology, Atlanta, GA 30332 USA (e-mail: anayak306@gatech.edu)}
+\address[2]{School of Cybersecurity and Privacy, Georgia Institute of Technology, Atlanta, GA 30332 USA (e-mail: vkm@gatech.edu)}
+
+\markboth
+{Nayak \headeretal: On Reliable Detection of AI-Generated Multimedia Content}
+{Nayak \headeretal: On Reliable Detection of AI-Generated Multimedia Content}
+
+\corresp{Corresponding author: Dr. Vijay Madisetti (e-mail: vkm@gatech.edu).}
+
+
+% \tfootnote{This work was supported in part by [Funding Source, if applicable].}
+
+
+\begin{abstract}
+With the rapid proliferation of AI-generated multimedia content, the growing need for reliable detection of AI-generated media, including deepfakes and misinformation, has been largely unmet. Uniformly applying large vision-language models (VLMs) to all content can be prohibitively expensive. In this work, we formulate detection as a model selection problem over a set of complementary detectors. We show that disagreement between artifact-based and semantic detectors provides a strong, parameter-free indicator of input difficulty, and that this signal remains stable even when the semantic probe faces deployment shift to unseen generator families. We construct a selective-computation cascade in which lightweight detectors process all inputs and a stronger verifier is invoked only for disagreement cases. On in-domain benchmarks, a well-trained semantic detector achieves the best cost-accuracy tradeoff without VLM escalation. The cascade's utility emerges under generator evolution. Experiments on SDXL and FLUX show that escalating to GPT-5.5 only on disagreement cases recovers up to 4.9 percentage points of accuracy over a stale semantic probe while avoiding 58--65\% of verifier invocations. Cross-model disagreement is a practical routing signal for adaptive computation under distribution shift, requiring no calibrated confidence scores, learned routing policies, or detector retraining.
+
+\end{abstract}
+
+\begin{keywords}
+AI-generated image detection, deepfake 
+detection, multi-model disagreement, distribution shift, 
+vision-language models, forensic routing, CLIP embeddings
+\end{keywords}
+
+\titlepgskip=-21pt
+\maketitle
+
+% Sections
+\section{Introduction}
+
+The rapid advancement of generative models for images and videos has significantly increased the realism and accessibility of synthetic media. Diffusion models~\cite{Wang_2023_ICCV}, GAN-based generators~\cite{wang2020cnn}, and multimodal large language models (MLLMs) can now generate highly convincing content with minimal effort. Although this opens up useful applications, it also raises concerns about misinformation, impersonation, and fraud. As a result, reliably detecting AI-generated media has become an important problem that still needs to be addressed.
+
+One of the main challenges is generalization. Detection models often perform well on the generator families they were trained on, but accuracy degrades significantly when applied to new or unseen generators~\cite{NEURIPS2023_f4d4a021}. Artifact-based detectors exploit low-level frequency and synthesis patterns introduced during generation, while semantic models capture higher-level structural representations. These two signal types fail in different ways, suggesting that combining them provides more robust coverage than either approach alone.
+
+
+In practical deployment settings, compute cost is a significant concern. High-capacity
+vision-language models (VLMs) provide strong reasoning capabilities but are expensive to apply at scale~\cite{chen2024frugalgpt}. Applying these models uniformly to every input is often infeasible in real-time or large-scale systems. Existing approaches typically apply a
+fixed detector or ensemble without adapting computation to input difficulty. The central challenge is identifying which inputs require expensive verification rather than applying a
+uniform computation to all inputs.
+
+
+In this work, we address this challenge by modeling AI-generated media detection as a model selection problem over complementary detectors. We find that the disagreement between an artifact-based detector and a semantic detector serves as a proxy for input difficulty and requires no calibration. When the detectors agree, the predictions are highly reliable, whereas disagreements consistently identify cases where cheap detectors are insufficient.
+
+Unlike prior approaches that rely on calibrated confidence scores or learned routing policies, disagreement provides a parameter-free signal that remains reliable under distribution shift. We design a cascade that routes inputs based a signal where lightweight detectors process all inputs, and a stronger verifier is invoked only on disagreement cases. When the semantic probe is trained in-domain, it already achieves strong performance without VLM escalation. The cascade's primary value is under deployment shift, where it recovers
+accuracy over a stale semantic probe while avoiding the majority of verifier invocations.This reframes the detection problem as identifying which inputs require expensive computation, rather than uniformly increasing model complexity.
+
+\subsection{Research Questions}
+
+This work is guided by the following research questions:
+
+\begin{itemize}
+    \item \textbf{RQ1:} Can we reliably estimate which inputs require more powerful models
+    for AI-generated media detection, including under generator distribution shift?
+    \item \textbf{RQ2:} Can such estimates be used to guide model selection across heterogeneous detectors without relying on calibrated confidence scores?
+    \item \textbf{RQ3:} Does disagreement-based routing reduce verifier cost while recovering accuracy under deployment shift to unseen generator families?
+\end{itemize}
+
+\subsection{Contributions}
+
+This work makes the following contributions:
+
+\begin{itemize}
+    \item \textbf{C1:} We show that the disagreement between artifact-based and semantic detectors reliably predicts failure cases across generator families and remains
+    predictive under deployment shift to unseen generators.
+    
+    \item \textbf{C2:} We propose a parameter-free routing strategy that uses disagreement as a difficulty signal for selective model invocation, requiring no confidence
+    calibration or policy training.
+    
+    \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 4.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--65\%.
+    
+    \item \textbf{C4:} We show that a learned bandit router does not outperform the disagreement rule, indicating that disagreement captures the dominant routing signal and more complex learned policies offer no meaningful gain.
+\end{itemize}
+
+
+\section{Related Work}
+This section reviews prior work related to AI-generated media detection and adaptive inference. We first identify gaps in existing approaches that motivate this work, then discuss detection methods under distribution shift, examine approaches for selective computation, and finally compare routing strategies based on confidence and learned policies.
+
+
+
+
+\subsection{Gaps in Existing Approaches}
+
+Existing forensic detection and cost-aware inference literature leaves several gaps that motivate this work.
+
+\textbf{Single signal reliance.} Most forensic detectors rely on a single signal type, such as diffusion-based artifacts or reconstruction inconsistencies~\cite{Corvi_2023_ICASSP} or semantic embeddings from large pretrained models~\cite{cozzolino2023raising}. These approaches work well within specific generator families but degrade under generator distribution shift. Recent large-scale evaluations show that no single detector consistently generalizes across modern image generation pipelines~\cite{epstein2023online, cozzolino2023raising}.
+
+\textbf{Confidence-based routing under shift.} Cost-aware inference methods and selective classification approaches rely on calibrated confidence estimates to decide when to defer or escalate predictions. Predictive uncertainty in deep models degrades significantly under distribution shift~\cite{ovadia2019can}. As a result, confidence-based routing signals become unreliable in the very regimes where robust detection is most needed. Existing literature on uncertainty estimation and selective prediction does not address this failure mode in heterogeneous detector cascades.
+
+\textbf{Disagreement as a routing signal.} Inter-model disagreement has been studied extensively in active learning~\cite{seung1992query} and ensemble-based uncertainty estimation~\cite{lakshminarayanan2017simple}. In these settings, disagreement identifies informative samples or improves predictive uncertainty. Prior work treats disagreement as a mechanism for aggregation or data selection. Its role as a routing signal for cost-aware inference remains unexplored in forensic detection pipelines. Specifically, using disagreement as a diagnostic to indicate when low-cost detectors should not be trusted has not been studied.
+
+This work addresses these gaps in four ways. First, we combine heterogeneous artifact-based and semantic signals through a parameter-free disagreement rule. Second, we demonstrate empirically that disagreement provides a more reliable routing signal than confidence under distribution shift. We evaluate this at matched operating points across multiple generator families. Third, we account for both latency and token cost when evaluating VLM-based escalation strategies. Fourth, we reinterpret disagreement as a diagnostic for selective invocation of more expensive models, not as a voting mechanism.
+
+\subsection{Detection under Distribution Shift}
+
+A large body of work has focused on detecting AI-generated images using artifact-based features. Early approaches such as CNN-based detectors~\cite{wang2020cnn} exploit low-level patterns introduced by generative models. More recent methods aim to improve generalization across generators, such as universal fake detectors~\cite{ojha2023fakedetect}. Benchmark datasets such as GenImage~\cite{NEURIPS2023_f4d4a021} highlight the difficulty of this problem, showing that many detectors degrade significantly when evaluated on unseen generators.
+
+Other approaches leverage higher-level representations. Models such as CLIP~\cite{pmlr-v139-radford21a} learn semantic features from large-scale image-text data and have been used in downstream detection tasks. Diffusion-specific detection methods, such as DIRE~\cite{Wang_2023_ICCV}, further illustrate the diversity of signals used in modern detection systems. Despite these advances, no single model consistently generalizes across generator families, motivating the use of multiple complementary detectors.
+
+Frequency-domain analysis provides a complementary artifact signal. Spectral methods
+exploit periodic and structured artifacts introduced by GAN upsampling and diffusion
+denoising pipelines, and have shown strong in-domain generalization~\cite{Corvi_2023_ICASSP}.
+Beyond CLIP, recent vision encoders such as DINOv2~\cite{oquab2023dinov2} and
+SigLIP2~\cite{tschannen2025siglip2} offer stronger visual representations and have
+demonstrated improved robustness under limited training data. Their behavior under
+generator distribution shift in forensic detection tasks remains underexplored, motivating
+their inclusion as semantic detector candidates in this work.
+
+
+\subsection{Selective Computation and Model Cascades}
+
+Selective computation has been studied as a way to reduce inference cost by adapting computation to input difficulty. Early work on selective classification~\cite{NIPS2017_4a8423d5} proposes abstaining on uncertain predictions to improve reliability. More recent systems extend this idea to model selection, routing inputs across models of varying capacity. For example, FrugalGPT~\cite{chen2024frugalgpt} reduces cost by selecting among large language models based on estimated utility. These approaches typically rely on confidence scores or calibrated probabilities to guide routing decisions. However, such signals can be unreliable under distribution shift, where models may produce overconfident incorrect predictions.
+
+\subsection{Routing Signals for Model Selection}
+
+Most existing routing strategies use confidence-based signals, such as entropy or prediction probability, to determine whether additional computation is required. While effective in controlled settings, these signals often degrade under distribution shift due to poor calibration. Learned routing policies, such as bandit-based approaches, attempt to improve decision-making by training a model to predict the best action
+from input features.
+
+In contrast, this work explores disagreement between heterogeneous detectors as a routing signal. Rather than relying on calibrated confidence scores or learned policies, we use prediction disagreement between artifact-based and semantic models to estimate input difficulty. This provides a simple, calibration-free signal that remains effective under distribution shift.
+
+\begin{table*}[h]
+\centering
+\small % Reduces font size to help fit more content comfortably
+\caption{Comparative analysis of related AI-generated media detection approaches. \checkmark~indicates capability is present; \texttimes~indicates absent.}
+\label{tab:litsurvey}
+\setlength{\tabcolsep}{4pt} % Slightly tighter spacing between columns
+
+% Define a custom column type 'Y' that is a ragged-right version of 'X'
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+
+\begin{tabularx}{\textwidth}{p{2.0cm}YYYYYY}
+\toprule
+\textbf{Feature}
+  & \textbf{CNNSpot} \cite{wang2020cnn}
+  & \textbf{DIRE} \cite{Wang_2023_ICCV}
+  & \textbf{UnivFD} \cite{ojha2023fakedetect}
+  & \textbf{BusterX} \cite{wen2025busterxmllmpoweredaigeneratedvideo}
+  & \textbf{FrugalGPT} \cite{chen2024frugalgpt}
+  & \textbf{Ours} \\
+\midrule
+Detection signal
+  & (\checkmark) Frequency \& upsampling artifacts
+  & (\checkmark) Diffusion reconstruction error
+  & (\checkmark) CLIP embeddings for generalizable detection
+  & (\checkmark) MLLM open-ended visual reasoning
+  & (\texttimes) LLM text output, not a forgery detector
+  & (\checkmark) Artifact + semantic embeddings + VLM reasoning \\
+\midrule
+Model architecture
+  & (\texttimes) Single CNN/fixed computation
+  & (\texttimes) Single diffusion model/fixed computation
+  & (\texttimes) Single CLIP backbone/fixed computation
+  & (\texttimes) Single MLLM/fixed computation
+  & (\checkmark) LLM cascade/variable computation
+  & (\checkmark) Heterogeneous three-stage pipeline \\
+\midrule
+Sequential routing
+  & (\texttimes) No routing/uniform inference
+  & (\texttimes) No routing/uniform inference
+  & (\texttimes) No routing/uniform inference
+  & (\texttimes) No routing/uniform inference
+  & (\checkmark) Budget-aware cascade routing
+  & (\checkmark) Disagreement-based escalation (primary) \\
+\midrule
+Cost awareness
+  & (\texttimes) Fixed cost per sample
+  & (\texttimes) Fixed cost per sample
+  & (\texttimes) Fixed cost per sample
+  & (\texttimes) Fixed cost per sample
+  & (\checkmark) Minimizes LLM API cost
+  & (\checkmark) Latency and token-aware cascade \\
+\midrule
+Multi-model disagreement
+  & (\texttimes) Single model/no signal
+  & (\texttimes) Single model/no signal
+  & (\texttimes) Single model/no signal
+  & (\texttimes) Single model/no signal
+  & (\texttimes) Not applicable to forgery detection
+  & (\checkmark) Artifact/semantic detector disagreement as primary signal \\
+\midrule
+Generator shift eval.
+  & (\texttimes) GAN only, degrades on diffusion
+  & (\checkmark) Evaluated across diffusion
+  & (\checkmark) Evaluated across multiple models
+  & (\checkmark) Modern video generators
+  & (\texttimes) Not evaluated on media forgery
+  & (\checkmark) Video, GAN, diffusion, SDXL, and FLUX generators \\
+\midrule
+Media type
+  & (\texttimes) Images only
+  & (\texttimes) Images only
+  & (\texttimes) Images only
+  & (\checkmark) Video forgery detection
+  & (\texttimes) Text only
+  & (\checkmark) Video frames and static images \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+
+\section{Proposed Solution}
+This section describes the proposed framework for difficulty-aware model selection. We first formalize the routing problem and define the cost model, then introduce the disagreement-based routing strategy, examine the alternative routing baselines used for comparison, and finally detail how latency is measured across routing strategies.
+
+\subsection{Problem Formulation}
+
+We consider the problem of detecting AI-generated media using a set of heterogeneous detectors with different computational costs and failure modes. Given an input sample $x$, the goal is to select an appropriate subset of detectors to apply such that prediction accuracy is maintained while minimizing computational cost.
+
+Let:
+\[
+\mathcal{M} = \{f_{\text{art}}, f_{\text{sem}}, f_{\text{vlm}}\}
+\]
+denote the set of available detectors, corresponding to an artifact-based model, a semantic model, and a high-capacity vision-language model. Each model produces a binary prediction $\hat{y}_i \in \{0,1\}$. A routing policy $\pi(x) \in \{0,1\}$ determines whether the VLM is invoked on input $x$, with the artifact and semantic detectors always applied as
+low-cost first-stage filters. We evaluate multiple instantiations of this framework in which the artifact detector is instantiated as a dual-stream FFT probe (primary) or CNNSpot
+(baseline), and the semantic detector as CLIP, SigLIP2, or DINOv2.
+
+We report on two complementary cost metrics. Wall-clock latency, measured in milliseconds on a fixed GPU, applies to every detection stage:
+\[
+C_{\text{lat}}(x, \pi) = \kappa^{\text{lat}}_{\text{art}} + \kappa^{\text{lat}}_{\text{sem}}
++ \mathbbm{1}[\pi(x)=1] \cdot \kappa^{\text{lat}}_{\text{vlm}}(x),
+\]
+where $\kappa^{\text{lat}}_{\text{vlm}}(x)$ is measured per sample because VLM latency depends on input resolution. The token cost, measured as mean VLM input and output tokens per sample, applies only when the VLM is invoked and reflects the standard unit of cost for commercial VLM APIs~\cite{chen2024frugalgpt}:
+\[
+C_{\text{tok}}(x, \pi) = \mathbbm{1}[\pi(x)=1] \cdot \bigl(\tau^{\text{in}}_{\text{vlm}}(x)
++ \tau^{\text{out}}_{\text{vlm}}(x)\bigr).
+\]
+The routing objective is to minimize the expected cost under either metric while maintaining a target accuracy $\alpha$:
+\[
+\min_{\pi} \; \mathbb{E}_x[C(x, \pi)] \quad \text{s.t.} \quad \text{Accuracy}(\pi) \geq \alpha.
+\]
+We report both $C_{\text{lat}}$ and $C_{\text{tok}}$ in all evaluated methods, as the deployment scenarios vary between self-hosted (latency-bound) and API-based (token-bound) inference.
+
+\subsection{Disagreement as a Difficulty Signal}
+
+We estimate the input difficulty using disagreement between the artifact-based and semantic detectors:
+
+\begin{equation}
+d(x) = \mathbbm{1}\left[\hat{y}_{\text{art}}(x) \neq \hat{y}_{\text{sem}}(x)\right].
+\end{equation}
+
+When the detectors agree, predictions are highly reliable. Disagreement corresponds to
+cases where predictions conflict, indicating that neither signal alone is sufficient and
+that additional computation may be required. Unlike confidence-based measures such as
+entropy, this signal requires no calibration and shows consistent diagnostic behavior
+across generator families. This behavior comes from the complementary failure modes of
+both artifact and semantic detectors with their errors are weakly correlated under
+distribution shift. This leads to disagreement reliably identifying the cases where cheap detectors
+are not trusted.
+
+
+\subsection{Disagreement-Based Routing}
+
+Using the disagreement signal, we define a simple routing policy:
+
+\begin{equation}
+\pi_{\text{disagree}}(x) =
+\begin{cases}
+0, & \text{if } d(x) = 0 \\
+1, & \text{if } d(x) = 1
+\end{cases}
+\end{equation}
+
+where $\pi(x) = 1$ indicates that the VLM is invoked. Inputs where the detectors agree are handled by the cheap stage alone while disagreement cases are escalated to the VLM. This enables selective allocation of computation based on estimated difficulty. Note that outputting the
+semantic detector's prediction on all inputs is equivalent to this routing policy without VLM escalation, since the artifact and semantic detectors produce identical predictions on
+agreement cases by definition. In-domain, this semantic-only baseline achieves the best
+cost-accuracy tradeoff. The cascade's value is under deployment shift, where a stale
+semantic probe loses accuracy and VLM escalation on disagreement cases recovers it.
+
+\subsection{Baseline Routing Strategies}
+
+To evaluate the effectiveness of disagreement-based routing, we compare two alternative strategies.
+
+\textbf{Entropy-based routing.}  
+We use the entropy of the artifact detector as a measure of uncertainty:
+
+\begin{equation}
+H(x) = - \sum_{i} p_i(x) \log p_i(x),
+\end{equation}
+
+where $p_i(x)$ are the predicted class probabilities. Inputs with entropy above a threshold are escalated to the VLM. This represents a standard confidence-based routing approach.
+
+\textbf{Bandit-based routing.}
+We train a contextual bandit model using a logistic regression policy on features derived from detector output, including artifact detector confidence, semantic confidence, and prediction disagreement. The model predicts whether an input should be escalated to the VLM, providing a learned routing baseline.
+
+\subsection{Latency Measurement}
+
+Inference latency for each model component is measured independently using synchronized CUDA execution on a fixed hardware setup. The total latency per sample is the sum of the costs of all models invoked by the routing policy. Artifact and semantic detectors are modeled as additive costs, which is a  conservative estimate since these stages could run in parallel in practice. All latency measurements are intended for relative comparison across routing strategies rather than as absolute deployment guarantees.
+
+\FloatBarrier
+\begin{figure*}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{workflowfinal.png}
+    \caption{Comparison of detection workflows. (a) FrugalGPT introduces cost-aware cascade
+routing for homogeneous LLM outputs. (b) Our framework adapts this paradigm to
+heterogeneous forensic detectors, using artifact-semantic disagreement as the primary
+routing signal.}
+    \label{fig:workflowdiagram}
+\end{figure*}
+\FloatBarrier
+
+\section{Experiments}
+
+This section describes the evaluation methodology used to assess the proposed routing framework. We first define the compared methods and evaluation metrics, then summarize implementation details and latency measurements.
+
+\subsection{Evaluation Strategy}
+We evaluate our framework against artifact-only and semantic-only detectors applied without routing, an always-escalate pipeline that invokes the verifier on every sample, and entropy- and bandit-based routing baselines. UnivFD~\cite{ojha2023fakedetect} is included
+as a published 2023 baseline using CLIP ViT-L/14 features trained on GAN images. We
+evaluate two verifiers: Qwen2.5-VL-7B~\cite{bai2025qwen25vltechnicalreport} as the
+baseline and GPT-5.5~\cite{openai2026gpt55} as the primary, to test whether a stronger verifier better exploits the disagreement signal.
+Evaluation focuses on detection accuracy, balanced accuracy, 
+average computational cost, and escalation rate. For video 
+datasets, a representative frame is sampled from each clip 
+and treated as an image detection task following standard 
+evaluation practice~\cite{wen2025busterxmllmpoweredaigeneratedvideo}.
+
+
+
+\subsection{Implementation}
+
+The pipeline integrates three heterogeneous detection components. The first stage is an artifact-based detector. The primary artifact detector is a dual-stream frequency-domain probe that combines radial FFT magnitude profiles~\cite{dzanic2020fourier} with DCT high-frequency statistics~\cite{frank2020leveraging, Corvi_2023_ICASSP} and color channel
+coherence features, trained as a logistic regression classifier. CNNSpot~\cite{wang2020cnn} is retained as an artifact detector baseline. The second stage is a semantic detector. Visual embeddings are extracted with one of three backbones:CLIP
+ViT-B/32~\cite{pmlr-v139-radford21a}, SigLIP2~\cite{tschannen2025siglip2}, or
+DINOv2~\cite{oquab2023dinov2}. It's then passed through a logistic regression classifier trained on the first 50\% of each dataset. All three semantic probes use the same training split and evaluation protocol. The third and final stage is an optional VLM verifier which is only invoked 
+on disagreement cases.
+
+
+To utilize GPT-5.5 as the primary image verifier, we prompt it as follows:
+
+\noindent
+\begin{minipage}{\linewidth}
+\vspace{10pt}
+\itshape
+``Analyze this image carefully. Determine whether it is a REAL photograph or an AI-generated FAKE image. Consider both possibilities equally. Answer with exactly one word: REAL or FAKE.''
+\vspace{10pt}
+\end{minipage}
+
+When applied to the real images bundled with AIGIBench (PASCAL VOC 2007--2012
+photographs), GPT-5.5 classified 82--97\% of them as \emph{FAKE} despite being
+genuine photographs. PASCAL VOC images are archival scans with heavy JPEG
+compression that a frontier VLM trained on modern high-quality imagery does not
+recognize as real, reducing real-class recall to near zero. We replaced these
+images with ImageNet val/nature photographs from the GenImage SD~1.4
+partition~\cite{NEURIPS2023_f4d4a021}, which GPT-5.5 correctly identifies as real
+and which match the real-image source used to train the SD~1.4 semantic probes.
+Any VLM-based evaluation on AIGIBench should substitute the bundled real images
+with contemporary photographs to avoid this calibration artifact.
+
+
+Confidence scores are derived from the logistic probe output for the FFT artifact detector and all semantic detectors. For the CNNSpot baseline, confidence is the maximum softmax probability from the ResNet output. The bandit and entropy baselines use these scores as features. The disagreement rule would only use binary predictions and would require no confidence
+calibration.
+
+The routing policy operates on the joint output of the artifact and semantic detectors. 
+In the disagreement threshold configuration, escalation is triggered whenever the two first-stage detectors produce conflicting 
+predictions. In the entropy threshold configuration, escalation is 
+triggered when the artifact detectors prediction entropy exceeds $\tau = 0.5$. The 
+bandit router applies a logistic regression policy trained on artifact
+confidence, semantic confidence, and their disagreement signal to produce 
+a binary escalation decision.
+
+We measure deployment latency on an NVIDIA RTX A4500 GPU with synchronized CUDA execution. The FFT probe takes 2.5~ms per sample. Each semantic detector takes 10.4~ms per sample,
+giving a cheap-stage latency of 12.9~ms. This represents a 4.4$\times$ reduction in cheap-stage cost compared to the CNNSpot-based configuration (56.2~ms). GPT-5.5 latency on the original benchmarks averages 1{,}595~ms on GenBuster, 1{,}459~ms on SD~1.4, and 1{,}572~ms on BigGAN. On the SDXL and FLUX benchmarks, where images are higher resolution, GPT-5.5 latency averages 3{,}084--3{,}103~ms and 3{,}670--3{,}849~ms respectively. Qwen2.5-VL
+latency on the original benchmarks is 190~ms (GenBuster), 83~ms (SD~1.4), and 71~ms
+(BigGAN) under always-escalate. We report both latency and token cost throughout our results. Latency comparisons assume sequential FFT and semantic detector execution. Parallel
+execution would further reduce cheap-stage cost.
+
+\section{Results}
+
+This section presents empirical results across video, diffusion, and GAN benchmarks. We first describe the datasets and evaluation protocol, then compare detector performance, analyze routing behavior, and finally study the robustness of the proposed signal through ablations.
+
+\subsection{Experimental Setup}
+
+We evaluate on three in-domain benchmarks spanning distinct generator families.
+GenBuster-200K-mini~\cite{wen2025busterxmllmpoweredaigeneratedvideo} comprises 2{,}000
+samples from eight modern AI video generators and 1{,}000 real video clips.
+GenImage SD~1.4~\cite{NEURIPS2023_f4d4a021} comprises 6{,}000 Stable Diffusion v1.4
+images and 6{,}000 real ImageNet images. GenImage
+BigGAN~\cite{NEURIPS2023_f4d4a021} comprises 6{,}000 BigGAN images and 6{,}000 real
+ImageNet images. Each sample is represented by a single frame or image following standard
+practice~\cite{wen2025busterxmllmpoweredaigeneratedvideo}.
+
+We additionally evaluate under deployment shift on two modern diffusion benchmarks.
+Fake images are drawn from AIGIBench~\cite{li2025artificial} SDXL and FLUX1-dev
+subsets. Real images are ImageNet val/nature photographs from the GenImage SD~1.4
+partition. AIGIBench's bundled PASCAL VOC real images are not used because they
+cause systematic VLM calibration failure (Section~IV.B). Each benchmark contains
+4{,}000 samples (2{,}000 fake, 2{,}000 real). All semantic probes are trained
+exclusively on SD~1.4 data. No SDXL or FLUX images appear in any training split.
+
+
+For the in-domain benchmarks, each dataset is partitioned into three non-overlapping splits
+using stratified sampling. The first split (50\%) trains the semantic probe classifiers,
+with a held-out 20\% subset used for probe validation. The remaining 50\% forms the routing
+policy training and evaluation pool, from which a held-out 40\% subset is used for all
+reported evaluations. No detector or routing policy is evaluated on samples seen during
+training. Evaluation sets contain 400 samples for GenBuster and 480 samples each for
+SD~1.4 and BigGAN.
+
+We compare FFT-only, CNNSpot-only~\cite{wang2020cnn}, UnivFD~\cite{ojha2023fakedetect},
+and semantic-only configurations using CLIP~\cite{pmlr-v139-radford21a},
+SigLIP2~\cite{tschannen2025siglip2}, and DINOv2~\cite{oquab2023dinov2}. Routing
+baselines include entropy threshold ($\tau = 0.5$), disagreement-based escalation to Qwen2.5-VL-7B or GPT-5.5, and uniform escalation to Qwen2.5-VL. All configurations
+are evaluated under identical conditions on the same held-out splits.
+
+All accuracy figures are reported with 95\% bootstrap confidence intervals over 1{,}000
+resamples. Balanced accuracy is the mean of fake and real recall. Latency is measured in
+milliseconds on an NVIDIA RTX A4500 GPU.
+
+\subsection{Detector Performance}
+
+
+\textbf{Artifact detectors.} Table~\ref{tab:artifact_comparison} compares the dual-stream
+FFT probe against CNNSpot across all three in-domain benchmarks. FFT achieves 75.3\%,
+74.8\%, and 99.8\% accuracy on GenBuster, SD~1.4, and BigGAN respectively, against
+CNNSpot's 52.0\%, 50.4\%, and 72.1\%. This gain comes at 2.5~ms per sample versus
+CNNSpot's 45.8~ms, an 18$\times$ reduction in artifact-stage latency. The FFT probe
+maintains balanced recall across fake and real classes, while CNNSpot exhibits strong real
+bias on out-of-domain generators (4.3\% fake recall on GenBuster).
+
+\textbf{Semantic detectors.} Among the three semantic probes, SigLIP2 achieves the
+strongest in-domain accuracy on all benchmarks: 98.5\% on GenBuster, 92.7\% on SD~1.4,
+and 99.6\% on BigGAN. CLIP and DINOv2 are competitive (96.3--99.4\% on BigGAN, 91.3--96.5\% on GenBuster), with DINOv2 trailing on SD~1.4 (89.0\%). 
+All three probes are trained on in-domain data and run at 10.4~ms per sample.
+
+When semantic probes are trained in-domain, the semantic-only baseline achieves the best
+cost-accuracy tradeoff on all three benchmarks. Routing configurations that invoke
+Qwen2.5-VL on disagreement cases achieve 89--90.5\% on GenBuster and 84--87\% on SD~1.4,
+below the semantic-only baselines (96.3--98.5\% and 89--92.7\% respectively). We expected this since
+Qwen provides weak signal on these benchmarks (69.0\%, 60.6\%, 70.4\% under
+uniform escalation), and invoking it on the hardest cases cannot recover to the level of a
+well-trained in-domain probe.
+
+\textbf{Verifier comparison.} Table~\ref{tab:verifier_comparison} compares Qwen2.5-VL
+and GPT-5.5 on the disagreement subset. GPT-5.5 achieves 91.9\% accuracy on the
+GenBuster disagreement subset versus Qwen's 75.0\%, a 16.9 percentage point gain. On
+SD~1.4, GPT-5.5 is modestly better (63.9\% vs 58.8\%). On BigGAN, GPT-5.5 performs below
+Qwen (43.0\% vs 71.1\%). We attribute this reversal to the same distribution mismatch
+documented in Section~IV.B. The images in BigGAN have a distinct visual style consistent with early GAN
+synthesis that the latest VLMs do not associate with AI generation. GPT-5.5's strong
+performance on modern generators (GenBuster video, SDXL, FLUX) confirms it is better
+calibrated to current generation artifacts.
+
+\textbf{UnivFD baseline.} UnivFD~\cite{ojha2023fakedetect}, trained on GAN images using
+CLIP ViT-L/14, achieves zero fake recall on GenBuster and near-zero on SD~1.4 (5.9\%),
+matching chance accuracy. On BigGAN, where the test distribution matches its training
+domain, it achieves 91.5\%. GAN-trained detectors fail categorically on video generators
+and diffusion images regardless of backbone strength. The advantage of trainable semantic
+probes over fixed pretrained ones is consistent across all evaluated backbones.
+
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{plot_accuracy_comparison.png}
+    \caption{Detector accuracy across three benchmarks. Semantic probes dominate in-domain on all datasets. FFT substantially outperforms CNNSpot on diffusion and video generators. The cascade (FFT + SigLIP2 + Qwen) falls below semantic-only in-domain, confirming that routing adds value only when the semantic probe faces deployment shift.}
+
+    \label{fig:accuracy_comparison}
+\end{figure*}
+
+
+% --- Table: Artifact Detector Comparison (E2) ---
+\begin{table}[h]
+\large
+\centering
+\caption{Artifact detector comparison. FFT outperforms CNNSpot on all benchmarks at
+18$\times$ lower latency.}
+\label{tab:artifact_comparison}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Detector & GenBuster & SD~1.4 & BigGAN & Fake Rec. (GB) & Latency (ms) \\
+\midrule
+CNNSpot~\cite{wang2020cnn} & 0.520 & 0.502 & 0.721 & 0.043 & 45.8 \\
+FFT (ours)                  & 0.753 & 0.748 & 0.998 & 0.677 & 2.5  \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% --- Table: GenBuster main results ---
+\begin{table}[h]
+\large
+\centering
+\caption{Detection results on GenBuster-200K-mini. CI denotes 95\% bootstrap confidence
+interval.}
+\label{tab:genbuster}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+\midrule
+FFT-only          & 0.753 & [0.710, 0.793] &  2.5  & 0.00 \\
+CNNSpot-only      & 0.520 & [0.470, 0.568] & 45.8  & 0.00 \\
+UnivFD            & 0.512 & [0.463, 0.565] & 56.2  & 0.00 \\
+\midrule
+CLIP-only         & 0.965 & [0.945, 0.983] & 10.4  & 0.00 \\
+SigLIP2-only      & 0.985 & [0.970, 0.995] & 10.4  & 0.00 \\
+DINOv2-only       & 0.963 & [0.945, 0.978] & 10.4  & 0.00 \\
+\midrule
+Entropy thresh    & 0.527 & [0.480, 0.570] & 17.9  & 0.03 \\
+Disagree→Qwen (FFT+CLIP)    & 0.900 & [0.870, 0.928] & 55.1  & 0.24 \\
+Disagree→Qwen (FFT+SigLIP2) & 0.905 & [0.875, 0.933] & 57.9  & 0.26 \\
+Disagree→Qwen (FFT+DINOv2)  & 0.890 & [0.860, 0.918] & 58.4  & 0.26 \\
+Always escalate   & 0.690 & [0.648, 0.738] & 190.2 & 1.00 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% --- Table: SD 1.4 main results ---
+\begin{table}[h]
+\large
+\centering
+\caption{Detection results on GenImage SD~1.4.}
+\label{tab:sd14}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+\midrule
+FFT-only          & 0.748 & [0.710, 0.790] &  2.5  & 0.00 \\
+CNNSpot-only      & 0.504 & [0.460, 0.546] & 45.8  & 0.00 \\
+UnivFD            & 0.529 & [0.485, 0.575] & 56.2  & 0.00 \\
+\midrule
+CLIP-only         & 0.913 & [0.888, 0.935] & 10.4  & 0.00 \\
+SigLIP2-only      & 0.927 & [0.904, 0.950] & 10.4  & 0.00 \\
+DINOv2-only       & 0.890 & [0.860, 0.919] & 10.4  & 0.00 \\
+\midrule
+Entropy thresh    & 0.525 & [0.479, 0.571] & 14.3  & 0.07 \\
+Disagree→Qwen (FFT+CLIP)    & 0.865 & [0.833, 0.896] & 36.9  & 0.30 \\
+Disagree→Qwen (FFT+SigLIP2) & 0.867 & [0.835, 0.898] & 31.9  & 0.28 \\
+Disagree→Qwen (FFT+DINOv2)  & 0.842 & [0.808, 0.873] & 32.5  & 0.29 \\
+Always escalate   & 0.606 & [0.565, 0.654] & 83.2  & 1.00 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% --- Table: BigGAN main results ---
+\begin{table}[h]
+\large
+\centering
+\caption{Detection results on GenImage BigGAN. FFT and semantic detectors near-saturate.
+VLM escalation is rarely triggered ($<$1.3\%).}
+\label{tab:biggan}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+\midrule
+FFT-only          & 0.998 & [0.994, 1.000] &  2.5  & 0.00 \\
+CNNSpot-only      & 0.721 & [0.681, 0.758] & 45.8  & 0.00 \\
+UnivFD            & 0.915 & [0.890, 0.938] & 56.2  & 0.00 \\
+\midrule
+CLIP-only         & 0.994 & [0.985, 1.000] & 10.4  & 0.00 \\
+SigLIP2-only      & 0.996 & [0.990, 1.000] & 10.4  & 0.00 \\
+DINOv2-only       & 0.990 & [0.979, 0.998] & 10.4  & 0.00 \\
+\midrule
+Entropy thresh    & 0.733 & [0.692, 0.771] & 12.9  & 0.06 \\
+Disagree→Qwen (FFT+CLIP)    & 0.998 & [0.994, 1.000] & 13.3  & 0.01 \\
+Disagree→Qwen (FFT+SigLIP2) & 0.998 & [0.994, 1.000] & 13.2  & 0.01 \\
+Disagree→Qwen (FFT+DINOv2)  & 0.998 & [0.994, 1.000] & 13.5  & 0.01 \\
+Always escalate   & 0.704 & [0.665, 0.745] & 70.6  & 1.00 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% --- Table: Verifier comparison (E4) ---
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}  % reduced from 4pt to 3pt
+\caption{Verifier accuracy on the disagreement subset. GPT-5.5 substantially outperforms
+Qwen on modern generator types but underperforms on BigGAN, consistent with calibration
+to modern imagery. Since Qwen is baseline here, improvement is marked as ---}
+\label{tab:verifier_comparison}
+\begin{tabular}{llcccc}
+\toprule
+Dataset & Verifier & Acc. & Improvement & $n$ & Lat. (ms) \\
+\midrule
+GenBuster & Qwen2.5-VL-7B  & 0.750 & ---        & 172 & 178 \\
+GenBuster & GPT-5.5        & 0.919 & $+$0.169   & 172 & 1595 \\
+\midrule
+SD~1.4    & Qwen2.5-VL-7B  & 0.588 & ---        & 238 & 74 \\
+SD~1.4    & GPT-5.5        & 0.639 & $+$0.050   & 238 & 1459 \\
+\midrule
+BigGAN    & Qwen2.5-VL-7B  & 0.711 & ---        & 135 & 58 \\
+BigGAN    & GPT-5.5        & 0.430 & $-$0.281   & 135 & 1572 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% --- Table: E8 SDXL/FLUX deployment shift main results ---
+\begin{table}[h]
+\large
+\centering
+\caption{Deployment shift results on SDXL and FLUX. Semantic probes are trained on
+SD~1.4 and tested without retraining. Cascade escalates to GPT-5.5 on disagreement
+cases. Gain = cascade accuracy $-$ stale semantic accuracy}
+\label{tab:e8_results}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+Dataset & Semantic & Stale Sem. & Cascade (GPT-5.5) & Gain \\
+\midrule
+SDXL & CLIP    & 0.872 & 0.893 & $+$0.021 \\
+SDXL & SigLIP2 & 0.847 & 0.881 & $+$0.034 \\
+SDXL & DINOv2  & 0.855 & 0.891 & $+$0.036 \\
+\midrule
+FLUX & CLIP    & 0.920 & 0.914 & $-$0.006 \\
+FLUX & SigLIP2 & 0.909 & 0.913 & $+$0.004 \\
+FLUX & DINOv2  & 0.815 & 0.864 & $+$0.049 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% --- Table: E8 token savings ---
+\begin{table}[h]
+\centering
+\caption{Disagreement rates and verifier invocation savings on SDXL and FLUX. Token
+savings = 1 $-$ escalation rate.}
+\label{tab:e8_efficiency}
+\begin{tabular}{llcc}
+\toprule
+Dataset & Semantic & Disagree Rate & Token Savings \\
+\midrule
+SDXL & CLIP    & 35.2\% & 64.8\% \\
+SDXL & SigLIP2 & 36.6\% & 63.4\% \\
+SDXL & DINOv2  & 38.6\% & 61.4\% \\
+\midrule
+FLUX & CLIP    & 40.3\% & 59.7\% \\
+FLUX & SigLIP2 & 41.4\% & 58.6\% \\
+FLUX & DINOv2  & 41.4\% & 58.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Routing Analysis}
+
+In this section we analyze whether artifact-semantic disagreement between the FFT artifact detector and
+the semantic probe provides a reliable routing signal, and how selective escalation
+affects the cost-accuracy tradeoff across in-domain and deployment-shift conditions.
+
+Figure~\ref{fig:agree_disagree} shows disagreement rates across all five evaluation
+datasets. On in-domain benchmarks, the rate ranges from 24--30\%. On BigGAN it collapses
+to under 1\%, consistent with the FFT probe near-saturating at 99.8\% accuracy and
+leaving almost no room for artifact-semantic conflict. Under deployment shift on SDXL and
+FLUX, the rate rises to 35--42\%, marking the conditions where the stale semantic probe
+loses accuracy and VLM escalation provides gain.
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{plot_fig_c_disagreement_rate.png}
+    \caption{Artifact-semantic disagreement rate across five datasets. The artifact detector
+is the FFT probe. Semantic detectors are CLIP, SigLIP2, and DINOv2. Disagreement stays
+at 24--30\% on in-domain benchmarks and collapses to under 1\% on BigGAN where the FFT
+probe near-saturates. The hatched SDXL and FLUX bars mark deployment shift, where
+disagreement rises sharply and VLM escalation provides the most gain.}
+    \label{fig:agree_disagree}
+\end{figure*}
+
+
+Table~\ref{tab:crossdataset} shows cascade gain over the FFT-only baseline across datasets.
+
+\begin{table}[h]
+\centering
+\caption{Cascade accuracy and gain over FFT-only across datasets. Cascade is FFT +
+SigLIP2 with Qwen escalation on disagreement cases.}
+\label{tab:crossdataset}
+\small
+\begin{tabularx}{\columnwidth}{l l c c c}
+\toprule
+\textbf{Dataset} & \textbf{Generator} & \textbf{FFT} & \textbf{Cascade} & \textbf{Gain} \\
+\midrule
+GenBuster & Video     & 0.753 & 0.905 & $+$0.152 \\
+SD~1.4    & Diffusion & 0.748 & 0.867 & $+$0.119 \\
+BigGAN    & GAN       & 0.998 & 0.998 & $+$0.000 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+
+When the FFT artifact detector and semantic probe agree, the agreement subset achieves
+above 96\% accuracy across all three in-domain benchmarks (Table~\ref{tab:cheap_path}).
+When they disagree, FFT accuracy on the disagreement subset drops to under 18\% on
+GenBuster and SD~1.4, and neither detector is reliable on its own. This asymmetry
+confirms that artifact-semantic disagreement is a stable routing signal without requiring
+confidence calibration.
+
+Table~\ref{tab:escalation} breaks down escalation behavior by case type on GenBuster for
+the FFT+SigLIP2 configuration. The disagreement rule escalates all 103 disagreement cases
+and bypasses all 297 agreement cases by construction. FFT is correct on 296 of 297
+agreement-subset samples. The single case where both detectors agree but FFT is wrong
+represents the fundamental limit of the routing signal. When both cheap detectors fail
+simultaneously, no artifact-semantic disagreement can flag the error. At 99.7\% agreement-
+subset accuracy, this limit affects under 0.3\% of all inputs. The disagreement rule
+identifies 98 of the 99 total FFT failures on GenBuster.
+
+\begin{table}[h]
+\centering
+\caption{Escalation behavior by case type on GenBuster-200K-mini (FFT+SigLIP2).
+The disagreement rule covers 98 of 99 total FFT failures. The one uncatchable failure
+is the case where both cheap detectors simultaneously err.}
+\label{tab:escalation}
+\begin{tabular}{lcc}
+\toprule
+Case & $n$ & Disagree esc. \\
+\midrule
+FFT correct, models agree    & 296 & 0.00 \\
+FFT correct, models disagree &   5 & 1.00 \\
+FFT wrong, models agree      &   1 & 0.00 \\
+FFT wrong, models disagree   &  98 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:per_generator} breaks down accuracy by generator on GenBuster.
+CNNSpot achieves zero fake recall on all eight video generators, confirming that
+GAN-trained detectors fail categorically on modern video content. Disagreement-routed
+escalation recovers accuracy across generators but falls below the semantic-only
+baseline, consistent with Qwen's limited accuracy on video frames.
+
+
+\begin{table}[h]
+\centering
+\caption{Per-generator detection accuracy on GenBuster-200K-mini. Disagreement-routed
+escalation improves over CNNSpot across all generators but falls below CLIP, reflecting
+Qwen's limited accuracy on video frames}
+\label{tab:per_generator}
+\begin{tabular}{lrcccc}
+\toprule
+Generator & $n$ & CNNSpot & Cascade & CLIP \\
+\midrule
+Gen3   & 24  & 0.000 & 0.792 & 1.000 \\
+Jimeng & 22  & 0.136 & 0.318 & 0.818 \\
+Kling  & 20  & 0.050 & 0.500 & 0.800 \\
+Luma   & 18  & 0.222 & 0.667 & 0.778 \\
+Pika   & 15  & 0.000 & 0.600 & 0.933 \\
+Sora   & 31  & 0.032 & 0.613 & 0.968 \\
+Vidu   & 38  & 0.026 & 0.421 & 0.789 \\
+Wanx   & 27  & 0.000 & 0.519 & 0.741 \\
+\midrule
+Real   & 205 & 0.966 & 0.956 & 0.966 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+The retrained bandit router, trained on the same Qwen verifier used in the disagreement threshold configuration, converges to performance that matches the disagreement rule on both GenBuster (0.755 vs 0.755) and BigGAN (0.925 vs 0.925). On SD~1.4 the bandit trails disagreement by 11.9\% (0.623 vs 0.742), reflecting the weaker Qwen signal on that dataset, which provides a noisier reward for policy learning. The bandit's convergence to disagreement on two of three datasets suggests that disagreement captures most of the useful routing signal for routing in the clean-signal regime, and that more complex learned policies offer little benefit over the parameter-free rule.
+
+
+\begin{table}[h]
+\centering
+\caption{Mean per-sample latency and accuracy on GenBuster-200K-mini. Latency reduction
+is relative to always-escalate to Qwen (190.2~ms)}
+\label{tab:latency}
+\begin{tabular}{lccc}
+\toprule
+Method & Latency (ms) & Reduction & Accuracy \\
+\midrule
+FFT-only               &   2.5 & 99\%  & 0.753 \\
+SigLIP2-only           &  10.4 & 95\%  & 0.985 \\
+Entropy thresh         &  17.9 & 91\%  & 0.527 \\
+Disagree (FFT+SigLIP2) &  57.9 & 70\%  & 0.905 \\
+Always escalate        & 190.2 &  0\%  & 0.690 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h]
+\centering
+\caption{Disagreement vs.\ entropy routing at matched escalation rates (CNNSpot+CLIP
+configuration). Disagreement outperforms entropy by 16--19 percentage points on every
+dataset}
+\label{tab:matched_entropy}
+\begin{tabular}{lcccc}
+\toprule
+Dataset & Method & Accuracy & Esc. Rate & Gap \\
+\midrule
+GenBuster & Disagree thresh      & 0.755 & 0.44 & --     \\
+GenBuster & Entropy matched      & 0.590 & 0.26 & $-$0.165 \\
+\midrule
+SD 1.4    & Disagree thresh      & 0.742 & 0.49 & --     \\
+SD 1.4    & Entropy matched      & 0.550 & 0.43 & $-$0.192 \\
+\midrule
+BigGAN    & Disagree thresh      & 0.925 & 0.28 & --     \\
+BigGAN    & Entropy matched      & 0.760 & 0.28 & $-$0.165 \\
+\bottomrule
+\end{tabular}
+% \footnotetext{Disagreement threshold values reflect the FFT+SigLIP2+Qwen configuration.
+% Entropy-matched comparison uses matched escalation rates from the CNNSpot artifact detector;
+% the ordering is expected to hold with FFT entropy given the larger disagreement accuracy gap.}
+The FFT-based disagreement rule achieves substantially higher absolute accuracy on
+these same datasets (Table~\ref{tab:crossdataset}); the entropy comparison here is
+retained to show the signal-quality advantage holds independent of the artifact
+detector used.
+\end{table}
+
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{plot_cost_accuracy_all.png}
+    \caption{Cost--accuracy tradeoff per semantic backbone. In-domain (left), semantic-only probes
+are Pareto-optimal and the cascade adds latency without accuracy gain. Under deployment
+shift on SDXL (right), stale probe accuracy drops 4--8 percentage points from in-domain
+and the cascade with GPT-5.5 partially recovers it through selective escalation.}
+    \label{fig:cost_accuracy}
+\end{figure*}
+
+
+\subsection{Ablation Studies}
+The ablation studies characterize cheap-path coverage, robustness of the
+disagreement-based routing signal, and cascade behavior under cross-family probe
+transfer.
+
+
+\subsubsection{Cheap-Path Coverage}
+
+Table~\ref{tab:cheap_path} quantifies cheap-path coverage for the FFT+SigLIP2
+configuration. On every dataset, at least 74\% of samples fall in the agreement subset where FFT accuracy exceeds 96\%, and escalation is limited to the remaining disagreement
+cases. On BigGAN, the agreement rate reaches 99.4\% and cheap-path accuracy is 100\%,
+leaving only 3 samples for VLM escalation.
+
+\FloatBarrier
+\begin{table}[h]
+\centering
+\caption{Agreement-subset coverage and accuracy for the FFT+SigLIP2 configuration.
+Agreement-subset accuracy exceeds 96\% on all three datasets.}
+
+\label{tab:cheap_path}
+\begin{tabular}{lcccc}
+\toprule
+Dataset & Agree & Cheap Acc & Disagree & Esc. \\
+        & $n$   &           & $n$      & rate \\
+\midrule
+GenBuster & 297 & 0.997 & 103 & 0.258 \\
+SD~1.4    & 348 & 0.966 & 132 & 0.275 \\
+BigGAN    & 477 & 1.000 &   3 & 0.006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\FloatBarrier
+
+
+\subsubsection{Cross-Dataset Bandit Transfer}
+
+Table~\ref{tab:transfer} reports cross-dataset bandit transfer accuracy. In-domain
+diagonal entries range from 0.782 on GenBuster to 0.923 on BigGAN. The bandits transfer
+across datasets with off-diagonal accuracy ranging from 0.650 to 0.896. BigGAN is the
+strongest transfer target, reflecting its cleaner verifier signal. SD~1.4 is the weakest,
+where both out-of-domain bandits score below 0.75, consistent with the noisy Qwen signal
+on that benchmark.
+
+The disagreement rule (FFT+SigLIP2, Qwen verifier) achieves 0.905, 0.867, and 0.998
+across the three datasets (Table~\ref{tab:disagree_transfer}), exceeding every cell of
+the bandit transfer matrix. The bandit reported here was trained and evaluated against
+the CNNSpot+CLIP configuration. Ordering is expected to hold with an FFT-based
+bandit, as disagreement captures the dominant routing signal regardless of which
+artifact detector is used. The disagreement rule does not require per-dataset retraining.
+
+
+\begin{table}[h]
+\centering
+\caption{Cross-dataset bandit transfer accuracy. Diagonal entries are in-domain results. Off-diagonal entries apply a bandit trained on one dataset directly to another without retraining.}
+\label{tab:transfer}
+\begin{tabular}{lccc}
+\toprule
+Train $\rightarrow$ Test & GenBuster & BigGAN & SD14 \\
+\midrule
+GenBuster & \textbf{0.782} & 0.842 & 0.650 \\
+BigGAN    & 0.770 & \textbf{0.923} & 0.733 \\
+SD14      & 0.730 & 0.896 & \textbf{0.792} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\begin{table}[h]
+\centering
+\caption{Cross-dataset disagreement rule accuracy (FFT+SigLIP2, Qwen verifier). The
+disagreement threshold has no trainable parameters and requires no dataset-specific
+retraining.}
+\label{tab:disagree_transfer}
+\begin{tabular}{lc}
+\toprule
+Dataset & Disagreement threshold accuracy \\
+\midrule
+GenBuster & 0.905 \\
+SD~1.4    & 0.867 \\
+BigGAN    & 0.998 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsubsection{Sensitivity to CLIP Probe Quality}
+
+The disagreement signal assumes both detectors provide meaningful predictions. When one detector degrades to near-random output, disagreement becomes uninformative.Table~\ref{tab:clip_transfer} shows that CLIP probes trained on one generator family do not generalize to others. A GenBuster-trained probe evaluated on SD~1.4 achieves 0.597
+accuracy, near chance. Off-diagonal accuracies range from 0.505 to 0.598, showing that
+cross-family probe transfer is unreliable regardless of source domain. Deploying the
+cascade on a new generator family requires training a semantic probe on in-domain data.
+The disagreement mechanism itself introduces no additional parameters, but depends on
+both detectors providing signal above chance.
+
+
+\begin{table}[h]
+\centering
+\caption{Cross-dataset transfer accuracy of the CLIP logistic probe. Diagonal entries
+are in-domain. Off-diagonal entries apply the probe to another dataset without
+retraining}
+
+\label{tab:clip_transfer}
+\begin{tabular}{lccc}
+\toprule
+Train $\rightarrow$ Test & GenBuster & SD~1.4 & BigGAN \\
+\midrule
+GenBuster & \textbf{0.965} & 0.597 & 0.511 \\
+SD~1.4    & 0.598 & \textbf{0.913} & 0.551 \\
+BigGAN    & 0.549 & 0.505 & \textbf{0.994} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Cross-Family Deployment}
+\label{sec:cross_family_deployment}
+
+Cross-family deployment evaluates whether the cascade provides benefit when the semantic
+probe is applied out of domain. A probe trained on dataset A is applied to dataset B
+without retraining, then compared against the stale probe alone, the cascade with Qwen
+as verifier, and an in-domain probe as an upper bound (Table~\ref{tab:cross_family_deployment}).
+
+The cascade improves over the stale cross-family probe in four of six pairings, with the
+largest gains when the probe is near chance. Disagreement remains informative in these
+cases and Qwen maintains above-chance accuracy on the routed subset, recovering up to 19
+percentage points. The only negative case occurs when the verifier provides no useful
+signal on the routed subset. An in-domain semantic probe remains the strongest choice
+when available. When only a cross-family probe is available, the cascade provides a mean
+gain of $+$6.3 points with no retraining.
+
+\begin{table}[t]
+\centering
+\caption{Cross-family deployment results. Cascade uses the cross-family CLIP probe with
+Qwen escalation on disagreement cases.}
+\label{tab:cross_family_deployment}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+Train & Test & Stale & Casc. & $\Delta$ & In-dom \\
+\midrule
+GenBuster & SD~1.4    & 0.546 & 0.571 & $+$0.025 & 0.900 \\
+GenBuster & BigGAN    & 0.523 & 0.713 & $+$0.190 & 0.990 \\
+SD~1.4    & GenBuster & 0.613 & 0.562 & $-$0.050 & 0.910 \\
+SD~1.4    & BigGAN    & 0.535 & 0.721 & $+$0.185 & 0.990 \\
+BigGAN    & GenBuster & 0.547 & 0.547 & $+$0.000 & 0.910 \\
+BigGAN    & SD~1.4    & 0.508 & 0.537 & $+$0.029 & 0.900 \\
+\midrule
+\multicolumn{2}{l}{Mean $\Delta$} & & & $+$0.063 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{plot_fig_a_semantic_degradation.png}
+    \caption{Semantic probe accuracy in-domain (solid) vs.\ deployment shift on SDXL and FLUX (hatched). In-domain accuracy reaches 86--99\%. On SDXL and FLUX it drops 5--17 points, with DINOv2 degrading most and SigLIP2 least. These stale probes define the deployment context where cascade routing provides gain.}
+
+    \label{fig:semantic_degradation}
+\end{figure*}
+
+
+\section{Discussion}
+
+This section interprets the empirical results presented in Section V. We first examine
+why artifact-semantic disagreement separates easy from hard inputs and assess whether
+learned routing improves on this signal, then characterize the role of the semantic
+probe and VLM verifier under in-domain and deployment-shift conditions, and finally
+discuss generator distribution shift, limitations, and practical deployment guidelines.
+
+
+
+\subsection{Artifact-Semantic Disagreement as a Routing Signal}
+
+The FFT artifact detector achieves 99.7\%, 96.6\%, and 100\% accuracy on agreement
+cases across the three benchmarks and drops to 4.9\%, 17.4\%, and 66.7\% on
+disagreement cases. Agreement between the artifact and semantic detectors is a
+near-perfect predictor of an easy sample, and disagreement predicts difficulty with
+equal reliability. This pattern holds across fundamentally different generator
+architectures: video-based diffusion generators (GenBuster), image diffusion models
+(SD~1.4), and GAN-based generators (BigGAN).
+
+The complementarity arises from the signal types each detector uses. The FFT probe
+captures spectral regularities introduced during synthesis, including upsampling grids
+and DCT coefficient patterns. Semantic probes encode high-level scene content learned
+from natural image-text distributions. These signal types are largely orthogonal.
+When both detectors agree, at least one type of signal is unambiguous and the sample
+is easy to classify. When they disagree, neither is sufficient alone, indicating a
+sample that requires higher-level reasoning. The disagreement rule routes only these
+ambiguous cases to the VLM verifier without requiring a learned policy or calibrated
+confidence scores.
+
+BigGAN produces fewer than 1\% disagreement cases in-domain because GAN upsampling
+artifacts are unambiguous in the frequency domain. The FFT probe resolves nearly all
+BigGAN samples at the cheap stage. On GenBuster and SD~1.4, modern diffusion and
+video generators produce 26--28\% disagreement rates, marking the regime where VLM
+escalation recovers accuracy that neither cheap detector can provide alone.
+
+\subsection{Limitations of Learned Routing}
+The retrained bandit router converges to the disagreement threshold on two of three
+datasets. On GenBuster the bandit achieves 0.755 accuracy, identical to the
+disagreement rule, and on BigGAN it achieves 0.925, also identical. On SD~1.4 the
+bandit trails by 11.9 percentage points (0.623 vs.\ 0.742), where Qwen reward signal
+is noisiest. These figures reflect the CNNSpot+CLIP configuration. The FFT-based
+disagreement rule achieves substantially higher accuracy on the same datasets
+(Table~\ref{tab:crossdataset}), and the ordering is expected to hold. A learned
+classifier with eleven detector features and explicit latency rewards does not
+outperform the binary disagreement rule, independently validating that disagreement
+captures the dominant routing signal.
+
+
+
+\subsection{Role of the Semantic Probe}
+
+The semantic probe (SigLIP2) achieves 98.5\%, 92.7\%, and 99.6\% accuracy at
+12.9~ms cheap-stage latency across the three in-domain benchmarks. This is
+Pareto-optimal in-domain where not invoking the VLM improved accuracy over the
+semantic probe alone.
+
+The FFT detector's role in the cascade is diagnostic, not predictive. On agreement
+cases, the FFT and semantic probe produce identical predictions by construction. Any
+routing policy that escalates only disagreement cases to the VLM reduces to outputting
+the semantic probe's prediction on agreement cases unchanged. The FFT detector
+ does not contribute to independent prediction on these samples. It serves as a cheap signal
+whose agreement with the semantic probe identifies easy inputs, routing only the
+residual disagreement cases to the VLM.
+
+This clarifies when the cascade adds value. In-domain, the semantic probe is accurate
+enough that VLM escalation does not improve accuracy and only adds latency. Under
+deployment shift, when a stale probe loses accuracy on unseen generators, disagreement
+rises and targeted VLM escalation recovers it. The SDXL and FLUX experiments confirm
+this (Table~\ref{tab:e8_results}). Semantic probes do not transfer across generator
+families (Table~\ref{tab:clip_transfer}), so production deployment on a new generator
+family requires in-domain probe training. The disagreement rule itself needs no
+retraining.
+
+\subsection{VLM Domain Sensitivity}
+
+By using the prompt mentioned in Section~IV.B, Qwen2.5-VL achieves a balanced accuracy of 50.8\% on GenBuster, 62.3\% on SD~1.4, and 73.4\% on BigGAN when applied uniformly to all inputs. This is a substantial improvement over text-decoded Qwen configurations we initially evaluated, which produced near-zero fake recall on static image datasets. We attribute this improvement to extracting the REAL/FAKE logit difference at generation time instead of parsing decoded output tokens. With standard greedy decoding, the model's text outputs were biased toward "REAL" even when its underlying logits distinguished between classes. This is a methodological observation that may generalize to other VLM-based classification tasks.
+
+Despite this improvement, Qwen2.5-VL remains substantially weaker than the CLIP logistic probe on all three datasets. 
+The disagreement-routed cascade extracts useful signal from Qwen by invoking it only
+on inputs where the FFT and semantic probe disagree. These are precisely the inputs
+where the cheap detectors are unreliable and any additional signal from the VLM is
+valuable. On GenBuster, the cascade achieves 90.5\% accuracy even though uniform
+Qwen achieves only 69.0\%.
+ This demonstrates that selective escalation makes a mediocre verifier useful.
+
+Although the uniform Qwen accuracy ranges from roughly 50-73\% across datasets, its accuracy on the routed disagreement subset is higher. In-domain, it reaches 58-75\% (Table~\ref{tab:verifier_comparison}), and under cross-family deployment it achieves 60-68\% in 5 of 6 pairings (Table~\ref{tab:cross_family_deployment}). This shows that the VLM provides useful signal on the samples it processes, even when overall accuracy is modest.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{plot_fig_b_cascade_gain_scatter.png}
+    \caption{Cascade gain over the stale semantic probe vs.\ stale probe accuracy on SDXL and FLUX. Gain is negative only for FLUX + CLIP (91.9\% stale accuracy), where the probe remains strong enough that escalation cannot improve it. All five lower-accuracy configurations show positive gain, with the OLS trend confirming that cascade benefit scales inversely with stale probe quality.}
+
+    \label{fig:cascade_gain}
+\end{figure}
+
+\subsection{Generator Distribution Shift}
+
+CNNSpot accuracy is 55.0\%, 50.2\%, and 72.1\% across the three datasets. The
+near-chance performance on GenBuster and SD~1.4 confirms that artifact-based detectors
+trained on GANs do not generalize to modern diffusion and video
+generators~\cite{Wang_2023_ICCV}. The FFT probe generalizes substantially better:
+75.3\%, 74.8\%, and 99.8\%. Its spectral features capture regularities common across
+synthesis architectures rather than GAN-specific upsampling patterns. The cascade
+(FFT+SigLIP2, Qwen verifier) improves over FFT-only by 15.2 and 11.9 percentage
+points on GenBuster and SD~1.4. On BigGAN, FFT-only already achieves 99.8\% and the
+cascade matches it exactly.
+
+
+
+
+\subsection{Limitations}
+
+The evaluation sets are modest: 400 samples for GenBuster and 480 each for SD~1.4
+and BigGAN. Bootstrap confidence intervals confirm statistical reliability at these
+scales, but larger sets would strengthen generalization claims. The bandit router is
+trained and evaluated within the same benchmark distribution, so its generalization
+to unseen generator types remains untested. Qwen2.5-VL is applied zero-shot without
+fine-tuning. However, a fine-tuned VLM may recover the domain sensitivity failures observed on
+SD~1.4 and BigGAN. The study uses frame-level detection without temporal modeling,
+and incorporating motion and frame consistency could improve performance on
+video-specific generators. The semantic probe does not transfer across generator
+families and deploying this cascade on a new family requires retraining the probe on
+in-domain data. The disagreement rule itself has no trainable parameters and needs
+no retraining.
+
+\subsection{Practical Implications}
+
+Disagreement-based routing provides a deployment-ready signal for adaptive detection
+pipelines. It requires no calibration, no learned policy, and no retraining when the
+artifact detector is already deployed. When a well-trained in-domain semantic probe
+is available, deploying it without VLM escalation achieves the best cost-accuracy
+tradeoff. When only a stale probe is available on unseen generators, routing disagreement cases to a frontier VLM recovers up to 4.9 percentage points
+over a stale semantic probe while limiting escalation to 35--42\% of verifier
+invocations (Table~\ref{tab:e8_results}, Table~\ref{tab:e8_efficiency}).
+The cascade provides value when the verifier is reliably stronger than the stale semantic probe on disagreement cases. When both are weak on the target domain, the stale probe alone is the preferred deployment (Table~\ref{tab:cross_family_deployment}).
+
+
+
+
+\section{Conclusion}
+
+This work frames AI-generated media detection as an adaptive model selection problem. A two-stage cheap pipeline routes inputs through an FFT artifact detector and a semantic probe and escalates to a frontier VLM only when the two detectors disagree. Three research questions were evaluated with this design.
+
+For RQ1, FFT and semantic probe agreement is a near-perfect predictor of detection ease. FFT accuracy is 99.7\%, 96.6\%, and 100\% on agreement cases and falls to 4.9\%, 17.4\%, and 66.7\% on disagreement cases. This pattern holds across video diffusion, image diffusion, and GAN generator families and forms the basis for the routing rule.
+
+For RQ2, the disagreement rule does not require parameters or calibration. A bandit router trained with eleven detector features and explicit latency rewards converges to the same routing decisions as the binary disagreement rule on two of three datasets and trails by 11.9 percentage points on the third, where Qwen reward signal is noisiest. This convergence independently validates that disagreement captures the dominant routing signal.
+
+For RQ3, the cascade (FFT + SigLIP2, disagreement routing, Qwen verifier) achieves 90.5\%, 86.7\%, and 99.8\% accuracy on the three benchmarks. It escalates only 26--28\% of GenBuster and SD~1.4 inputs to the VLM and reduces mean latency by 62--70\% compared to always-escalate without sacrificing accuracy. Under deployment shift on SDXL and FLUX, the cascade recovers up to 4.9 percentage
+points over a stale semantic probe while avoiding 58--65\% of verifier invocations
+(Table~\ref{tab:e8_results}), directly satisfying RQ3's deployment-shift condition.
+
+
+The effective deployment of heterogeneous detection pipelines depends on using cheap detectors to identify when expensive verification is needed rather than increasing individual detector complexity. Future work will explore temporal modeling for video detection, fine-tuned VLM verifiers for domain-specific forensic cues, and cross-family semantic probe training to remove the per-family retraining requirement.
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\vskip -.5\baselineskip plus -1fil
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{ansuman_nayak2.png}}]{Ansuman Nayak}
+is a Software Engineer at Bank of America, where he focuses on building scalable automation tools for deployment pipelines, data workflows, and infrastructure operations. He earned his Bachelor's degree in Computer Science from Virginia Tech and is currently pursuing a Master's degree in Computer Science at Georgia Institute of Technology, specializing in Artificial Intelligence. His interests center on Agentic AI and LLM optimization, with a focus on workflow automation designed to operate efficiently under resource and cost constraints.
+\end{IEEEbiography}
+\vspace{-0.5\baselineskip}
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{vijay.png}}]{Vijay K. Madisetti}
+holds the position of Professor of Cybersecurity and Privacy (SCP) at Georgia Tech.
+He earned his PhD in Electrical Engineering and Computer Sciences from the University of California at Berkeley
+and is recognized as a Fellow of the IEEE. Additionally, he has been honored with the Terman Medal
+by the American Society of Engineering Education (ASEE). Professor Madisetti has authored several widely
+referenced textbooks on topics including cloud computing, data analytics, blockchain, and microservices.
+\end{IEEEbiography}
+
+\EOD
+
+\end{document}

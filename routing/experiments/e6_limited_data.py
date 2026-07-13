@@ -6,11 +6,17 @@ when the semantic detector is trained with only a fraction of available labels.
 Hypothesis: at low-data fractions, routing improves over semantic-only because
 the semantic probe is weaker and the cheap-path accuracy drops.
 
-Evaluates: Semantic-only vs Disagreement-cascade (semantic + CNNSpot + Qwen)
+Evaluates: Semantic-only vs Disagreement-cascade (semantic + FFT + Qwen)
 at train fractions: 1%, 5%, 10%, 25%, 50%, 100%.
 
 Produces: results/e6_limited_data.csv
 Success: routing outperforms semantic-only at low-data fractions.
+
+Uses the FFT artifact detector (not CNNSpot) so results are directly
+comparable to the paper's primary cascade (Tables 3-5, 9, 10, 14), which
+holds A1 (FFT) fixed and sweeps A2 (semantic) from strong to weak via the
+training-fraction knob -- this is the probe-degradation sweep from the
+K-stage formalization (Case 2 -> Case 3 transition).
 
 Usage:
     python e6_limited_data.py [--datasets GenBuster SD14 BigGAN]
@@ -33,11 +39,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "extractors"))
 from extractors.common import (
     DATASETS, RESULTS_DIR, ROUTING_BASE, ensure_results_dir, bootstrap_ci,
-    LATENCY_CHEAP_MS, load_val_paths,
+    load_val_paths,
 )
 
-LATENCY_CNN_MS = 45.8
+LATENCY_FFT_MS = 2.5
 LATENCY_CLIP_MS = 10.4
+LATENCY_CHEAP_MS = LATENCY_FFT_MS + LATENCY_CLIP_MS
 
 FRACTIONS = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
 
@@ -46,6 +53,34 @@ BACKBONE_MAP = {
     "SigLIP2": {"feat_prefix": "siglip2_features", "latency_col": "latency_siglip2_ms"},
     "DINOv2": {"feat_prefix": "dinov2_features", "latency_col": "latency_dinov2_ms"},
 }
+
+
+def get_fft_val_preds(cfg):
+    """Apply the cached in-domain FFT probe (trained by e0_fft_variant.py /
+    cross_family_deployment.py) to this dataset's val split. Returns a
+    DataFrame with columns [path, y_fft]."""
+    prefix = cfg["prefix"]
+    feat_file = os.path.join(ROUTING_BASE, f"{prefix}fft_features.csv")
+    probe_pkl = os.path.join(ROUTING_BASE, f"{prefix}fft_probe.pkl")
+    df = pd.read_csv(feat_file)
+    feat_cols = [c for c in df.columns if c.startswith("f")]
+    X = df[feat_cols].values.astype(np.float32)
+    y = df["y_true"].values.astype(int)
+
+    val_paths = load_val_paths(cfg, df["path"].tolist())
+    val_mask = df["path"].isin(val_paths)
+    train_mask = ~val_mask
+
+    if os.path.exists(probe_pkl):
+        clf, scaler = joblib.load(probe_pkl)
+    else:
+        scaler = StandardScaler()
+        clf = LogisticRegression(max_iter=2000, C=0.1, random_state=42)
+        clf.fit(scaler.fit_transform(X[train_mask]), y[train_mask])
+        joblib.dump((clf, scaler), probe_pkl)
+
+    y_fft = clf.predict(scaler.transform(X[val_mask])).astype(int)
+    return pd.DataFrame({"path": df.loc[val_mask, "path"].values, "y_fft": y_fft})
 
 
 def load_and_split_features(feat_file, val_paths_set):
@@ -93,33 +128,33 @@ def train_probe_fraction(df, feat_cols, train_mask, val_mask, frac, c=0.1):
     return clf, scaler, y_pred, y_val, df.iloc[val_idx]["path"].values, len(sampled)
 
 
-def evaluate_routing(df_val_feat, y_clip_pred, df_cnn_val, df_qwen_val):
+def evaluate_routing(df_val_feat, y_clip_pred, df_fft_val, df_qwen_val):
     """Evaluate semantic-only vs disagreement cascade on the val set."""
     paths_feat = df_val_feat["path"].values
     y_true = df_val_feat["y_true"].values
 
-    # Merge CNN predictions
-    cnn_lookup = dict(zip(df_cnn_val["path"], df_cnn_val["y_cnn"]))
+    # Merge FFT predictions
+    fft_lookup = dict(zip(df_fft_val["path"], df_fft_val["y_fft"]))
     qwen_lookup = dict(zip(df_qwen_val["path"], df_qwen_val["y_qwen"]))
     lat_lookup = {p: v for p, v in zip(df_qwen_val["path"],
                                         df_qwen_val.get("latency_qwen_ms",
                                                          pd.Series([0]*len(df_qwen_val))))}
 
-    y_cnn = np.array([cnn_lookup.get(p, -1) for p in paths_feat])
+    y_fft = np.array([fft_lookup.get(p, -1) for p in paths_feat])
     y_qwen = np.array([qwen_lookup.get(p, -1) for p in paths_feat])
     lat_qwen = np.array([lat_lookup.get(p, 0) for p in paths_feat])
 
-    valid = (y_cnn != -1) & (y_qwen != -1)
+    valid = (y_fft != -1) & (y_qwen != -1)
     if valid.sum() < 10:
         return None
 
     y_true_v = y_true[valid]
     y_clip_v = y_clip_pred[valid]
-    y_cnn_v = y_cnn[valid]
+    y_fft_v = y_fft[valid]
     y_qwen_v = y_qwen[valid]
     lat_qwen_v = lat_qwen[valid]
 
-    disagree = (y_cnn_v != y_clip_v).astype(bool)
+    disagree = (y_fft_v != y_clip_v).astype(bool)
 
     # Semantic-only
     sem_acc = float(np.mean(y_clip_v == y_true_v))
@@ -163,16 +198,16 @@ def main():
     for ds_name in args.datasets:
         cfg = DATASETS[ds_name]
 
-        # Load CNN and Qwen predictions (needed for routing evaluation)
-        if not os.path.exists(cfg["cnnspot_csv"]) or not os.path.exists(cfg["qwen_preds"]):
-            print(f"Skipping {ds_name}: missing CNN or Qwen predictions")
+        # Load FFT and Qwen predictions (needed for routing evaluation)
+        fft_feat_file = os.path.join(ROUTING_BASE, f"{cfg['prefix']}fft_features.csv")
+        if not os.path.exists(fft_feat_file) or not os.path.exists(cfg["qwen_preds"]):
+            print(f"Skipping {ds_name}: missing FFT features or Qwen predictions")
             continue
 
-        df_cnn = pd.read_csv(cfg["cnnspot_csv"])
+        df_fft_val = get_fft_val_preds(cfg)
         df_qwen = pd.read_csv(cfg["qwen_preds"])
         # Use load_val_paths to get consistent split
-        _val_paths = load_val_paths(cfg, df_cnn["path"].tolist())
-        df_cnn_val = df_cnn[df_cnn["path"].isin(_val_paths)].reset_index(drop=True)
+        _val_paths = load_val_paths(cfg, df_fft_val["path"].tolist())
         df_qwen_val = df_qwen[df_qwen["path"].isin(_val_paths)].reset_index(drop=True)
 
         print(f"\n=== {ds_name} ===")
@@ -201,7 +236,7 @@ def main():
                     df_feat, feat_cols, train_mask, val_mask, frac
                 )
 
-                rt = evaluate_routing(df_feat_val, y_pred, df_cnn_val, df_qwen_val)
+                rt = evaluate_routing(df_feat_val, y_pred, df_fft_val, df_qwen_val)
                 if rt is None:
                     continue
 

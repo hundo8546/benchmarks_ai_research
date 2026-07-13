@@ -1,0 +1,109 @@
+IEEE ACCESS PEER REVIEW — REVIEWER 1 COMMENTS
+
+Paper: On Reliable Detection of AI-Generated Multimedia Content
+Authors: Ansuman Nayak, Vijay K. Madisetti
+
+================================================================================
+
+REVIEWER COMMENTS:
+
+(1) The problem can be discussed in a systematic way:
+
+The problem discussed in the paper can be generalized as a system optimization 
+problem. There are three heterogeneous detectors (artifact detector D1, semantic 
+detector D2, and a VLM verifier V1) and one routing strategy in the system. For an 
+input dataset, each detector has associated compute cost (say C1, C2, Cv, 
+respectively) and accuracy (say A1, A2, Av). Usually, C1, C2 << Cv. Theoretically, 
+A1, A2 << Av; however, this assumption is not always true (for Qwen2.5 in-domain 
+case) in this paper. 
+
+The paper claimed:
+(a) the cascaded scheme can improved the accuracy for the out-of-domain input 
+    with less token cost;
+(b) the "disagree threshold" routing policy is simpler and as good as the 
+    "learned bandit" policy.
+
+The authors should discuss every scenario with experiment evidence to support the 
+claims in a systematical way. For two cheaper detectors, here are three combinations:
+
+Case 1 (both detectors show high accuracy): escalation is rarely triggered; the 
+system maintains high accuracy at low cost.
+
+Case 2 (one detector is strong, the other is weak/fair): The routing scheme 
+primarily flags cases where the weaker detector fails but the stronger one succeeds. 
+As seen in the in-domain experiments, the semantic probe is highly accurate while 
+the FFT probe is fair. Thus, the "disagreement gain" may largely stem from the 
+performance gap between these two detectors combined with the performance of the 
+VLM.
+
+Case 3 (both detectors show low accuracy, unreliable): Under deployment shift, both 
+detectors may degrade.
+
+I recommend the authors should explicitly formalize these three cases, putting 
+together with experiment results and discussions, to give a clear concept about 
+when the cascade scheme works and when it fails.
+
+(2) The fundamental value proposition of the cascade framework should rely on the 
+assumptions that C1, C2 << Cv and A1, A2 << Av. If A1 or A2 > Av, the high-
+accurate detector should be adopted, no need to escalate to verifier. The framework 
+is only justifiable if the cascade scheme can achieve the accuracy that 
+A(cascade) >= max (A1, A2, Av) while maintaining low cost, C(cascade) is a bit 
+higher than C1+C2.
+
+In this paper, the experiment setup shows a distinct discrepancy between the 
+assumptions. When using Qwen2.5 as verifier for in-domain test data, from Table 3, 
+4, 5 the A(Qwen) is lower than A(FFT-only) and A(SigLIP2-only). The cascade scheme 
+(in Table 3) shows the accuracy drops from 0.985(SigLIP2-only) to 0.905 
+A(disagree->Qwen-FFT-SigLIP2).
+
+(3) Complete the baseline columns in Tables:
+
+To verify the exact source of the cascade's performance gains, it is critical to 
+see the individual accuracy of all detectors side-by-side with the final cascade 
+accuracy. I found several tables didn't show these details:
+
+Table 7 & Table 8: suggest adding the columns of accuracy for FFT-only on SDXL/FLUX 
+and Qwen2.5-only on SDXL/FLUX alongside the GPT-5.5 metrics.
+
+Table 9: suggest adding the columns of accuracy for SigLIP2 and Qwen2.5.
+
+Table 18 (Cross-Family Deployment): Only the Semantic-Stale and Cascade results 
+are listed. The performance of the FFT-only detector must be added. Given that 
+FFT-only achieves strong results in Tables 3, 4, and 5 (e.g., 0.753, 0.748, 0.998), 
+it is mandatory to find out whether the accuracy of cascade comes from disagreement 
+or just the accuracy gap between two detectors.
+
+For out-of-domain test, we may be able to evaluate where the major contribution 
+comes from when these columns are added.
+
+(4) Unfair comparison in Table 15 vs. Table 16:
+
+In Table 16, it was generated with the newly proposed FFT + SigLIP2 + Qwen 
+configuration to achieve high accuracy. The authors claim that this disagreement 
+threshold outperforms the Bandit transfer baselines in Table 15. However, the 
+metrics in Table 15 were generated using the legacy CNNSpot + CLIP baseline. This 
+is an unfair comparison since the gains might simply come from the superior 
+foundational capabilities of FFT/SigLIP2 rather than the routing framework itself. 
+The authors must update Table 15 using the same FFT + SigLIP2 backbone to ensure 
+a rigorous comparison.
+
+(5) For the Case 3 (both detectors are weak):
+
+If both detectors are unreliable, is the disagreement signal still a valid flag for 
+difficulty, or does it degenerate into a random trigger? I suggest the authors 
+should provide experiment data or give a clear mathematical note defining the 
+breakdown point of the disagreement signal when entering Case 3.
+
+(6) In real-world applications, the system does not have prior knowledge of whether 
+an incoming sample is "in-domain" or "out-of-domain" relative to the training 
+distribution. A truly reliable detector framework must be fail-safe under all 
+circumstances. In the proposed cascade framework, there is no guarantee to get 
+highest accuracy, the worst case may happen. I suggest the authors may consider a 
+practical decision-making guideline to ensure a reliable result for any input 
+distribution.
+
+(7) The manuscript currently contains an overwhelming number of tables, which 
+severely hinders readability. I suggest consolidating or restructuring the data 
+presentation to make the core takeaways easier to digest.
+
+================================================================================

@@ -1,0 +1,232 @@
+RESPONSE TO REVIEWER 1
+Paper: "On Reliable Detection of AI-Generated Multimedia Content"
+Authors: Ansuman Nayak, Vijay K. Madisetti
+================================================================================
+
+We thank the reviewer for a thorough and constructive review. Every point
+raised has been addressed with either a formal analytical fix, a corrected
+experiment, or a new experiment, and in three places the fix surfaced a more
+serious version of the issue than originally flagged, which we report
+honestly rather than smoothing over. A table-number map is provided at the
+end of this letter, since consolidating tables to address point (7) shifted
+several table numbers relative to the version the reviewer saw.
+
+================================================================================
+POINT (1) — Systematize the three-case framework
+================================================================================
+REVIEWER: "The authors should discuss every scenario with experiment evidence
+to support the claims in a systematic way... I recommend the authors should
+explicitly formalize these three cases."
+
+RESPONSE: Fully addressed. We added a new subsection, Section III.D
+("Generalized K-Stage Formulation and Three Operating Regimes"), which
+generalizes the pipeline to a K-stage cascade, derives a closed-form
+decomposition of cascade accuracy (Eq. 3, "eq:decomp") and cascade gain over
+the semantic-only baseline (Eq. 4, "eq:gain"), and formally defines Case 1
+(both cheap stages strong), Case 2 (asymmetric cheap stages), and Case 3
+(both cheap stages degraded) directly from that equation, exactly as the
+reviewer requested.
+
+We then added Section VI.B ("Three Regimes in Practice") mapping each case
+onto real results: Case 1 = BigGAN (Table 2, disagreement <1%); Case 2 = the
+in-domain GenBuster/SD~1.4 result (Section V.B) and, more sharply, the
+cross-family deployment experiment (Table 14, see point 2 below); Case 3 =
+the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier (Table 4). We further
+added a new probe-degradation-sweep experiment (Section V.D.2,
+"Probe-Degradation Sweep", Table 11) that holds the artifact detector fixed
+and continuously varies semantic-probe quality, directly observing cascade
+gain cross from negative (Case 2) to positive (Case 3) within a single
+experiment on SD~1.4, rather than relying on cross-dataset anecdote as
+before.
+
+================================================================================
+POINT (2) — Value proposition requires A(cascade) >= max(A1, A2, Av)
+================================================================================
+REVIEWER: "The framework is only justifiable if the cascade scheme can
+achieve the accuracy that A(cascade) >= max(A1, A2, Av)... the experiment
+setup shows a distinct discrepancy between the assumptions."
+
+RESPONSE: Addressed, and the investigation this point prompted uncovered a
+more serious version of the same problem elsewhere in the paper, which we
+have now corrected rather than left in place.
+
+First, the in-domain finding the reviewer cited (cascade accuracy of 0.905
+vs. SigLIP2-only 0.985 on GenBuster) is now explicitly named as the expected
+signature of Case 2 (Section V.B, "Semantic detectors" paragraph), with the underlying
+mechanism made quantitative: SigLIP2's own accuracy on the disagreement
+subset (A2|D = 95.1% on GenBuster, 82.6% on SD~1.4) exceeds Qwen's accuracy
+on that same subset (A3|D = 63.6% and 60.6% respectively, Table 3) — i.e.
+the reviewer's inequality A(cascade) >= max(A1,A2,Av) fails here precisely
+because Av is not larger than A2 on the cases that matter, and the paper now
+says this plainly rather than leaving it implicit.
+
+Second, and more importantly: re-examining the Cross-Family Deployment
+experiment (Table 14, formerly using a different, inconsistent artifact
+detector than the rest of the paper) under the paper's own primary FFT+SigLIP2
+configuration revealed that the reviewer's concern applies there far more
+severely than in the case the reviewer flagged. Adding an FFT-only reference
+column (see point 3) shows the cascade beats the stale semantic probe in 6/6
+cross-family pairings but beats the FFT detector alone in only 1/6 — meaning
+the "cascade gain" reported in the previous version of this table was almost
+entirely a detector-quality-gap artifact, not genuine routing value, exactly
+the failure mode the reviewer's inequality is designed to catch. This is now
+stated directly in Section V.D.5 and echoed in the Conclusion and Practical
+Implications (Section VI.H): "the cascade provides value only when the
+verifier is reliably stronger than the stronger of the two cheap detectors
+on the disagreement subset, not merely stronger than a stale semantic probe."
+
+================================================================================
+POINT (3) — Complete the baseline columns in Tables 7, 8, 9, 18 (as numbered
+in the version the reviewer saw)
+================================================================================
+REVIEWER: "Table 7 & Table 8: suggest adding the columns of accuracy for
+FFT-only on SDXL/FLUX and Qwen2.5-only... Table 9: suggest adding the columns
+of accuracy for SigLIP2 and Qwen2.5... Table 18: ... The performance of the
+FFT-only detector must be added."
+
+RESPONSE: All three requested additions are in the revised manuscript.
+
+- Table 4 (was Table 7, SDXL/FLUX main results): added a Stale-FFT column
+  and, from a new Qwen2.5-VL-7B inference run on all 3,991 disagreement-case
+  images across the six dataset x semantic-backbone configurations, a
+  Cascade(Qwen)/Gain(Qwen) column pair alongside the existing GPT-5.5
+  columns. Qwen gives negative gain on all six configurations, in contrast
+  to GPT-5.5's consistently positive gain -- see the new discussion in
+  Section VI.B connecting this to verifier-dependence of Case 3 status.
+- Table 6 (was Table 9, cascade gain over FFT-only): added SigLIP2-only and
+  Qwen (always-escalate) columns from data already computed for the main
+  per-dataset tables.
+- Table 14 (was Table 18, cross-family deployment): added an FFT-only
+  column (FFT trained in-domain per test dataset, matching the rest of the
+  paper's convention) and rebuilt the whole table on the FFT+SigLIP2+Qwen
+  backbone used everywhere else in the paper (previously it used a
+  different, inconsistent backbone -- see point 3 continuation below and
+  point 4). This is the change that produced the point-2 finding above.
+
+================================================================================
+POINT (4) — Unfair comparison, Table 15 vs. Table 16
+================================================================================
+REVIEWER: "The authors must update Table 15 using the same FFT + SigLIP2
+backbone to ensure a rigorous comparison."
+
+RESPONSE: Fully addressed. The bandit router (Table 12, was Table 15) is
+retrained on the identical FFT+SigLIP2+Qwen feature set as the disagreement
+rule (bottom row of the same table, merged from the former Table 16 -- see
+point 7). Under the fair comparison, the bandit's in-domain accuracy now
+matches the disagreement rule exactly on two of three datasets (SD~1.4:
+0.867 vs. 0.867; BigGAN: 0.998 vs. 0.998) and closely on the third
+(GenBuster: 0.917 vs. 0.917, on an internal calibration split -- footnoted,
+see below), a stronger version of the paper's claim C4 than the previous
+comparison, which had shown an 11.9-point gap on SD~1.4 that we can now
+attribute to the backbone mismatch rather than a genuine policy gap. The
+cross-dataset bandit-transfer matrix in the same table was likewise
+regenerated on the fair backbone.
+
+One caveat is disclosed in the table footnote: GenBuster's archived Qwen
+predictions cover only its 400-sample validation split, not the
+training-split frames the standard protocol (used for SD~1.4/BigGAN)
+requires to fit a bandit; the GenBuster row/column therefore uses a bandit
+fit on an internal 70/30 split of the validation set. We flag this rather
+than silently using the standard protocol's numbers, and note it is a
+data-availability limitation, not a methodological choice.
+
+================================================================================
+POINT (5) — Breakdown point of the disagreement signal in Case 3
+================================================================================
+REVIEWER: "I suggest the authors should provide experiment data or give a
+clear mathematical note defining the breakdown point of the disagreement
+signal when entering Case 3."
+
+RESPONSE: Addressed via the mathematical note the reviewer offered as an
+acceptable alternative to a new experiment. Section III.D closes with a
+formal breakdown condition, derived directly from the gain equation:
+disagreement is informative only when (a) the two cheap detectors' errors
+are weakly correlated, keeping the disagreement rate p_D large enough to
+route a meaningful fraction of hard cases, and (b) the verifier is more
+accurate than the semantic detector specifically on the routed subset. If
+the two cheap detectors instead share a correlated blind spot, the
+disagreement set collapses toward zero and those failures become invisible
+to the routing rule by construction, independent of how the verifier would
+have performed had it been consulted.
+
+This is tied to concrete evidence already in the paper: Table 7 (escalation
+behavior by case type on GenBuster) shows the one case where FFT is wrong
+but the semantic probe agrees with it -- the literal realization of a
+correlated blind spot -- accounts for under 0.3% of inputs, which we now
+call out explicitly in Section VI.B as the empirical instance of this
+breakdown condition.
+
+================================================================================
+POINT (6) — Practical decision-making guideline under unknown domain shift
+================================================================================
+REVIEWER: "I suggest the authors may consider a practical decision-making
+guideline to ensure a reliable result for any input distribution."
+
+RESPONSE: Addressed with a new subsection, Section VI.I ("A Practical
+Fail-Safe: the Verifier Validation Gate"). We first show that the obvious
+candidate signal -- escalating whenever the disagreement rate exceeds the
+~26-28% in-domain baseline -- does not work, because Case 2 (cross-family,
+where escalation hurts) and Case 3 (SDXL/FLUX, where escalation helps)
+produce overlapping disagreement-rate ranges (38.5-50.4% vs. 35.2-41.4%);
+we report this negative result rather than omit it. We then propose a
+"verifier validation gate": before trusting escalation to a verifier on a
+new detector pair or target distribution, evaluate the verifier's accuracy
+on a small calibration sample of the disagreement subset, and deploy the
+cascade only if that accuracy exceeds the stronger cheap detector's own
+accuracy on the same sample; otherwise deploy the stronger cheap detector
+alone. This requires no prior knowledge of whether the deployment is
+in-domain or shifted, directly answering the reviewer's concern.
+
+We validate the rule retrospectively against all 18 configurations available
+in the paper with ground truth (6 cross-family pairings x Qwen, 6 SDXL/FLUX
+x GPT-5.5, 6 SDXL/FLUX x Qwen): using the full disagreement-subset accuracy
+as an oracle calibration sample, the gate's escalate/fall-back decision
+matches the actual outcome in 17 of 18 cases (94.4%); the single miss is a
+near-exact tie (0.04 percentage points). We report this as an upper bound on
+achievable reliability and note that a finite calibration sample would add
+estimation noise in practice.
+
+================================================================================
+POINT (7) — Too many tables
+================================================================================
+REVIEWER: "The manuscript currently contains an overwhelming number of
+tables... I suggest consolidating or restructuring the data presentation."
+
+RESPONSE: Addressed by net reduction, not just reorganization. We merged the
+artifact-detector comparison table and the three near-identical per-dataset
+main-results tables (GenBuster, SD~1.4, BigGAN -- previously Tables 2-5)
+into a single consolidated table (Table 2) grouped by dataset; deleted the
+mean-latency table, which was fully redundant with rows already in the
+consolidated table (its one new fact, a 70% latency reduction figure, is now
+a sentence in the text instead); and merged the cross-dataset
+disagreement-rule table into the bandit-transfer table as a labeled bottom
+row (Table 12) rather than a separate table, enabling direct visual
+comparison in addition to saving a table. Net effect: 18 tables in the
+version the reviewer saw, 14 in this revision, despite also adding one new
+table (Table 11, the probe-degradation sweep, point 1) and two new columns
+each to three other tables (points 2/3/4).
+
+================================================================================
+TABLE NUMBER MAP (reviewer's numbering -> revised manuscript)
+================================================================================
+Reviewer's Table  3, 4, 5  (GenBuster/SD1.4/BigGAN main results)  -> Table 2 (merged)
+Reviewer's Table  6        (verifier comparison)                  -> Table 3
+Reviewer's Table  7        (SDXL/FLUX main results)                -> Table 4
+Reviewer's Table  8        (SDXL/FLUX token savings)                -> Table 5
+Reviewer's Table  9        (cascade gain over FFT-only)             -> Table 6
+Reviewer's Table 15        (bandit transfer)                        -> Table 12 (now includes
+Reviewer's Table 16        (disagreement-rule transfer)              -> merged into Table 12 as bottom row)
+Reviewer's Table 18        (cross-family deployment)                 -> Table 14
+
+================================================================================
+SUMMARY
+================================================================================
+All seven points are resolved: four (1, 2, 4, 7) fully and with corrections
+that turned out stronger or more consequential than the original ask; one
+(3) with the exact columns requested; one (5) via the mathematical note the
+reviewer offered as sufficient; one (6) via a new, empirically validated
+decision rule. No claims were removed to accommodate these fixes -- every
+number that changed is either a same-methodology recomputation on the
+paper's own primary (FFT+SigLIP2) backbone in place of an inconsistent one,
+or new data from an experiment run specifically for this revision, and each
+is traceable to a source script and result file for reproducibility.

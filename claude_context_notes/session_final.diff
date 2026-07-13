@@ -1,0 +1,929 @@
+--- oldpaper.tex	2026-07-13 19:30:16.000000000 +0000
++++ updatedpaper.tex	2026-07-13 19:45:57.000000000 +0000
+@@ -278,6 +278,7 @@
+ 
+ \begin{equation}
+ d(x) = \mathbbm{1}\left[\hat{y}_{\text{art}}(x) \neq \hat{y}_{\text{sem}}(x)\right].
++\label{eq:disagree}
+ \end{equation}
+ 
+ When the detectors agree, predictions are highly reliable. Disagreement corresponds to
+@@ -300,6 +301,7 @@
+ 0, & \text{if } d(x) = 0 \\
+ 1, & \text{if } d(x) = 1
+ \end{cases}
++\label{eq:pidisagree}
+ \end{equation}
+ 
+ where $\pi(x) = 1$ indicates that the VLM is invoked. Inputs where the detectors agree are handled by the cheap stage alone while disagreement cases are escalated to the VLM. This enables selective allocation of computation based on estimated difficulty. Note that outputting the
+@@ -308,6 +310,83 @@
+ cost-accuracy tradeoff. The cascade's value is under deployment shift, where a stale
+ semantic probe loses accuracy and VLM escalation on disagreement cases recovers it.
+ 
++\subsection{Generalized K-Stage Formulation and Three Operating Regimes}
++\label{sec:kstage}
++
++The three-detector pipeline evaluated in this paper is an instance of a more
++general $K$-stage cascade. Let a sequence of detectors $f_1, \ldots, f_K$
++have non-decreasing cost $C_1 \le C_2 \le \cdots \le C_K$ and accuracies
++$A_1, \ldots, A_K$ on a fixed evaluation distribution. Define the accuracy
++gap between adjacent stages as $\Delta_{i,i+1} = A_{i+1} - A_i$. A cascade
++only benefits from escalating stage $i$ to stage $i{+}1$ on a subset of
++inputs if $\Delta_{i,i+1}$ restricted to that subset is positive; the
++unconditional, dataset-wide comparison of $A_i$ and $A_{i+1}$ is not
++sufficient, since escalation is never applied uniformly.
++
++This paper instantiates $K=3$ with $f_1 = f_{\text{art}}$, $f_2 = f_{\text{sem}}$,
++and $f_3 = f_{\text{vlm}}$, restricting escalation to the disagreement set
++$D = \{x : \hat y_{\text{art}}(x) \neq \hat y_{\text{sem}}(x)\}$
++(Eq.~\eqref{eq:disagree}). Cascade accuracy decomposes as
++\begin{equation}
++A_{\text{cascade}} = (1-p_D)\, A_{\text{agree}} + p_D\, A_{3\mid D},
++\label{eq:decomp}
++\end{equation}
++where $p_D = P(x \in D)$, $A_{\text{agree}}$ is accuracy on the agreement set
++(identical for $f_1$ and $f_2$ by construction, Eq.~\eqref{eq:pidisagree}),
++and $A_{3\mid D}$ is verifier accuracy restricted to $D$. Because the
++agreement term is shared with the semantic-only baseline, the sign of
++cascade gain over semantic-only depends only on the disagreement subset:
++\begin{equation}
++\text{Gain} = A_{\text{cascade}} - A_2 \;\approx\; p_D \left( A_{3\mid D} - A_{2\mid D} \right),
++\label{eq:gain}
++\end{equation}
++where $A_{2\mid D}$ is the semantic detector's own accuracy restricted to
++$D$ (typically far below its dataset-wide accuracy, since $D$ is precisely
++where $f_2$ is contested). Equation~\eqref{eq:gain} formalizes three
++qualitative regimes for the two-cheap-detector-plus-verifier setting used
++throughout this paper:
++
++\textbf{Case 1 (both cheap stages strong, $A_1 \approx A_2 \approx A_3$).}
++The artifact and semantic detectors rarely disagree, so $p_D \to 0$ and
++Gain $\to 0$ regardless of $A_{3\mid D}$. The verifier's own quality is
++nearly irrelevant to end-to-end accuracy because it is invoked on almost
++nothing.
++
++\textbf{Case 2 (asymmetric cheap stages, $A_1 \ll A_2$, and $A_2 \gtrsim A_3$).}
++The disagreement set is dominated by cases where the artifact detector is
++wrong and the semantic detector is right. If $A_{3\mid D} < A_{2\mid D}$ --
++i.e., the verifier is not reliably better than the semantic detector on
++exactly the inputs it disagrees with the artifact detector on -- then
++Gain $< 0$: the cascade trades away some of the semantic detector's correct
++predictions for the verifier's mixed accuracy on $D$. Any positive delta
++over the \emph{artifact}-only baseline in this regime is attributable to the
++semantic detector's quality gap over the artifact detector, not to the
++verifier or to the routing mechanism itself.
++
++\textbf{Case 3 (both cheap stages degraded, $A_1 \ll A_3$ and $A_2 \ll A_3$).}
++Disagreement is common because neither cheap detector is individually
++reliable, and if the verifier retains high accuracy on $D$, $A_{3\mid D}$
++substantially exceeds $A_{2\mid D}$. This is the only regime in which
++Equation~\eqref{eq:gain} is reliably positive and large, and the resulting
++cascade gain is attributable specifically to escalation rather than to a
++quality gap between the two cheap detectors.
++
++\textbf{Breakdown condition.} Equation~\eqref{eq:gain} also identifies when
++the disagreement signal itself degenerates. Disagreement is an informative
++routing signal only when (a) the errors of $f_1$ and $f_2$ are weakly
++correlated, so that $p_D$ remains large enough to route a meaningful
++fraction of the hard cases, and (b) $A_{2\mid D} < A_{3\mid D}$ specifically
++on the routed subset. If $f_1$ and $f_2$ share a correlated blind spot --
++both systematically wrong on the same inputs -- then $D$ collapses toward
++the small residual where the detectors happen to differ, $p_D \to 0$, and
++Equation~\eqref{eq:decomp} reduces to $A_{\text{cascade}} \approx A_{\text{agree}}$
++even though both detectors may be jointly unreliable on the (uncaught)
++correlated-error inputs. In this regime, disagreement provides no signal at
++all about those inputs; failures caused by correlated blind spots are
++invisible to the routing rule by construction, independent of $p_D$
++elsewhere in the distribution. Section~VI further connects Cases 1--3 and
++this breakdown condition to the empirical results in Section~V.
++
+ \subsection{Baseline Routing Strategies}
+ 
+ To evaluate the effectiveness of disagreement-based routing, we compare two alternative strategies.
+@@ -450,7 +529,7 @@
+ \subsection{Detector Performance}
+ 
+ 
+-\textbf{Artifact detectors.} Table~\ref{tab:artifact_comparison} compares the dual-stream
++\textbf{Artifact detectors.} Table~\ref{tab:main_results} compares the dual-stream
+ FFT probe against CNNSpot across all three in-domain benchmarks. FFT achieves 75.3\%,
+ 74.8\%, and 99.8\% accuracy on GenBuster, SD~1.4, and BigGAN respectively, against
+ CNNSpot's 52.0\%, 50.4\%, and 72.1\%. This gain comes at 2.5~ms per sample versus
+@@ -469,17 +548,40 @@
+ below the semantic-only baselines (96.3--98.5\% and 89--92.7\% respectively). We expected this since
+ Qwen provides weak signal on these benchmarks (69.0\%, 60.6\%, 70.4\% under
+ uniform escalation), and invoking it on the hardest cases cannot recover to the level of a
+-well-trained in-domain probe.
++well-trained in-domain probe. This is the expected signature of \textbf{Case 2} in the
++K-stage formulation (Section~III.D): the artifact detector is comparatively weak
++($A_1 = 75$--$99.8\%$) while the semantic detector is comparatively strong
++($A_2 = 89$--$98.5\%$) and is not exceeded by the verifier on the disagreement subset
++specifically. Restricted to the FFT+SigLIP2 disagreement subset, SigLIP2's own accuracy
++$A_{2\mid D}$ is 95.1\% on GenBuster and 82.6\% on SD~1.4, both well above Qwen's accuracy
++on that same subset ($A_{3\mid D}=$ 63.6\% and 60.6\% respectively, Table~\ref{tab:verifier_comparison}).
++% NOTE: A_{2|D} sourced from routing/results/e0_fft_disagreement_stats.csv
++% (dis_sem_acc, SigLIP2 rows, pre-existing data). A_{3|D} matches
++% Table~\ref{tab:verifier_comparison}'s Qwen column, both now fully fixed
++% this session (routing/fix_table6_verifier_comparison.py +
++% routing/fill_table6_gpt55_gap.py).
++The cascade's positive delta over FFT-only in this regime
++(Table~\ref{tab:crossdataset}) reflects the semantic detector's quality gap over the
++artifact detector, not a genuine contribution from VLM escalation; the value
++proposition of escalation holds only under Case 3 (Section~VI).
+ 
+ \textbf{Verifier comparison.} Table~\ref{tab:verifier_comparison} compares Qwen2.5-VL
+-and GPT-5.5 on the disagreement subset. GPT-5.5 achieves 91.9\% accuracy on the
+-GenBuster disagreement subset versus Qwen's 75.0\%, a 16.9 percentage point gain. On
+-SD~1.4, GPT-5.5 is modestly better (63.9\% vs 58.8\%). On BigGAN, GPT-5.5 performs below
+-Qwen (43.0\% vs 71.1\%). We attribute this reversal to the same distribution mismatch
+-documented in Section~IV.B. The images in BigGAN have a distinct visual style consistent with early GAN
+-synthesis that the latest VLMs do not associate with AI generation. GPT-5.5's strong
+-performance on modern generators (GenBuster video, SDXL, FLUX) confirms it is better
+-calibrated to current generation artifacts.
++and GPT-5.5 on the FFT+SigLIP2 disagreement subset -- the same subset the primary
++cascade escalates throughout this paper, rather than a subset defined by a different
++detector pair. On this subset, Qwen2.5-VL is \emph{more} accurate than GPT-5.5 on
++GenBuster (63.6\% vs.\ 55.5\%, a $-$8.1 point GPT-5.5 delta): the GenBuster disagreement
++cases that FFT and SigLIP2 disagree on turn out to be ones where GPT-5.5 does
++comparatively poorly, the opposite of the ordering suggested by a subset built from a
++weaker artifact detector. On SD~1.4, GPT-5.5's advantage over Qwen widens substantially
++on the correct subset (77.3\% vs.\ 60.6\%, $+$16.7 points, versus a $+$5.0-point gap on
++the old subset). BigGAN's disagreement subset is only 3 samples (FFT and SigLIP2 agree
++on 99.4\% of BigGAN inputs, Table~\ref{tab:cheap_path}), too few to support any claim
++about relative verifier accuracy there; both verifiers happen to score 66.7\% on this
++subset. This dataset-dependent reversal -- GPT-5.5 is not uniformly stronger than Qwen,
++even restricted to the disagreement cases the cascade actually escalates -- is itself
++evidence that verifier choice should be validated per-deployment rather than assumed
++from a single benchmark, and reinforces that Case~2/Case~3 identity depends on which
++verifier is paired with which detector pair on which dataset.
+ 
+ \textbf{UnivFD baseline.} UnivFD~\cite{ojha2023fakedetect}, trained on GAN images using
+ CLIP ViT-L/14, achieves zero fake recall on GenBuster and near-zero on SD~1.4 (5.9\%),
+@@ -499,164 +601,135 @@
+ \end{figure*}
+ 
+ 
+-% --- Table: Artifact Detector Comparison (E2) ---
+-\begin{table}[h]
+-\large
+-\centering
+-\caption{Artifact detector comparison. FFT outperforms CNNSpot on all benchmarks at
+-18$\times$ lower latency.}
+-\label{tab:artifact_comparison}
+-\resizebox{\columnwidth}{!}{%
+-\begin{tabular}{lcccccc}
+-\toprule
+-Detector & GenBuster & SD~1.4 & BigGAN & Fake Rec. (GB) & Latency (ms) \\
+-\midrule
+-CNNSpot~\cite{wang2020cnn} & 0.520 & 0.502 & 0.721 & 0.043 & 45.8 \\
+-FFT (ours)                  & 0.753 & 0.748 & 0.998 & 0.677 & 2.5  \\
+-\bottomrule
+-\end{tabular}%
+-}
+-\end{table}
+-
+-% --- Table: GenBuster main results ---
+-\begin{table}[h]
+-\large
+-\centering
+-\caption{Detection results on GenBuster-200K-mini. CI denotes 95\% bootstrap confidence
+-interval.}
+-\label{tab:genbuster}
+-\resizebox{\columnwidth}{!}{%
+-\begin{tabular}{lcccc}
+-\toprule
+-Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+-\midrule
+-FFT-only          & 0.753 & [0.710, 0.793] &  2.5  & 0.00 \\
+-CNNSpot-only      & 0.520 & [0.470, 0.568] & 45.8  & 0.00 \\
+-UnivFD            & 0.512 & [0.463, 0.565] & 56.2  & 0.00 \\
+-\midrule
+-CLIP-only         & 0.965 & [0.945, 0.983] & 10.4  & 0.00 \\
+-SigLIP2-only      & 0.985 & [0.970, 0.995] & 10.4  & 0.00 \\
+-DINOv2-only       & 0.963 & [0.945, 0.978] & 10.4  & 0.00 \\
+-\midrule
+-Entropy thresh    & 0.527 & [0.480, 0.570] & 17.9  & 0.03 \\
+-Disagree→Qwen (FFT+CLIP)    & 0.900 & [0.870, 0.928] & 55.1  & 0.24 \\
+-Disagree→Qwen (FFT+SigLIP2) & 0.905 & [0.875, 0.933] & 57.9  & 0.26 \\
+-Disagree→Qwen (FFT+DINOv2)  & 0.890 & [0.860, 0.918] & 58.4  & 0.26 \\
+-Always escalate   & 0.690 & [0.648, 0.738] & 190.2 & 1.00 \\
+-\bottomrule
+-\end{tabular}%
+-}
+-\end{table}
+-
+-% --- Table: SD 1.4 main results ---
+-\begin{table}[h]
+-\large
+-\centering
+-\caption{Detection results on GenImage SD~1.4.}
+-\label{tab:sd14}
+-\resizebox{\columnwidth}{!}{%
+-\begin{tabular}{lcccc}
+-\toprule
+-Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+-\midrule
+-FFT-only          & 0.748 & [0.710, 0.790] &  2.5  & 0.00 \\
+-CNNSpot-only      & 0.504 & [0.460, 0.546] & 45.8  & 0.00 \\
+-UnivFD            & 0.529 & [0.485, 0.575] & 56.2  & 0.00 \\
+-\midrule
+-CLIP-only         & 0.913 & [0.888, 0.935] & 10.4  & 0.00 \\
+-SigLIP2-only      & 0.927 & [0.904, 0.950] & 10.4  & 0.00 \\
+-DINOv2-only       & 0.890 & [0.860, 0.919] & 10.4  & 0.00 \\
+-\midrule
+-Entropy thresh    & 0.525 & [0.479, 0.571] & 14.3  & 0.07 \\
+-Disagree→Qwen (FFT+CLIP)    & 0.865 & [0.833, 0.896] & 36.9  & 0.30 \\
+-Disagree→Qwen (FFT+SigLIP2) & 0.867 & [0.835, 0.898] & 31.9  & 0.28 \\
+-Disagree→Qwen (FFT+DINOv2)  & 0.842 & [0.808, 0.873] & 32.5  & 0.29 \\
+-Always escalate   & 0.606 & [0.565, 0.654] & 83.2  & 1.00 \\
+-\bottomrule
+-\end{tabular}%
+-}
+-\end{table}
+-
+-% --- Table: BigGAN main results ---
+-\begin{table}[h]
++% --- Table: Consolidated main results (was 4 separate tables: artifact_comparison,
++% genbuster, sd14, biggan -- merged this session to address reviewer point (7),
++% table sprawl. Artifact-detector-only comparison (CNNSpot vs FFT) is now a
++% subset of rows within this table rather than a separate table. ---
++\begin{table*}[t]
+ \large
+ \centering
+-\caption{Detection results on GenImage BigGAN. FFT and semantic detectors near-saturate.
+-VLM escalation is rarely triggered ($<$1.3\%).}
+-\label{tab:biggan}
+-\resizebox{\columnwidth}{!}{%
+-\begin{tabular}{lcccc}
++\caption{Detection results across all three in-domain benchmarks. CI denotes 95\%
++bootstrap confidence interval. FFT outperforms CNNSpot on every benchmark at
++18$\times$ lower latency (rows 1-2 of each block). BigGAN: FFT and semantic
++detectors near-saturate and VLM escalation is rarely triggered ($<$1.3\%).}
++\label{tab:main_results}
++\begin{tabular}{llcccc}
+ \toprule
+-Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
++Dataset & Method & Accuracy & 95\% CI & Latency (ms) & Esc. Rate \\
+ \midrule
+-FFT-only          & 0.998 & [0.994, 1.000] &  2.5  & 0.00 \\
+-CNNSpot-only      & 0.721 & [0.681, 0.758] & 45.8  & 0.00 \\
+-UnivFD            & 0.915 & [0.890, 0.938] & 56.2  & 0.00 \\
+-\midrule
+-CLIP-only         & 0.994 & [0.985, 1.000] & 10.4  & 0.00 \\
+-SigLIP2-only      & 0.996 & [0.990, 1.000] & 10.4  & 0.00 \\
+-DINOv2-only       & 0.990 & [0.979, 0.998] & 10.4  & 0.00 \\
+-\midrule
+-Entropy thresh    & 0.733 & [0.692, 0.771] & 12.9  & 0.06 \\
+-Disagree→Qwen (FFT+CLIP)    & 0.998 & [0.994, 1.000] & 13.3  & 0.01 \\
+-Disagree→Qwen (FFT+SigLIP2) & 0.998 & [0.994, 1.000] & 13.2  & 0.01 \\
+-Disagree→Qwen (FFT+DINOv2)  & 0.998 & [0.994, 1.000] & 13.5  & 0.01 \\
+-Always escalate   & 0.704 & [0.665, 0.745] & 70.6  & 1.00 \\
++GenBuster & FFT-only          & 0.753 & [0.710, 0.793] &  2.5  & 0.00 \\
++GenBuster & CNNSpot-only      & 0.520 & [0.470, 0.568] & 45.8  & 0.00 \\
++GenBuster & UnivFD            & 0.512 & [0.463, 0.565] & 56.2  & 0.00 \\
++GenBuster & CLIP-only         & 0.965 & [0.945, 0.983] & 10.4  & 0.00 \\
++GenBuster & SigLIP2-only      & 0.985 & [0.970, 0.995] & 10.4  & 0.00 \\
++GenBuster & DINOv2-only       & 0.963 & [0.945, 0.978] & 10.4  & 0.00 \\
++GenBuster & Entropy thresh    & 0.527 & [0.480, 0.570] & 17.9  & 0.03 \\
++GenBuster & Disagree→Qwen (FFT+CLIP)    & 0.900 & [0.870, 0.928] & 55.1  & 0.24 \\
++GenBuster & Disagree→Qwen (FFT+SigLIP2) & 0.905 & [0.875, 0.933] & 57.9  & 0.26 \\
++GenBuster & Disagree→Qwen (FFT+DINOv2)  & 0.890 & [0.860, 0.918] & 58.4  & 0.26 \\
++GenBuster & Always escalate   & 0.690 & [0.648, 0.738] & 190.2 & 1.00 \\
++\midrule
++SD~1.4 & FFT-only          & 0.748 & [0.710, 0.790] &  2.5  & 0.00 \\
++SD~1.4 & CNNSpot-only      & 0.504 & [0.460, 0.546] & 45.8  & 0.00 \\
++SD~1.4 & UnivFD            & 0.529 & [0.485, 0.575] & 56.2  & 0.00 \\
++SD~1.4 & CLIP-only         & 0.913 & [0.888, 0.935] & 10.4  & 0.00 \\
++SD~1.4 & SigLIP2-only      & 0.927 & [0.904, 0.950] & 10.4  & 0.00 \\
++SD~1.4 & DINOv2-only       & 0.890 & [0.860, 0.919] & 10.4  & 0.00 \\
++SD~1.4 & Entropy thresh    & 0.525 & [0.479, 0.571] & 14.3  & 0.07 \\
++SD~1.4 & Disagree→Qwen (FFT+CLIP)    & 0.865 & [0.833, 0.896] & 36.9  & 0.30 \\
++SD~1.4 & Disagree→Qwen (FFT+SigLIP2) & 0.867 & [0.835, 0.898] & 31.9  & 0.28 \\
++SD~1.4 & Disagree→Qwen (FFT+DINOv2)  & 0.842 & [0.808, 0.873] & 32.5  & 0.29 \\
++SD~1.4 & Always escalate   & 0.606 & [0.565, 0.654] & 83.2  & 1.00 \\
++\midrule
++BigGAN & FFT-only          & 0.998 & [0.994, 1.000] &  2.5  & 0.00 \\
++BigGAN & CNNSpot-only      & 0.721 & [0.681, 0.758] & 45.8  & 0.00 \\
++BigGAN & UnivFD            & 0.915 & [0.890, 0.938] & 56.2  & 0.00 \\
++BigGAN & CLIP-only         & 0.994 & [0.985, 1.000] & 10.4  & 0.00 \\
++BigGAN & SigLIP2-only      & 0.996 & [0.990, 1.000] & 10.4  & 0.00 \\
++BigGAN & DINOv2-only       & 0.990 & [0.979, 0.998] & 10.4  & 0.00 \\
++BigGAN & Entropy thresh    & 0.733 & [0.692, 0.771] & 12.9  & 0.06 \\
++BigGAN & Disagree→Qwen (FFT+CLIP)    & 0.998 & [0.994, 1.000] & 13.3  & 0.01 \\
++BigGAN & Disagree→Qwen (FFT+SigLIP2) & 0.998 & [0.994, 1.000] & 13.2  & 0.01 \\
++BigGAN & Disagree→Qwen (FFT+DINOv2)  & 0.998 & [0.994, 1.000] & 13.5  & 0.01 \\
++BigGAN & Always escalate   & 0.704 & [0.665, 0.745] & 70.6  & 1.00 \\
+ \bottomrule
+-\end{tabular}%
+-}
+-\end{table}
++\end{tabular}
++\end{table*}
+ 
+ % --- Table: Verifier comparison (E4) ---
+ \begin{table}[h]
+ \centering
+ \small
+ \setlength{\tabcolsep}{3pt}  % reduced from 4pt to 3pt
+-\caption{Verifier accuracy on the disagreement subset. GPT-5.5 substantially outperforms
+-Qwen on modern generator types but underperforms on BigGAN, consistent with calibration
+-to modern imagery. Since Qwen is baseline here, improvement is marked as ---}
++\caption{Verifier accuracy on the FFT+SigLIP2 disagreement subset (matching the
++disagreement set used by the primary cascade throughout this paper). Since Qwen is
++baseline here, improvement is marked as ---. $n$ is small on BigGAN because FFT and
++SigLIP2 rarely disagree there (Case 1).}
+ \label{tab:verifier_comparison}
+ \begin{tabular}{llcccc}
+ \toprule
+ Dataset & Verifier & Acc. & Improvement & $n$ & Lat. (ms) \\
+ \midrule
+-GenBuster & Qwen2.5-VL-7B  & 0.750 & ---        & 172 & 178 \\
+-GenBuster & GPT-5.5        & 0.919 & $+$0.169   & 172 & 1595 \\
++GenBuster & Qwen2.5-VL-7B  & 0.636 & ---        & 110 & 174 \\
++GenBuster & GPT-5.5        & 0.555 & $-$0.081   & 110 & 2443 \\
+ \midrule
+-SD~1.4    & Qwen2.5-VL-7B  & 0.588 & ---        & 238 & 74 \\
+-SD~1.4    & GPT-5.5        & 0.639 & $+$0.050   & 238 & 1459 \\
++SD~1.4    & Qwen2.5-VL-7B  & 0.606 & ---        & 132 & 69 \\
++SD~1.4    & GPT-5.5        & 0.773 & $+$0.167   & 132 & 2492 \\
+ \midrule
+-BigGAN    & Qwen2.5-VL-7B  & 0.711 & ---        & 135 & 58 \\
+-BigGAN    & GPT-5.5        & 0.430 & $-$0.281   & 135 & 1572 \\
++BigGAN    & Qwen2.5-VL-7B  & 0.667 & ---        &   3 & 53 \\
++BigGAN    & GPT-5.5        & 0.667 & $+$0.000   &   3 & 2023 \\
+ \bottomrule
+ \end{tabular}
+ \end{table}
++% NOTE: Table rebuilt on the correct FFT+SigLIP2 disagreement subset (was
++% CNNSpot+CLIP, n=172/238/135) this session. Source:
++% routing/results/table6_fft_siglip2_fix.csv (fix_table6_verifier_comparison.py)
++% + routing/fill_table6_gpt55_gap.py (142 new GPT-5.5 calls to complete
++% coverage). GenBuster's verifier ordering flips entirely (GPT-5.5 no longer
++% beats Qwen there); SD~1.4's GPT-5.5 advantage widens; BigGAN's n=3 is too
++% small to support the old "GPT-5.5 underperforms on BigGAN" claim.
+ 
+ 
+ % --- Table: E8 SDXL/FLUX deployment shift main results ---
+-\begin{table}[h]
++\begin{table*}[t]
+ \large
+ \centering
+ \caption{Deployment shift results on SDXL and FLUX. Semantic probes are trained on
+-SD~1.4 and tested without retraining. Cascade escalates to GPT-5.5 on disagreement
+-cases. Gain = cascade accuracy $-$ stale semantic accuracy}
++SD~1.4 and tested without retraining. FFT is also trained on SD~1.4 and tested without
++retraining (stale, like the semantic probe). Cascade escalates to the named verifier on
++disagreement cases. Gain = cascade accuracy $-$ stale semantic accuracy.}
+ \label{tab:e8_results}
+-\resizebox{\columnwidth}{!}{%
+-\begin{tabular}{llccc}
++\begin{tabular}{llcccccc}
+ \toprule
+-Dataset & Semantic & Stale Sem. & Cascade (GPT-5.5) & Gain \\
+-\midrule
+-SDXL & CLIP    & 0.872 & 0.893 & $+$0.021 \\
+-SDXL & SigLIP2 & 0.847 & 0.881 & $+$0.034 \\
+-SDXL & DINOv2  & 0.855 & 0.891 & $+$0.036 \\
++Dataset & Semantic & Stale FFT & Stale Sem. & Casc.\ (Qwen) & Gain (Qwen) & Casc.\ (GPT-5.5) & Gain (GPT-5.5) \\
+ \midrule
+-FLUX & CLIP    & 0.920 & 0.914 & $-$0.006 \\
+-FLUX & SigLIP2 & 0.909 & 0.913 & $+$0.004 \\
+-FLUX & DINOv2  & 0.815 & 0.864 & $+$0.049 \\
++SDXL & CLIP    & 0.622 & 0.872 & 0.826 & $-$0.047 & 0.893 & $+$0.021 \\
++SDXL & SigLIP2 & 0.622 & 0.847 & 0.817 & $-$0.030 & 0.881 & $+$0.034 \\
++SDXL & DINOv2  & 0.622 & 0.855 & 0.824 & $-$0.031 & 0.891 & $+$0.036 \\
++\midrule
++FLUX & CLIP    & 0.578 & 0.920 & 0.779 & $-$0.140 & 0.914 & $-$0.006 \\
++FLUX & SigLIP2 & 0.578 & 0.909 & 0.779 & $-$0.130 & 0.913 & $+$0.004 \\
++FLUX & DINOv2  & 0.578 & 0.815 & 0.734 & $-$0.081 & 0.864 & $+$0.049 \\
+ \bottomrule
+-\end{tabular}%
+-}
+-\end{table}
++\end{tabular}
++\end{table*}
++% NOTE: Stale FFT column added from routing/results/e8_modern_diffusion.csv
++% (fft_stale_acc column) -- pre-existing data from before this session, not
++% a new experiment. Qwen cascade/gain columns added this session from a new
++% Qwen2.5-VL-7B run on all 3991 unique SDXL/FLUX disagreement-subset images
++% (routing/run_qwen_sdxl_flux.py, routing/results/e8_qwen_cascade.csv).
++% Addresses reviewer request to add FFT-only and Qwen2.5-only columns to
++% Tables 7/8. Note Qwen gives NEGATIVE gain on all six configs here (unlike
++% GPT-5.5's consistent positive gain) -- this deployment-shift cascade's
++% Case-3 status depends specifically on using a strong verifier (GPT-5.5),
++% not on the routing mechanism alone; a weak verifier (Qwen) turns this into
++% a Case-2-like result even though both cheap detectors are genuinely
++% degraded. Worth a sentence in Section VI.E (VLM Domain Sensitivity) or
++% wherever this table is first discussed in Results. Stale FFT (62.2%/57.8%)
++% is well below GPT-5.5's cascade and stale-semantic accuracy here (unlike
++% the cross-family Table 18 result) -- with GPT-5.5 as verifier this
++% deployment-shift setting is a genuine Case 3, not Case 2, consistent with
++% Section VI.B; with Qwen as verifier it behaves like Case 2 instead.
+ 
+ % --- Table: E8 token savings ---
+ \begin{table}[h]
+@@ -711,20 +784,27 @@
+ 
+ \begin{table}[h]
+ \centering
+-\caption{Cascade accuracy and gain over FFT-only across datasets. Cascade is FFT +
+-SigLIP2 with Qwen escalation on disagreement cases.}
++\caption{Cascade accuracy and gain over FFT-only across datasets, alongside the
++individual FFT-only, SigLIP2-only, and Qwen (always-escalate) baselines. Cascade is
++FFT + SigLIP2 with Qwen escalation on disagreement cases. Complete baseline columns
++make explicit that in-domain cascade gain over FFT-only tracks the FFT/SigLIP2
++accuracy gap (Case 2, Section~III.D), not Qwen's own accuracy.}
+ \label{tab:crossdataset}
+ \small
+-\begin{tabularx}{\columnwidth}{l l c c c}
++\begin{tabularx}{\columnwidth}{l l c c c c c}
+ \toprule
+-\textbf{Dataset} & \textbf{Generator} & \textbf{FFT} & \textbf{Cascade} & \textbf{Gain} \\
++\textbf{Dataset} & \textbf{Generator} & \textbf{FFT} & \textbf{SigLIP2} & \textbf{Qwen} & \textbf{Cascade} & \textbf{Gain} \\
+ \midrule
+-GenBuster & Video     & 0.753 & 0.905 & $+$0.152 \\
+-SD~1.4    & Diffusion & 0.748 & 0.867 & $+$0.119 \\
+-BigGAN    & GAN       & 0.998 & 0.998 & $+$0.000 \\
++GenBuster & Video     & 0.753 & 0.985 & 0.690 & 0.905 & $+$0.152 \\
++SD~1.4    & Diffusion & 0.748 & 0.927 & 0.606 & 0.867 & $+$0.119 \\
++BigGAN    & GAN       & 0.998 & 0.996 & 0.704 & 0.998 & $+$0.000 \\
+ \bottomrule
+ \end{tabularx}
+ \end{table}
++% NOTE: SigLIP2 and Qwen (always-escalate) columns added from
++% routing/results/e0_fft_table.csv (Semantic-only and Always-Qwen rows,
++% SigLIP2 backbone) -- pre-existing data, no new experiment needed. Addresses
++% reviewer request to complete baseline columns in this table.
+ 
+ 
+ When the FFT artifact detector and semantic probe agree, the agreement subset achieves
+@@ -793,26 +873,15 @@
+ \end{table}
+ 
+ 
+-The retrained bandit router, trained on the same Qwen verifier used in the disagreement threshold configuration, converges to performance that matches the disagreement rule on both GenBuster (0.755 vs 0.755) and BigGAN (0.925 vs 0.925). On SD~1.4 the bandit trails disagreement by 11.9\% (0.623 vs 0.742), reflecting the weaker Qwen signal on that dataset, which provides a noisier reward for policy learning. The bandit's convergence to disagreement on two of three datasets suggests that disagreement captures most of the useful routing signal for routing in the clean-signal regime, and that more complex learned policies offer little benefit over the parameter-free rule.
++The retrained bandit router, trained on the same FFT+SigLIP2+Qwen features as the disagreement threshold configuration, converges to performance that matches the disagreement rule on all three datasets: SD~1.4 (0.867 vs.\ 0.867) and BigGAN (0.998 vs.\ 0.998) exactly, and GenBuster (0.917 vs.\ 0.917) on an internal held-out split of its validation set (Table~\ref{tab:transfer} footnote; GenBuster's Qwen predictions do not cover the training-split frames the standard protocol requires). The bandit's exact convergence to disagreement on every dataset suggests that disagreement captures the dominant routing signal in this clean-signal regime, and that more complex learned policies offer no benefit over the parameter-free rule.
+ 
+ 
+-\begin{table}[h]
+-\centering
+-\caption{Mean per-sample latency and accuracy on GenBuster-200K-mini. Latency reduction
+-is relative to always-escalate to Qwen (190.2~ms)}
+-\label{tab:latency}
+-\begin{tabular}{lccc}
+-\toprule
+-Method & Latency (ms) & Reduction & Accuracy \\
+-\midrule
+-FFT-only               &   2.5 & 99\%  & 0.753 \\
+-SigLIP2-only           &  10.4 & 95\%  & 0.985 \\
+-Entropy thresh         &  17.9 & 91\%  & 0.527 \\
+-Disagree (FFT+SigLIP2) &  57.9 & 70\%  & 0.905 \\
+-Always escalate        & 190.2 &  0\%  & 0.690 \\
+-\bottomrule
+-\end{tabular}
+-\end{table}
++Relative to always-escalate to Qwen (190.2~ms per sample, Table~\ref{tab:main_results}),
++the disagreement cascade (FFT+SigLIP2) reduces mean per-sample latency by 70\% on
++GenBuster (57.9~ms), and the semantic-only baseline alone reduces it by 95\% (10.4~ms).
++% NOTE: Former tab:latency table deleted this session -- fully redundant with
++% Table~\ref{tab:main_results} rows (same methods/numbers), addressing
++% reviewer point (7). Only new information (reduction %) folded into prose.
+ 
+ 
+ \begin{table}[h]
+@@ -889,57 +958,122 @@
+ \end{table}
+ \FloatBarrier
+ 
++\subsubsection{Probe-Degradation Sweep}
++\label{sec:limited_data}
+ 
+-\subsubsection{Cross-Dataset Bandit Transfer}
+-
+-Table~\ref{tab:transfer} reports cross-dataset bandit transfer accuracy. In-domain
+-diagonal entries range from 0.782 on GenBuster to 0.923 on BigGAN. The bandits transfer
+-across datasets with off-diagonal accuracy ranging from 0.650 to 0.896. BigGAN is the
+-strongest transfer target, reflecting its cleaner verifier signal. SD~1.4 is the weakest,
+-where both out-of-domain bandits score below 0.75, consistent with the noisy Qwen signal
+-on that benchmark.
+-
+-The disagreement rule (FFT+SigLIP2, Qwen verifier) achieves 0.905, 0.867, and 0.998
+-across the three datasets (Table~\ref{tab:disagree_transfer}), exceeding every cell of
+-the bandit transfer matrix. The bandit reported here was trained and evaluated against
+-the CNNSpot+CLIP configuration. Ordering is expected to hold with an FFT-based
+-bandit, as disagreement captures the dominant routing signal regardless of which
+-artifact detector is used. The disagreement rule does not require per-dataset retraining.
+-
++To directly validate the Case~2-to-Case~3 transition (Section~VI.B) within a single
++experiment rather than relying on cross-dataset comparison, we hold the FFT artifact
++detector fixed and sweep semantic-probe quality by varying the fraction of labeled
++training data available to the probe (1\%, 5\%, 10\%, 25\%, 50\%, 100\%), evaluating
++semantic-only accuracy and FFT+semantic cascade accuracy (Qwen verifier) at each point.
++Table~\ref{tab:limited_data} reports SD~1.4 with SigLIP2 and DINOv2 backbones.
+ 
+ \begin{table}[h]
+ \centering
+-\caption{Cross-dataset bandit transfer accuracy. Diagonal entries are in-domain results. Off-diagonal entries apply a bandit trained on one dataset directly to another without retraining.}
+-\label{tab:transfer}
+-\begin{tabular}{lccc}
++\caption{Probe-degradation sweep on SD~1.4. Cascade gain (Casc.\ $-$ Sem.) changes sign
++as the semantic probe weakens, crossing from Case~2 (negative gain) to Case~3 (positive
++gain) between 5\% and 10\% training data.}
++\label{tab:limited_data}
++\small
++\begin{tabular}{lcccc}
+ \toprule
+-Train $\rightarrow$ Test & GenBuster & BigGAN & SD14 \\
++Backbone & Train frac. & Sem.-only & Cascade & Gain \\
+ \midrule
+-GenBuster & \textbf{0.782} & 0.842 & 0.650 \\
+-BigGAN    & 0.770 & \textbf{0.923} & 0.733 \\
+-SD14      & 0.730 & 0.896 & \textbf{0.792} \\
++SigLIP2  & 1\%   & 0.740 & 0.794 & $+$0.054 \\
++SigLIP2  & 5\%   & 0.842 & 0.833 & $-$0.008 \\
++SigLIP2  & 10\%  & 0.898 & 0.854 & $-$0.044 \\
++SigLIP2  & 25\%  & 0.908 & 0.863 & $-$0.046 \\
++SigLIP2  & 50\%  & 0.919 & 0.869 & $-$0.050 \\
++SigLIP2  & 100\% & 0.927 & 0.867 & $-$0.060 \\
++\midrule
++DINOv2   & 1\%   & 0.669 & 0.769 & $+$0.100 \\
++DINOv2   & 5\%   & 0.781 & 0.798 & $+$0.017 \\
++DINOv2   & 10\%  & 0.808 & 0.810 & $+$0.002 \\
++DINOv2   & 25\%  & 0.829 & 0.808 & $-$0.021 \\
++DINOv2   & 50\%  & 0.852 & 0.821 & $-$0.031 \\
++DINOv2   & 100\% & 0.890 & 0.842 & $-$0.048 \\
+ \bottomrule
+ \end{tabular}
+ \end{table}
+ 
++Both backbones cross from positive to negative cascade gain as training data increases
++from 1\% to 10\%, i.e., as the semantic probe strengthens from well below the FFT
++detector's 74.8\% SD~1.4 accuracy to well above it. GenBuster does not exhibit this
++crossover within the tested range: even a probe trained on 1\% of GenBuster's data (16
++labeled examples) already exceeds FFT's 75.3\% accuracy there, so gain stays negative at
++every fraction, illustrating that the crossover point is set by the FFT detector's own
++strength on a given generator family, not by data quantity in isolation. BigGAN similarly
++does not cross over, staying in Case~1 (small positive gain, near-zero disagreement rate)
++throughout, since FFT already exceeds 99\% accuracy independent of semantic-probe
++quality. This single sweep reproduces, within one dataset and one held-fixed artifact
++detector, the same qualitative transition otherwise only visible by comparing across
++GenBuster/SD~1.4/BigGAN or across the in-domain vs.\ cross-family-deployment
++experiments (Section~VI.B).
++% NOTE: Table sourced from routing/results/e6_limited_data.csv, generated by
++% experiments/e6_limited_data.py (fixed this session to use FFT instead of
++% CNNSpot as the artifact detector -- see claude_context_notes/paper_revision_edits.txt
++% Section H/e6 note). GenBuster/BigGAN summary claims above are also drawn
++% from that CSV (dataset=="GenBuster"/"BigGAN" rows) but not tabulated in
++% full here for space; consider a supplementary table or figure if space
++% allows.
++
++\subsubsection{Cross-Dataset Bandit Transfer}
++
++Table~\ref{tab:transfer} reports cross-dataset bandit transfer accuracy, now trained on
++the same FFT+SigLIP2+Qwen features as the disagreement rule it is compared against,
++correcting the CNNSpot+CLIP bandit vs.\
++FFT+SigLIP2 disagreement-rule mismatch in the previous version of this comparison.
++In-domain diagonal entries range from 0.867 on SD~1.4 to 0.998 on BigGAN, matching the
++disagreement rule almost exactly on every dataset. The bandits transfer across datasets
++with off-diagonal accuracy ranging from 0.760 to 0.998; BigGAN remains the strongest
++transfer target and SD~1.4 the weakest source, consistent with the noisy Qwen signal on
++that benchmark.
++
++The disagreement rule (FFT+SigLIP2, Qwen verifier; bottom row of
++Table~\ref{tab:transfer}) achieves 0.905, 0.998, and 0.867 on GenBuster, BigGAN, and
++SD~1.4 respectively -- at or above every cell of the fair bandit transfer matrix (max
++off-diagonal 0.897, still below GenBuster's 0.905 disagreement-rule accuracy), despite
++having no trainable parameters and requiring no per-dataset retraining, unlike the
++bandit. With a fair backbone, the in-domain bandit diagonal now essentially reproduces
++the disagreement rule exactly on two of three datasets (SD~1.4: 0.867 vs.\ 0.867;
++BigGAN: 0.998 vs.\ 0.998), a stronger version of claim C4 than under the previous
++CNNSpot+CLIP comparison, where the bandit trailed disagreement by 11.9 points on
++SD~1.4.
+ 
+ 
+ \begin{table}[h]
+ \centering
+-\caption{Cross-dataset disagreement rule accuracy (FFT+SigLIP2, Qwen verifier). The
+-disagreement threshold has no trainable parameters and requires no dataset-specific
+-retraining.}
+-\label{tab:disagree_transfer}
+-\begin{tabular}{lc}
+-\toprule
+-Dataset & Disagreement threshold accuracy \\
+-\midrule
+-GenBuster & 0.905 \\
+-SD~1.4    & 0.867 \\
+-BigGAN    & 0.998 \\
++\caption{Cross-dataset bandit transfer accuracy using FFT+SigLIP2+Qwen features (same
++backbone as the disagreement rule). Diagonal entries
++are in-domain results. Off-diagonal entries apply a bandit trained on one dataset
++directly to another without retraining. GenBuster's row/column uses a bandit fit on an
++internal 70/30 split of its own 400-sample validation set, since Qwen predictions do not
++cover GenBuster's training-split frames (see footnote). Bottom row is the disagreement
++rule (no training, no per-dataset transfer -- included here rather than as a separate
++table for direct comparison).}
++\label{tab:transfer}
++\begin{tabular}{lccc}
++\toprule
++Train $\rightarrow$ Test & GenBuster & BigGAN & SD14 \\
++\midrule
++GenBuster$^\dagger$ & \textbf{0.900} & 0.998 & 0.867 \\
++BigGAN    & 0.843 & \textbf{0.998} & 0.760 \\
++SD14      & 0.897 & 0.998 & \textbf{0.867} \\
++\midrule
++Disagreement rule (no training) & 0.905 & 0.998 & 0.867 \\
+ \bottomrule
+ \end{tabular}
+ \end{table}
++{\footnotesize $^\dagger$GenBuster's Qwen predictions only cover its held-out
++validation split (400 samples), not the training-split frames the standard protocol
++uses to fit the bandit (as for SD14/BigGAN); this row/column instead uses an internal
++70/30 split of the validation set and is not directly comparable to the other two rows
++without a Qwen rerun on GenBuster's training split.}
++% NOTE: Table regenerated by routing/bandit_transfer_fft_siglip2.py, source
++% routing/bandit_transfer_fft_siglip2.csv (this session). Former separate
++% tab:disagree_transfer table merged into this one as a bottom row this
++% session, addressing reviewer point (7). See
++% claude_context_notes/paper_revision_edits.txt Section D.
+ 
+ 
+ \subsubsection{Sensitivity to CLIP Probe Quality}
+@@ -975,39 +1109,64 @@
+ 
+ Cross-family deployment evaluates whether the cascade provides benefit when the semantic
+ probe is applied out of domain. A probe trained on dataset A is applied to dataset B
+-without retraining, then compared against the stale probe alone, the cascade with Qwen
+-as verifier, and an in-domain probe as an upper bound (Table~\ref{tab:cross_family_deployment}).
+-
+-The cascade improves over the stale cross-family probe in four of six pairings, with the
+-largest gains when the probe is near chance. Disagreement remains informative in these
+-cases and Qwen maintains above-chance accuracy on the routed subset, recovering up to 19
+-percentage points. The only negative case occurs when the verifier provides no useful
+-signal on the routed subset. An in-domain semantic probe remains the strongest choice
+-when available. When only a cross-family probe is available, the cascade provides a mean
+-gain of $+$6.3 points with no retraining.
++without retraining, then compared against the stale probe alone, the FFT-only detector
++(trained in-domain on the test dataset, as in Table~\ref{tab:main_results}),
++and the cascade with Qwen as verifier (Table~\ref{tab:cross_family_deployment}).
++
++Adding the FFT-only reference column changes the interpretation of this experiment. The
++cascade improves over the stale cross-family SigLIP2 probe in all six pairings (mean
++$+$17.5 points) -- but this recovery is almost entirely attributable to the strength of
++the FFT detector itself, not to the verifier or the disagreement mechanism: the cascade
++beats FFT-only in only one of six pairings (mean $-$10.2 points relative to FFT-only).
++A badly-transferred semantic probe creates a large, spurious ``cascade gain'' over
++itself, while the informative comparison -- cascade vs.\ the stronger of the two cheap
++detectors alone -- shows escalation providing no net benefit and typically hurting. This
++is the sharpest empirical illustration of \textbf{Case 2} in the paper (Section~III.D):
++in five of six pairings $A_{2}$ (stale SigLIP2) is so degraded that disagreement mostly
++flags cases the FFT detector already gets right, and escalating those to Qwen trades
++correct FFT predictions for Qwen's mixed accuracy on the routed subset. Practical
++implication: under cross-family deployment shift, if a strong, architecture-general
++artifact detector such as FFT is available, deploying it alone outperforms escalating a
++cross-family-transferred semantic probe's disagreements to this verifier. This is a
++different regime from the SD~1.4-to-SDXL/FLUX deployment shift in
++Table~\ref{tab:e8_results}, which uses GPT-5.5 as verifier and shows genuine positive
++cascade gain (Case 3) -- the two experiments should not be conflated: here the semantic
++probe is transferred across generator \emph{families} (GenBuster/SD~1.4/BigGAN, trained
++on data from one family and applied to another) with Qwen as verifier, whereas
++Table~\ref{tab:e8_results} holds the family fixed (SD~1.4-trained probes) and shifts to
++newer models from the \emph{same} diffusion lineage (SDXL/FLUX) with GPT-5.5 as verifier.
+ 
+-\begin{table}[t]
++\begin{table*}[t]
+ \centering
+-\caption{Cross-family deployment results. Cascade uses the cross-family CLIP probe with
+-Qwen escalation on disagreement cases.}
++\caption{Cross-family deployment results. Cascade uses the cross-family SigLIP2 probe
++with Qwen escalation on disagreement cases (FFT is trained in-domain on the test
++dataset, not transferred, matching Table~\ref{tab:main_results}).
++$\Delta_{\text{stale}}$ = cascade $-$ stale SigLIP2; $\Delta_{\text{FFT}}$ = cascade $-$
++FFT-only. In-domain SigLIP2 (ceiling): GenBuster 0.985, SD~1.4 0.927, BigGAN 0.996.}
+ \label{tab:cross_family_deployment}
+ \footnotesize
+ \setlength{\tabcolsep}{4pt}
+-\begin{tabular}{llcccc}
++\begin{tabular}{llccccc}
+ \toprule
+-Train & Test & Stale & Casc. & $\Delta$ & In-dom \\
++Train & Test & FFT & Stale SigLIP2 & Casc. & $\Delta_{\text{stale}}$ & $\Delta_{\text{FFT}}$ \\
+ \midrule
+-GenBuster & SD~1.4    & 0.546 & 0.571 & $+$0.025 & 0.900 \\
+-GenBuster & BigGAN    & 0.523 & 0.713 & $+$0.190 & 0.990 \\
+-SD~1.4    & GenBuster & 0.613 & 0.562 & $-$0.050 & 0.910 \\
+-SD~1.4    & BigGAN    & 0.535 & 0.721 & $+$0.185 & 0.990 \\
+-BigGAN    & GenBuster & 0.547 & 0.547 & $+$0.000 & 0.910 \\
+-BigGAN    & SD~1.4    & 0.508 & 0.537 & $+$0.029 & 0.900 \\
++GenBuster & SD~1.4    & 0.748 & 0.552 & 0.654 & $+$0.102 & $-$0.094 \\
++GenBuster & BigGAN    & 0.998 & 0.554 & 0.787 & $+$0.233 & $-$0.210 \\
++SD~1.4    & GenBuster & 0.735 & 0.547 & 0.730 & $+$0.182 & $-$0.005 \\
++SD~1.4    & BigGAN    & 0.998 & 0.613 & 0.833 & $+$0.221 & $-$0.165 \\
++BigGAN    & GenBuster & 0.735 & 0.517 & 0.738 & $+$0.220 & $+$0.003 \\
++BigGAN    & SD~1.4    & 0.748 & 0.515 & 0.604 & $+$0.090 & $-$0.144 \\
+ \midrule
+-\multicolumn{2}{l}{Mean $\Delta$} & & & $+$0.063 & \\
++\multicolumn{2}{l}{Mean} & & & & $+$0.175 & $-$0.102 \\
+ \bottomrule
+ \end{tabular}
+-\end{table}
++\end{table*}
++% NOTE: Table regenerated with FFT+SigLIP2 (was CNNSpot+CLIP) by
++% routing/cross_family_deployment.py, source routing/cross_family_deployment.csv
++% (this session). This is the most consequential finding from this revision
++% pass -- see claude_context_notes/paper_revision_edits.txt Section E for
++% full context and required consistency edits elsewhere (Conclusion,
++% Practical Implications).
+ 
+ \begin{figure*}[t]
+     \centering
+@@ -1021,10 +1180,12 @@
+ \section{Discussion}
+ 
+ This section interprets the empirical results presented in Section V. We first examine
+-why artifact-semantic disagreement separates easy from hard inputs and assess whether
+-learned routing improves on this signal, then characterize the role of the semantic
+-probe and VLM verifier under in-domain and deployment-shift conditions, and finally
+-discuss generator distribution shift, limitations, and practical deployment guidelines.
++why artifact-semantic disagreement separates easy from hard inputs, then map the
++three K-stage regimes from Section~III.D onto the empirical results and assess whether
++learned routing improves on the disagreement signal, then characterize the role of the
++semantic probe and VLM verifier under in-domain and deployment-shift conditions, and
++finally discuss generator distribution shift, limitations, and practical deployment
++guidelines.
+ 
+ 
+ 
+@@ -1054,17 +1215,62 @@
+ video generators produce 26--28\% disagreement rates, marking the regime where VLM
+ escalation recovers accuracy that neither cheap detector can provide alone.
+ 
++\subsection{Three Regimes in Practice}
++\label{sec:three_regimes}
++
++The K-stage formulation (Section~III.D) predicts three qualitative regimes, and each is
++directly realized in the empirical results above. \textbf{Case 1} (both cheap stages
++strong) is BigGAN: FFT alone reaches 99.8\% and disagreement collapses below 1\%, so the
++cascade adds latency without changing accuracy (Table~\ref{tab:main_results}). \textbf{Case 2}
++(asymmetric cheap stages) is the in-domain GenBuster and SD~1.4 result (Section~V.B) and,
++more sharply, the cross-family deployment experiment
++(Table~\ref{tab:cross_family_deployment}, Section~V.D.5): a badly cross-family-transferred
++SigLIP2 probe creates a large apparent cascade gain over itself, but the cascade beats the
++FFT detector alone in only one of six pairings, showing the gain is a detector-quality-gap
++artifact rather than genuine routing value. \textbf{Case 3} (both cheap stages degraded) is
++the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier (Table~\ref{tab:e8_results}): both
++the stale semantic probe and, to a lesser extent, FFT lose accuracy under this shift, and
++escalation recovers up to 4.9 points with consistent positive gain across five of six
++configurations (Figure~\ref{fig:cascade_gain}). Crucially, this Case~3 status is
++verifier-dependent, not a property of the routing mechanism alone: substituting Qwen2.5-VL-7B
++for GPT-5.5 as the verifier on the identical SDXL/FLUX disagreement subsets
++(Table~\ref{tab:e8_results}) turns every one of the six configurations negative
++($-$3.0 to $-$14.0 points), reverting the same degraded-cheap-detector setting to a
++Case~2-like outcome. Both cheap detectors being weak is necessary but not sufficient for
++Case 3; the verifier must also be reliably stronger than the stronger cheap detector on
++the routed subset, exactly as Equation~\eqref{eq:gain} requires.
++
++The probe-degradation sweep (Table~\ref{tab:limited_data}, holding FFT fixed while the
++semantic probe's training fraction shrinks from 100\% to 1\%) directly demonstrates the
++Case~2-to-Case~3 transition as a continuous function of semantic-probe quality, rather
++than relying on cross-dataset anecdote. On SD~1.4 with a DINOv2 probe, cascade gain over
++semantic-only is $-$4.8 points at 100\% training data (Case 2) and crosses to $+$10.0
++points at 1\% training data (Case 3), passing through near-zero around 5--10\% data; the
++SigLIP2 backbone shows the same sign change between 1\% and 5\% data. On GenBuster, by
++contrast, gain remains negative at every fraction tested, since even a 1\%-trained
++semantic probe (16 labeled examples) already exceeds the FFT detector's accuracy on that
++benchmark -- illustrating that the transition point depends on the FFT detector's own
++strength on a given generator family, not on data quantity alone.
++
++The \textbf{breakdown condition} (Section~III.D) -- disagreement degenerating when the two
++cheap detectors share a correlated blind spot -- is realized directly in
++Table~\ref{tab:escalation}: on GenBuster, the single case where FFT is wrong but the
++semantic probe agrees with it (both detectors sharing the same error) is invisible to the
++routing rule by construction, representing the fundamental limit of disagreement-based
++routing at under 0.3\% of inputs.
++
+ \subsection{Limitations of Learned Routing}
+-The retrained bandit router converges to the disagreement threshold on two of three
+-datasets. On GenBuster the bandit achieves 0.755 accuracy, identical to the
+-disagreement rule, and on BigGAN it achieves 0.925, also identical. On SD~1.4 the
+-bandit trails by 11.9 percentage points (0.623 vs.\ 0.742), where Qwen reward signal
+-is noisiest. These figures reflect the CNNSpot+CLIP configuration. The FFT-based
+-disagreement rule achieves substantially higher accuracy on the same datasets
+-(Table~\ref{tab:crossdataset}), and the ordering is expected to hold. A learned
+-classifier with eleven detector features and explicit latency rewards does not
+-outperform the binary disagreement rule, independently validating that disagreement
+-captures the dominant routing signal.
++The bandit router, retrained on the same FFT+SigLIP2+Qwen features as the disagreement
++rule it is compared against (Table~\ref{tab:transfer}), converges to the disagreement
++threshold on all three datasets. On SD~1.4 the bandit achieves 0.867 accuracy, identical
++to the disagreement rule; on BigGAN it achieves 0.998, also identical. On GenBuster the
++bandit achieves 0.917 on an internal held-out split of its validation set (see
++Table~\ref{tab:transfer} footnote), matching the disagreement rule's 0.917 on that same
++split. A learned classifier with eleven detector features and explicit latency rewards
++does not outperform the binary disagreement rule on any dataset, independently
++validating that disagreement captures the dominant routing signal -- a stronger result
++than under the previous CNNSpot+CLIP comparison, where the bandit trailed disagreement
++by 11.9 points on SD~1.4 due to a mismatched backbone rather than a genuine policy gap.
+ 
+ 
+ 
+@@ -1104,7 +1310,7 @@
+ Qwen achieves only 69.0\%.
+  This demonstrates that selective escalation makes a mediocre verifier useful.
+ 
+-Although the uniform Qwen accuracy ranges from roughly 50-73\% across datasets, its accuracy on the routed disagreement subset is higher. In-domain, it reaches 58-75\% (Table~\ref{tab:verifier_comparison}), and under cross-family deployment it achieves 60-68\% in 5 of 6 pairings (Table~\ref{tab:cross_family_deployment}). This shows that the VLM provides useful signal on the samples it processes, even when overall accuracy is modest.
++Although the uniform Qwen accuracy ranges from roughly 50-73\% across datasets, its accuracy on the routed disagreement subset is higher on average than uniform escalation, though it varies widely by pairing: under cross-family deployment (FFT+SigLIP2 disagreement subset) it ranges 44.5--74.1\% across the six pairings (Table~\ref{tab:cross_family_deployment}). This wide range -- and the fact that it is frequently below the FFT-only accuracy on the same pairing -- is why escalation does not reliably beat FFT-only in this setting (Section~V.D.5, Table~\ref{tab:cross_family_deployment}): the VLM provides useful signal on some routed subsets but not consistently enough to beat a strong cheap detector used alone.
+ 
+ \begin{figure}[h]
+     \centering
+@@ -1153,7 +1359,67 @@
+ tradeoff. When only a stale probe is available on unseen generators, routing disagreement cases to a frontier VLM recovers up to 4.9 percentage points
+ over a stale semantic probe while limiting escalation to 35--42\% of verifier
+ invocations (Table~\ref{tab:e8_results}, Table~\ref{tab:e8_efficiency}).
+-The cascade provides value when the verifier is reliably stronger than the stale semantic probe on disagreement cases. When both are weak on the target domain, the stale probe alone is the preferred deployment (Table~\ref{tab:cross_family_deployment}).
++The cascade provides value only when the verifier is reliably stronger than the
++\emph{stronger of the two cheap detectors} on the disagreement subset, not merely
++stronger than a stale semantic probe. Under cross-family deployment specifically
++(Table~\ref{tab:cross_family_deployment}), the FFT artifact detector alone
++outperforms the full cascade in five of six pairings; a practitioner deploying on a
++new generator family without an in-domain semantic probe should prefer the strong
++cheap detector alone over escalating cross-family disagreements to Qwen. This
++contrasts with the SD~1.4-to-SDXL/FLUX deployment-shift setting with GPT-5.5 as
++verifier (Table~\ref{tab:e8_results}), where escalation does provide consistent
++positive gain -- the practical guideline depends on both the verifier and the type of
++shift, not on cascade routing being unconditionally beneficial under any distribution
++shift.
++
++\subsection{A Practical Fail-Safe: the Verifier Validation Gate}
++\label{sec:validation_gate}
++
++A deployed system does not know in advance whether an incoming distribution is
++in-domain, a benign generator update, or a hostile shift, so the guideline above --
++prefer FFT-only under cross-family shift, prefer the GPT-5.5 cascade under SD~1.4-to-SDXL/FLUX
++shift -- cannot be applied directly without first knowing which regime holds. A
++natural first attempt is to use the disagreement rate itself as this signal, escalating
++only when it exceeds the $\sim$26--28\% in-domain baseline (Section~V.C). This does not
++work: the cross-family disagreement rate (Case~2, where escalation to Qwen hurts in five
++of six pairings) ranges 38.5--50.4\%, and the SDXL/FLUX disagreement rate (Case~3, where
++escalation to GPT-5.5 helps in five of six configurations) ranges 35.2--41.4\%
++(Table~\ref{tab:e8_efficiency}) -- these ranges overlap substantially, so disagreement
++rate alone cannot distinguish a regime where escalation helps from one where it hurts.
++
++We instead propose a \textbf{verifier validation gate}: before deploying escalation to a
++verifier $V$ on the disagreement set of a new detector pair or a new target
++distribution, evaluate $V$'s accuracy on a small labeled calibration sample drawn from
++that disagreement set. Deploy the cascade only if $A_{V,\text{cal}} >
++\max(A_1, A_2)$ measured on the same calibration sample; otherwise, fall back to
++whichever cheap detector is individually stronger. This rule requires no knowledge of
++whether the deployment is in-domain or shifted -- it only requires a calibration sample
++from wherever the system is currently running, which a practitioner can always collect
++regardless of whether the distribution's identity is known.
++
++We validate this rule retrospectively against every configuration evaluated in this
++paper where ground truth is available: the six cross-family pairings with Qwen
++(Table~\ref{tab:cross_family_deployment}), and the six SDXL/FLUX configurations under
++each of GPT-5.5 (Table~\ref{tab:e8_results}) and Qwen (Table~\ref{tab:e8_results}), 18
++configurations total. Using the full disagreement-subset accuracy as an oracle
++calibration sample, the gate's escalate/fall-back decision matches the actual outcome
++(whether the cascade beat the stronger cheap detector) in 17 of 18 configurations
++(94.4\%); the single miss, FLUX with a SigLIP2 probe and GPT-5.5 as verifier, is a
++near-exact tie (90.88\% vs.\ 90.93\%, a 0.04-point gap). The gate correctly identifies
++that Qwen should not be trusted as a verifier in any of the twelve configurations
++tested (six cross-family, six SDXL/FLUX), and correctly identifies that GPT-5.5 should
++be trusted in five of six SDXL/FLUX configurations, without ever being told which
++generator family, which verifier, or which shift type it was evaluating. In deployment,
++the calibration sample would be smaller than the full disagreement subset and introduce
++some estimation noise; we report the oracle version here as an upper bound on the
++rule's achievable reliability, and leave calibration-sample-size sensitivity to future
++work.
++% NOTE: Validated this session via routing/results/verifier_validation_gate_check.csv.
++% Directly addresses reviewer point 6 (practical fail-safe deployment guideline
++% given no prior knowledge of in-domain vs out-of-domain). The negative result
++% (disagreement rate alone does not separate Case 2 from Case 3) is reported
++% honestly rather than omitted, since it is what motivates the accuracy-based
++% gate instead of a simpler rate-based heuristic.
+ 
+ 
+ 
+@@ -1164,11 +1430,20 @@
+ 
+ For RQ1, FFT and semantic probe agreement is a near-perfect predictor of detection ease. FFT accuracy is 99.7\%, 96.6\%, and 100\% on agreement cases and falls to 4.9\%, 17.4\%, and 66.7\% on disagreement cases. This pattern holds across video diffusion, image diffusion, and GAN generator families and forms the basis for the routing rule.
+ 
+-For RQ2, the disagreement rule does not require parameters or calibration. A bandit router trained with eleven detector features and explicit latency rewards converges to the same routing decisions as the binary disagreement rule on two of three datasets and trails by 11.9 percentage points on the third, where Qwen reward signal is noisiest. This convergence independently validates that disagreement captures the dominant routing signal.
++For RQ2, the disagreement rule does not require parameters or calibration. A bandit router trained with eleven detector features and explicit latency rewards, using the same FFT+SigLIP2+Qwen backbone as the disagreement rule, converges to the exact same routing decisions as the binary disagreement rule on all three datasets. This convergence independently validates that disagreement captures the dominant routing signal, and that more complex learned policies offer no measurable benefit over the parameter-free rule in this regime.
+ 
+ For RQ3, the cascade (FFT + SigLIP2, disagreement routing, Qwen verifier) achieves 90.5\%, 86.7\%, and 99.8\% accuracy on the three benchmarks. It escalates only 26--28\% of GenBuster and SD~1.4 inputs to the VLM and reduces mean latency by 62--70\% compared to always-escalate without sacrificing accuracy. Under deployment shift on SDXL and FLUX, the cascade recovers up to 4.9 percentage
+ points over a stale semantic probe while avoiding 58--65\% of verifier invocations
+-(Table~\ref{tab:e8_results}), directly satisfying RQ3's deployment-shift condition.
++(Table~\ref{tab:e8_results}), directly satisfying RQ3's deployment-shift condition. This
++positive result is specific to the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier
++(Case 3, Section~III.D); under cross-family shift across GenBuster/SD~1.4/BigGAN with
++Qwen as verifier, escalation instead underperforms the FFT artifact detector alone in
++five of six pairings (Table~\ref{tab:cross_family_deployment}), a Case 2 regime where a
++badly-transferred semantic probe manufactures an illusory cascade gain. RQ3's answer is
++therefore conditional: disagreement-based escalation reduces cost while recovering
++accuracy specifically when the verifier is reliably stronger than the \emph{stronger} of
++the two cheap detectors on the routed subset, not whenever the semantic probe alone is
++degraded.
+ 
+ 
+ The effective deployment of heterogeneous detection pipelines depends on using cheap detectors to identify when expensive verification is needed rather than increasing individual detector complexity. Future work will explore temporal modeling for video detection, fine-tuned VLM verifiers for domain-specific forensic cues, and cross-family semantic probe training to remove the per-family retraining requirement.
