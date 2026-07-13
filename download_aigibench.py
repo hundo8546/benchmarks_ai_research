@@ -19,7 +19,6 @@ Usage:
 """
 import argparse
 import os
-import re
 import sys
 import zipfile
 
@@ -28,10 +27,7 @@ from huggingface_hub import hf_hub_download
 REPO_ID = "HorizonTEL/AIGIBench"
 BASE    = "/workspace/benchmarks_ai_research/data/aigibench"
 
-# HF token from existing script
-with open(os.path.join(os.path.dirname(__file__), "hfgenbuster.py")) as f:
-    _src = f.read()
-HF_TOKEN = re.search(r'token="(hf_[^"]+)"', _src).group(1)
+HF_TOKEN = os.environ["HF_TOKEN"]
 
 REAL_CATEGORIES = [
     "airplane","bicycle","bird","boat","bottle","bus","car","cat",
