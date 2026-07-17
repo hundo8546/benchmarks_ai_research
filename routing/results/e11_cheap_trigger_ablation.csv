@@ -1,4 +1,3 @@
-dataset,n,escalation_rate,disagreement_cascade_acc,random_trigger_mean_acc,random_trigger_ci_lo,random_trigger_ci_hi,disagreement_beats_random_at_95
-GenBuster,400,0.275,0.8975,0.9037375,0.88,0.925,no
-SD14,480,0.275,0.8666666666666667,0.8386333333333335,0.8166666666666667,0.8604166666666667,yes
-BigGAN,480,0.00625,0.9979166666666667,0.9939343750000003,0.9895833333333334,0.9958333333333333,yes
+version https://git-lfs.github.com/spec/v1
+oid sha256:e564109e3772c5c03a88fbcb906c27d5e507d19c1b1aabd84e38619a98cfa956
+size 394
