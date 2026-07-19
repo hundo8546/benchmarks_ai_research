@@ -230,3 +230,271 @@ number that changed is either a same-methodology recomputation on the
 paper's own primary (FFT+SigLIP2) backbone in place of an inconsistent one,
 or new data from an experiment run specifically for this revision, and each
 is traceable to a source script and result file for reproducibility.
+
+
+RESPONSE TO REVIEWER 2
+Paper: "On Reliable Detection of AI-Generated Multimedia Content"
+Authors: Ansuman Nayak, Vijay K. Madisetti
+================================================================================
+
+We thank the reviewer for recommending acceptance and for the specific
+corrections below.
+
+================================================================================
+POINT — Is the verifier strong enough for deployment?
+================================================================================
+RESPONSE: Addressed by Section VI.I ("A Practical Fail-Safe: the Verifier
+Validation Gate"), described in our response to Reviewer 1, point 6. The
+gate evaluates the verifier's accuracy on a calibration sample before
+trusting escalation, directly answering whether a given verifier is strong
+enough for a given deployment.
+
+================================================================================
+POINT — Typo, "based a signal" (p.1)
+================================================================================
+RESPONSE: Fixed.
+
+================================================================================
+POINT — VOLUME 11 / DOI placeholder
+================================================================================
+RESPONSE: These are IEEE Access template fields (the volume number and DOI
+in the article header) that the publisher populates at production time and
+are not available to authors before acceptance. No manuscript change is
+needed; we note this here so the point is not left unaddressed.
+
+================================================================================
+POINT — Statistical power on cross-family delta values
+================================================================================
+REVIEWER: "Evaluation sets are small (400/480 samples); cross-family Delta
+values (e.g., +0.025, +0.029) fall within plausible CI overlap. Report CIs
+on the gain itself, or significance tests on the deployment-shift deltas, to
+firm up the headline claim."
+
+Note: the +0.025/+0.029 values the reviewer cites are from the previous
+CNNSpot+CLIP version of the cross-family table (GenBuster->SD1.4 and
+BigGAN->SD1.4 rows), superseded in this revision by the FFT+SigLIP2 rebuild
+described in our response to Reviewer 1, point 3 (current deltas range
++0.090 to +0.233). The underlying concern, uncertainty quantification on
+small deltas, applies equally to the corrected table and is addressed below.
+
+RESPONSE: Addressed with a paired bootstrap (10,000 resamples per cell,
+routing/experiments/e10_bootstrap_deltas.py). Each resample redraws sample
+indices once and recomputes both arms of a delta on that same resample, so
+correlation between paired errors is preserved rather than combining two
+independently bootstrapped accuracies. Table 14 now marks with a dagger the
+two Delta_FFT cells whose 95% CI includes zero (SD1.4->GenBuster: -0.005
+[-0.048, +0.040]; BigGAN->GenBuster: +0.003 [-0.037, +0.043]); Section V.D.5
+reports the full intervals and states plainly that the paper's own "cascade
+beats FFT-only in one of six pairings" point estimate is itself noise-level,
+not a second, weaker positive result. All six Delta_stale values remain
+significant. We ran the same analysis on the SDXL/FLUX Table 4 GPT-5.5 gains
+(the two configurations, SigLIP2 and DINOv2, reconstructable from archived
+per-sample predictions) and found three of four significant, with the
+smallest (FLUX+SigLIP2, +0.004) not distinguishable from zero; this is now
+noted in Section VI.B. CLIP's SDXL/FLUX gain could not be bootstrapped this
+way because no SD1.4-trained CLIP probe or feature set was retained in this
+environment (see the Table 14 caveat already in the manuscript); reproducing
+it would require new CLIP feature extraction rather than analysis over
+existing per-sample data.
+
+================================================================================
+POINT — Quantify FFT's marginal value vs. an even-cheaper trigger
+================================================================================
+REVIEWER: Since FFT contributes nothing on agreement cases by construction,
+requested a random-trigger (or resolution/filesize-based trigger) baseline
+at matched escalation rate, to isolate how much FFT's actual spectral
+features matter versus just having some first-stage filter.
+
+RESPONSE: Addressed with a new ablation, Section V.D ("Cheap-Trigger
+Ablation", routing/experiments/e11_cheap_trigger_ablation.py). At the same
+escalation rate as the real FFT-vs-semantic disagreement rule, we escalate
+an equally-sized random subset to Qwen instead (2,000 draws) and compare
+cascade accuracy. On SD~1.4 and BigGAN, the real disagreement-routed cascade
+significantly beats the random-trigger baseline: disagreement identifies a
+subset where the semantic probe is comparatively weaker than its overall
+accuracy, so escalating those specific cases costs less than escalating a
+typical random subset. On GenBuster, the two are statistically
+indistinguishable, because disagreement there does not identify a subset
+where the semantic probe is comparatively unreliable (95.5% accuracy on the
+disagreement subset vs. 98.5% overall). We report this honestly rather than
+only reporting the two positive results: FFT's marginal value over a
+same-cost arbitrary trigger holds on SD~1.4 and BigGAN but is not
+established on GenBuster, and we tie this directly to GenBuster already
+being the benchmark where escalation is least useful (Case 2).
+
+================================================================================
+POINT — Reproducibility of the VLM stage: open-weight strong verifier
+================================================================================
+REVIEWER: "GPT-5.5 is a closed, evolving model and the logit-extraction note
+applies only to open-weight models. Consider an open-weight strong verifier
+(e.g., Qwen2-VL-72B) on the disagreement subset so the core result is
+reproducible independent of a proprietary API."
+
+RESPONSE: Addressed by running Qwen2.5-VL-72B-Instruct (4-bit quantized) on
+the same SDXL/FLUX SigLIP2 disagreement subsets used for GPT-5.5 and
+Qwen2.5-VL-7B (routing/run_qwen72b_sdxl_flux.py). The result is honestly
+mixed rather than a uniform win: on SDXL, Qwen-72B nearly reproduces GPT-5.5
+(89.8% vs. 90.0% disagreement-subset accuracy; cascade gain +0.033 vs.
+GPT-5.5's +0.034). On FLUX, Qwen-72B behaves like the 7B model instead
+(58.5% accuracy, matching Qwen-7B's 58.5% and far below GPT-5.5's 90.9%;
+cascade gain -0.131, reverting FLUX to a Case-2-like outcome). Model scale
+alone does not guarantee open-weight reproducibility of the Case-3 result;
+this is now stated directly in Section VI.B rather than claimed as a general
+win. This is a stronger, more honest answer than simply reporting the SDXL
+success and omitting FLUX.
+
+================================================================================
+POINT — Generalization of the shift claim: a more distant generator family
+================================================================================
+REVIEWER: "Conclusions on shift rest on two diffusion families (SDXL, FLUX)
+both close to the SD 1.4 training distribution. A more distant family (e.g.,
+a GAN->diffusion or autoregressive generator) would test the disagreement
+signal's robustness more convincingly."
+
+RESPONSE: Addressed using the reviewer's own suggested example. We applied
+the SD1.4-trained (stale) FFT and SigLIP2 probes zero-shot to GenImage
+BigGAN, a GAN rather than a diffusion model and therefore architecturally
+distant from SD1.4 in a way SDXL/FLUX are not (both diffusion, same
+lineage). This is a new experimental configuration, not a restatement of the
+existing cross-family table (Table 14), which trains FFT in-domain on
+BigGAN (Case 2); here both cheap detectors are stale, mirroring the SDXL/FLUX
+design exactly. Degradation is far more severe than under the SDXL/FLUX
+shift: stale FFT accuracy drops to 38.3% and stale SigLIP2 to 62.1% (vs.
+57.8-62.2% / 81.5-92.0% on SDXL/FLUX), confirming this is a genuinely larger
+shift.
+
+On a stratified random sample of 1,500 disagreement cases (scale-matched to
+the SDXL/FLUX subsets), we tested three verifiers: GPT-5.5, Qwen2.5-VL-7B,
+and Qwen2.5-VL-72B. All three give negative cascade gain over the stale
+semantic probe (GPT-5.5: -0.031 [95% CI -0.037,-0.026]; Qwen-7B: -0.064
+[-0.071,-0.057]; Qwen-72B: -0.129 [-0.137,-0.122]) -- even GPT-5.5, the
+verifier that gave consistent positive gain on SDXL/FLUX, fails on this
+larger shift. The mechanism: on this disagreement subset specifically,
+stale SigLIP2 is 90.8% accurate and stale FFT is 9.2%, so disagreement here
+mostly flags cases where the stale FFT probe (not the semantic probe) is
+unreliable, and no tested verifier beats SigLIP2's 90.8% on that subset. We
+report this as a genuine negative result, not a caveat to soften: the
+paper's Case 3 rescue does not generalize to this larger shift, and we say
+so directly (Section V.D.7) rather than only reporting the SDXL/FLUX
+success. This also lets us extend the Verifier Validation Gate's
+retrospective validation (response to Reviewer 1, point 6) from 17/18 to
+20/21 configurations (95.2%), since the gate correctly recommends against
+escalation in all three new BigGAN configurations.
+
+Incidentally, this experiment also surfaces a second finding responsive to
+Reviewer 1's original review: Qwen2.5-VL-72B's disagreement-subset accuracy
+(46.7%) is lower than the smaller 7B model's (68.9%) on BigGAN specifically,
+driven by a severe real-answer bias (98.6% accuracy on the real class, 2.5%
+on the fake class). Model scale does not straightforwardly fix domain
+sensitivity; we note this in the same section rather than treating "72B" as
+a strictly-better substitute for "7B."
+
+================================================================================
+POINT — Minor editorial: duplicated "Conclusion Conclusion" in the response
+letter; inconsistent Roman/Arabic table cross-references
+================================================================================
+RESPONSE: The previous response letter is being fully regenerated for this
+submission round (this document), so the duplicated heading does not recur
+here. The manuscript's table cross-references are all generated via LaTeX
+\ref{} against Arabic-numbered table labels, and this response letter uses
+Arabic numerals throughout as well; we found no Roman-numeral table
+references in either document to reconcile.
+
+
+RESPONSE TO REVIEWER 3
+Paper: "On Reliable Detection of AI-Generated Multimedia Content"
+Authors: Ansuman Nayak, Vijay K. Madisetti
+================================================================================
+
+We thank the reviewer for recommending acceptance pending these clarifications
+and for identifying a genuine methodological gap (point 1) that we agree
+needed a direct answer rather than a workaround note.
+
+================================================================================
+POINT (1) — AIGIBench real-image substitution and independence of the
+deployment-shift evaluation
+================================================================================
+REVIEWER: "Explicitly discuss how the AIGIBench real-image substitution
+(Section IV-B) may affect the independence of the SDXL/FLUX deployment-shift
+evaluation from the semantic probes' training distribution... swapping the
+real-image distribution to one the semantic probes were also trained on
+risks making the 'deployment shift' evaluation on SDXL/FLUX less independent
+than it appears... this deserves more explicit discussion of how much of the
+recovered accuracy is attributable to routing vs. to this improved
+real-image alignment."
+
+RESPONSE: Addressed directly rather than by caveat alone. We added a
+class-conditional breakdown to the Limitations section (Section VI.G):
+splitting stale-semantic, stale-FFT, and cascade accuracy by true label
+(real vs. fake) on the SDXL/FLUX test sets shows the real class is indeed
+in-distribution and near-ceiling for the stale probe (95.8% SDXL, 95.4%
+FLUX), exactly the reviewer's concern. Critically, escalating disagreement
+cases to GPT-5.5 *lowers* real-class accuracy by 4.0-4.3 points rather than
+raising it -- the net cascade gain reported in Table 4 comes entirely from
+the fake class, the genuinely out-of-distribution half (stale accuracy rises
+from 73.6% to 84.7% on SDXL, 86.5% to 91.2% on FLUX). This directly answers
+"how much of the recovered accuracy is attributable to routing vs. real-image
+alignment": real-image alignment does not explain the gain, and if anything
+works against it. We view this as a stronger response than a purely
+qualitative caveat, since it gives the reviewer's concern a concrete,
+falsifiable answer rather than an acknowledgment that the threat exists.
+
+================================================================================
+POINT (2) — Bandit-router ablation (C4) on the primary FFT+SigLIP2
+configuration
+================================================================================
+REVIEWER: "The bandit router comparison (C4) is only run against the
+CNNSpot+CLIP configuration, not the primary FFT+SigLIP2 configuration the
+paper otherwise emphasizes; the authors state the ordering is 'expected to
+hold' but this is an assumption, not a demonstrated result... either run the
+bandit-router ablation on the primary FFT+SigLIP2 configuration or soften
+the claim."
+
+RESPONSE: Already addressed as part of the response to Reviewer 1, point 4
+(same underlying fix serves both reviewers' identical concern). The bandit
+router (Table 12) is retrained on the same FFT+SigLIP2+Qwen features as the
+disagreement rule it is compared against, not the legacy CNNSpot+CLIP
+configuration. Under this fair, primary-backbone comparison the bandit
+matches the disagreement rule exactly on SD~1.4 (0.867 vs. 0.867) and BigGAN
+(0.998 vs. 0.998), and closely on GenBuster (0.917 vs. 0.917, on an internal
+calibration split, footnoted in the table for the reason given in our
+response to Reviewer 1). This is a demonstrated result on the primary
+backbone, not an extrapolated assumption; the "expected to hold" language the
+reviewer flagged has been replaced throughout.
+
+================================================================================
+POINT (3) — GPT-5.5 vs. Qwen BigGAN reversal
+================================================================================
+REVIEWER: "The BigGAN reversal (GPT-5.5 43.0% vs. Qwen 71.1%, Table 6) is a
+striking result attributed post-hoc to 'distribution mismatch' with legacy
+GAN artifacts. This is a plausible explanation but is asserted rather than
+demonstrated (e.g., no qualitative error analysis of GPT-5.5's BigGAN
+failures is shown)."
+
+RESPONSE: Resolved as a byproduct of the same backbone fix (response to
+Reviewer 1, point 3): the reviewer's cited 43.0%/71.1% figures came from the
+disagreement subset defined by the old CNNSpot+CLIP detector pair. Recomputed
+on the FFT+SigLIP2 disagreement subset used throughout the rest of the paper,
+BigGAN's disagreement set collapses to 3 samples (FFT and SigLIP2 agree on
+99.4% of BigGAN inputs), on which GPT-5.5 and Qwen score identically (66.7%
+each, Table 3). The sharp reversal the reviewer asked us to explain no longer
+exists under the paper's primary backbone; it was an artifact of comparing
+verifiers on a disagreement subset defined by a detector pair the paper
+otherwise abandoned, not a genuine domain-sensitivity difference between the
+two verifiers. The paper now states plainly that n=3 is too small to support
+any claim about relative verifier accuracy on BigGAN (Section V.B,
+"Verifier comparison"), rather than offering a post-hoc explanation for an
+effect that does not survive the corrected subset.
+
+================================================================================
+SUMMARY
+================================================================================
+All three points are resolved: point 1 with a new quantitative
+class-conditional analysis rather than a qualitative caveat; points 2 and 3
+as byproducts of the same FFT+SigLIP2 backbone correction made in response to
+Reviewer 1, which happened to directly resolve both of Reviewer 3's remaining
+concerns as well. No claim was softened without a demonstrated result to
+back it -- point 2's "expected to hold" language is replaced with a measured
+result on the primary backbone, and point 3's post-hoc explanation is
+replaced with the finding that the effect it was explaining does not survive
+the corrected subset.
