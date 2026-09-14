@@ -2,7 +2,7 @@
 set -e
 
 echo "=== [1/8] Installing pip dependencies ==="
-pip install --upgrade torch torchvision
+pip install --upgrade torch torchvision torchaudio
 pip install \
   pandas \
   numpy \
@@ -53,13 +53,22 @@ snapshot_download(
 echo ""
 echo "=== [6/8] Extracting GenBuster dataset ==="
 python -c "
-import py7zr, os
-archive = '/workspace/data/genbuster-mini/GenBuster-200K-mini.7z'
-if os.path.exists(archive):
-    py7zr.SevenZipFile(archive, mode='r').extractall(path='/workspace/data/genbuster-mini/extracted')
-    print('Extraction complete')
+import py7zr, zipfile, os
+
+base = '/workspace/data/genbuster-mini'
+dest = base + '/extracted'
+candidates = [base + '/GenBuster-200K-mini.7z', base + '/GenBuster-200K-mini.zip']
+archive = next((p for p in candidates if os.path.exists(p)), None)
+
+if archive is None:
+    print('WARNING: Archive not found at', ' or '.join(candidates))
+elif archive.endswith('.7z'):
+    py7zr.SevenZipFile(archive, mode='r').extractall(path=dest)
+    print('Extraction complete:', archive)
 else:
-    print('WARNING: Archive not found at', archive)
+    with zipfile.ZipFile(archive) as zf:
+        zf.extractall(path=dest)
+    print('Extraction complete:', archive)
 "
 
 echo ""

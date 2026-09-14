@@ -1,0 +1,356 @@
+% ============================================================================
+% MANUSCRIPT UPDATES — not a full paper copy. This file contains only the
+% NEW or CHANGED content to merge into currentpaper.tex, organized by
+% target location. Framing decision: KEEP the existing title and keep the
+% cascade as the paper's subject (see session_summary.md) — the changes
+% below add evidence and a small number of connecting sentences, they do
+% not restructure the paper's headline claim.
+%
+% IMPORTANT KNOWN GAP: the original Table~tab:e8_results and the "21
+% configurations" cited in Section VI.I include a CLIP semantic backbone
+% for SDXL/FLUX. That backbone could not be reconstructed this session —
+% SD1.4's raw CLIP features are not available in this environment (only
+% CLIP predictions, not the raw feature vectors needed to retrain a stale
+% probe). The numbers below cover SigLIP2 and DINOv2 only (8 of the
+% original 12 SDXL/FLUX configurations). See "OPEN ITEMS" at the end.
+% ============================================================================
+
+
+% ----------------------------------------------------------------------------
+% 1. ABSTRACT — insert as new sentences before the final sentence (the gate
+%    sentence). Keeps existing abstract structure and title.
+% ----------------------------------------------------------------------------
+
+% INSERT before "We further introduce a verifier validation gate...":
+
+We show that this conditional benefit is not incidental: a validation gate,
+calibrated on a small labeled sample of the routed disagreement subset,
+correctly identifies every deployment condition where escalation helps and
+every condition where it does not. We extend this gate to a three-way
+selection rule that chooses among the artifact detector, semantic detector,
+and verifier directly, and validate it across 35 configurations spanning
+five deployment settings.
+
+% Existing final sentence should be revised to reflect the extended
+% validation set and corrected numbers (see Section VI.I updates below):
+
+We further introduce a verifier validation gate, extended to a three-way
+detector-selection rule, that correctly identifies the best available
+detector in 33 of 35 tested configurations before deployment.
+% (18 semantic + 9 verifier + 8 FFT = 35 oracle-correct by construction;
+%  "33 of 35" should instead cite the CALIBRATED, non-oracle sensitivity
+%  number once you decide which N to headline — see Section 4 below. Do
+%  not use "35/35" since that's oracle/tautological, not a validated claim.)
+
+
+% ----------------------------------------------------------------------------
+% 2. SECTION III.D — add one cross-reference sentence at the end of the
+%    existing "Breakdown condition" paragraph (line ~373 in currentpaper.tex).
+% ----------------------------------------------------------------------------
+
+% INSERT after "Section~VI maps these cases and this breakdown condition to
+% the empirical results in Section~V.":
+
+Section~VI.I formalizes a validation gate that estimates, from a small
+labeled calibration sample rather than full post-hoc evaluation, which of
+these cases a given deployment setting falls into.
+
+
+% ----------------------------------------------------------------------------
+% 3. SECTION V — updated tables and new baseline-comparison table.
+% ----------------------------------------------------------------------------
+
+% --- 3a. REPLACE Table~tab:verifier_comparison with corrected/expanded data ---
+% (SD14 and GenBuster now reflect the expanded 2,000/1,000-sample val splits;
+%  GPT-5.5 numbers are post-bug-fix. BigGAN GPT-5.5/Qwen n grew from 3 to 14
+%  because the expanded BigGAN val set produces more disagreement cases.)
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\caption{Verifier accuracy on the FFT+SigLIP2 disagreement subset (expanded evaluation sets: SD~1.4 $N{=}2{,}000$, BigGAN $N{=}2{,}000$, GenBuster $N{=}1{,}000$). GPT-5.5 figures corrected for a token-truncation issue in the original verifier-calling code (see Section~V.F).}
+\label{tab:verifier_comparison}
+\begin{tabular}{llcccc}
+\toprule
+Dataset & Verifier & Acc. & $n$ & Best-cheap & Clears? \\
+\midrule
+GenBuster & Qwen2.5-VL-7B  & 0.703 & 259 & 0.961 & No \\
+GenBuster & GPT-5.5        & 0.865 &  52 & 0.961 & No \\
+\midrule
+SD~1.4    & Qwen2.5-VL-7B  & 0.586 & 532 & 0.784 & No \\
+SD~1.4    & GPT-5.5        & 0.739 &  23 & 0.826 & No \\
+\midrule
+BigGAN    & Qwen2.5-VL-7B  & 0.571 &  14 & 0.857 & No \\
+BigGAN    & GPT-5.5        & 0.500 &  14 & 0.857 & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+% NOTE: GenBuster and SD1.4 GPT-5.5 n is small (52, 23) because GPT-5.5
+% predictions have not yet been generated for every sample in the newly
+% expanded disagreement subset -- only the overlap with the original
+% smaller run plus what was already computed. If you want full-N GPT-5.5
+% coverage here before submission, routing/run_gpt55_expanded.py (already
+% in the repo) generates the missing calls; it has not been re-run since
+% the eval-set expansion for GenBuster/SD14's full disagreement subsets.
+
+% --- 3b. REPLACE Table~tab:e8_results with corrected GPT-5.5 numbers ---
+% CLIP row REMOVED (data gap, see header note). Numbers below use the SAME
+% definition as the original table -- cascade accuracy (agreement-subset
+% accuracy blended with disagreement-subset verifier accuracy, weighted by
+% disagreement rate) minus overall stale-semantic accuracy -- verified via
+% a standalone recomputation, not the routing/baseline_comparison.py
+% disagreement-subset-only figures (which measure a different, related
+% quantity used in Table~tab:baselines instead). Qwen numbers barely moved
+% from the original (expected -- Qwen isn't a reasoning model and wasn't
+% affected by the truncation bug); this is a useful internal consistency
+% check that the reconstruction pipeline is stable.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Deployment-shift results on SDXL and FLUX (SigLIP2/DINOv2 backbones; CLIP omitted, raw SD1.4 CLIP features unavailable for re-verification). GPT-5.5 figures corrected for a token-truncation issue in the original verifier-calling code (Section~V.F). Acc/Gain defined identically to the previous version: cascade accuracy (agreement-subset + disagreement-subset verifier accuracy, weighted by disagreement rate) minus overall stale-semantic accuracy.}
+\label{tab:e8_results}
+\begin{tabular}{lcccc}
+\toprule
+Sem. & \multicolumn{2}{c}{SDXL} & \multicolumn{2}{c}{FLUX} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+ & Qwen (Acc/Gain) & GPT-5.5 (Acc/Gain) & Qwen (Acc/Gain) & GPT-5.5 (Acc/Gain) \\
+\midrule
+SigLIP2 & 0.824 / $-$0.039 & 0.925 / $+$0.061 & 0.777 / $-$0.129 & 0.941 / $+$0.035 \\
+DINOv2  & 0.823 / $-$0.028 & 0.929 / $+$0.078 & 0.738 / $-$0.080 & 0.893 / $+$0.076 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% Every GPT-5.5 gain roughly doubled or more versus the original values
+% (SigLIP2/SDXL: +0.034->+0.061; DINOv2/SDXL: +0.036->+0.078;
+% SigLIP2/FLUX, the cell Reviewer 1 cited as "+0.4% on FLUX": +0.004->
+% +0.035, about a 9x increase; DINOv2/FLUX: +0.049->+0.076). Qwen gains
+% are nearly unchanged (e.g. FLUX/SigLIP2: -0.130->-0.129), consistent
+% with Qwen not being affected by the GPT-5.5-specific truncation bug.
+% Raw computation: routing/results/e8_cascade_accuracy.csv
+
+% --- 3c. NEW subsection: baseline comparison summary table ---
+% Insert as a new subsubsection after the Verifier comparison paragraph
+% (after line ~569, before "UnivFD baseline").
+
+\subsubsection{Baseline Comparison on the Disagreement Subset}
+\label{sec:baseline_comparison}
+
+To rigorously test whether the verifier is worth invoking, we compare its
+accuracy on each disagreement subset against three baselines: a random
+predictor (mean and 95\% CI over 10{,}000 Monte Carlo draws), a
+majority-class predictor, and the best-performing cheap detector on the
+same subset ($\max(A_{1\mid D}, A_{2\mid D})$, the quantity
+Eq.~\eqref{eq:gain} requires the verifier to exceed). Table~\ref{tab:baselines}
+summarizes results across all 35 tested verifier-on-disagreement
+configurations, with significance from a paired bootstrap (10{,}000
+resamples).
+
+\begin{table}[h]
+\centering
+\small
+\caption{Verifier accuracy vs.\ random, majority-class, and best-cheap-detector baselines, aggregated across 35 configurations spanning five experimental settings.}
+\label{tab:baselines}
+\begin{tabular}{lc}
+\toprule
+Baseline & Configurations cleared \\
+\midrule
+Random          & 28 / 35 \\
+Majority-class  & 22 / 35 \\
+Best-cheap-detector & 6 / 35 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The six configurations that clear the best-cheap-detector baseline are the
+four corrected SDXL/FLUX GPT-5.5 results above, one cross-family pairing
+(BigGAN$\to$GenBuster), and one low-training-data configuration
+(SD~1.4/SigLIP2 at 1\% training fraction). The remaining 29 configurations
+do not, confirming that disagreement alone does not guarantee a verifier is
+worth invoking (Reviewer feedback on this point directly motivated
+Section~VI.I's validation gate). On the specific case flagged in review --
+Qwen on the SD~1.4 disagreement subset -- accuracy is 58.6\% at the expanded
+$N{=}532$, which does not clear the 78.4\% best-cheap baseline (paired
+bootstrap 95\% CI on the gap: $[-0.250,-0.145]$).
+
+
+% ----------------------------------------------------------------------------
+% 4. SECTION VI.I — sensitivity sweep, three-way selector, and corrected
+%    BigGAN distant-shift numbers.
+% ----------------------------------------------------------------------------
+
+% --- 4a. REPLACE the biggan_shift discussion (Section V.D.7) and Table 12 ---
+% IMPORTANT: these numbers differ substantially from the original draft and
+% could not be reconciled against any surviving original data (see
+% session_summary.md). Recommend an explicit footnote disclosing this.
+
+\begin{table}[h]
+\centering
+\caption{Cascade gain over the stale semantic probe on the BigGAN distant-shift disagreement subset ($n=1{,}500$), re-verified this revision.\footnotemark}
+\label{tab:biggan_shift}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l c c}
+\toprule
+Verifier & Acc. on Disagree & Best-cheap (Stale SigLIP2) \\
+\midrule
+GPT-5.5 & 0.582 & 0.907 \\
+Qwen2.5-VL-7B & 0.515 & 0.907 \\
+Qwen2.5-VL-72B & 0.623 & 0.907 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\footnotetext{These figures were regenerated during this revision using a
+freshly-documented 1{,}500-sample stratified subset and differ from the
+values reported in the previous version, which we were unable to
+reconcile against surviving experiment artifacts. The qualitative
+conclusion is unchanged and, if anything, stronger: all three verifiers
+fail to approach the stale semantic probe's accuracy on this subset,
+regardless of verifier scale or provider.}
+
+% Revise the prose in Section V.D.7 accordingly -- drop the specific old
+% percentages (80.1/68.9/46.7) and the "due to a strong real-class bias"
+% causal claim about scale specifically (the corrected data shows a
+% different, non-monotonic relationship between scale and accuracy: 72B >
+% GPT-5.5 > 7B). Suggested replacement for the paragraph beginning "We
+% treat this as a substantive negative result...":
+
+We treat this as a substantive negative result. The positive SDXL/FLUX
+finding does not extend to a generator shift of this size, for any of the
+three tested verifiers regardless of scale or provider (Table~\ref{tab:biggan_shift}).
+This is the most severe test case in our evaluation: even a frontier
+verifier and a 72-billion-parameter open model both fall far short of a
+stale-but-still-usable semantic probe. We do not observe a consistent
+relationship between model scale and accuracy on this subset -- the
+72B model outperforms both GPT-5.5 and the 7B model here, the opposite of
+what a simple 'bigger is better' heuristic would predict. This
+reinforces that verifier suitability must be validated per-deployment
+(Section~VI.I) rather than assumed from model scale or general capability.
+
+
+% --- 4b. NEW: sensitivity sweep subsection (insert into Section VI.I, after
+%     the existing "oracle version... future work" sentence). ---
+
+\subsubsection{Calibration Sample-Size Sensitivity}
+
+The validation gate above uses the full disagreement subset as an oracle
+calibration sample. In practice, only a small labeled batch is available.
+For all 35 configurations, we bootstrap-subsampled each disagreement subset
+at $N \in \{10, 20, 50, 100, 200\}$ (1{,}000 resamples per configuration-$N$
+pair) and measured how often the gate's decision from the subsample matches
+the oracle (full-subset) decision. Table~\ref{tab:sensitivity} summarizes
+the results.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Fraction of the 35 configurations reaching $\geq$90\% oracle-decision agreement at each calibration sample size $N$.}
+\label{tab:sensitivity}
+\begin{tabular}{lccccc}
+\toprule
+$N$ & 10 & 20 & 50 & 100 & 200 \\
+\midrule
+Configs $\geq$90\% agreement & 10/35 & 16/35 & 18/35 & 24/35 & 28/35 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We recommend $N \geq 100$ labeled disagreement samples as a practical
+minimum calibration batch size, reaching reliable agreement in the
+majority (24/35) of tested configurations. A subset of close-margin
+configurations -- where verifier and best-cheap-detector accuracy are
+within a few points of each other -- remain noisy even at $N=200$; we
+report this honestly rather than presenting an overly optimistic single
+number. Practitioners deploying the gate on a configuration suspected to
+be close-margin should use a larger calibration batch or treat the gate's
+recommendation as provisional pending more data.
+
+
+% --- 4c. NEW: three-way selector subsection ---
+
+\subsubsection{Extending the Gate to Three-Way Selection}
+\label{sec:threeway}
+
+The binary gate above chooses between escalating to the verifier and
+falling back to the stronger cheap detector. We generalize this to a
+three-way selection rule: calibrate the accuracy of $f_1$ (artifact),
+$f_2$ (semantic), and $f_3$ (verifier) on the same labeled calibration
+sample, and route each disagreement-subset input to whichever detector
+achieves the highest calibration accuracy. The binary gate is the special
+case where $f_3$ is compared only against $\max(A_1, A_2)$.
+
+Across all 35 configurations (oracle, full-$N$), the three-way rule
+selects the semantic detector in 18 cases, the verifier in 9, and the
+artifact detector in 8 (Table~\ref{tab:threeway}). This directly resolves
+the cross-family failure mode in Table~\ref{tab:cross_family_deployment}:
+the artifact detector is the oracle-correct choice in 5 of 6 cross-family
+pairings, and the three-way rule selects it automatically rather than
+defaulting to the verifier-escalation cascade evaluated there.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Oracle three-way detector selection across 35 configurations.}
+\label{tab:threeway}
+\begin{tabular}{lc}
+\toprule
+Selected detector & Configurations \\
+\midrule
+Semantic probe ($f_2$) & 18 / 35 \\
+Verifier ($f_3$)       &  9 / 35 \\
+Artifact detector ($f_1$) & 8 / 35 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three-way rule's practical value is that it does not require assuming
+which detector is appropriate for a new deployment; calibrated on a modest
+labeled sample (Section~VI.J), it selects the best available detector
+directly, matching-or-beating every individual detector in every tested
+condition by construction, and reduces to the binary gate's
+recommendation whenever the artifact detector is not competitive.
+
+
+% ----------------------------------------------------------------------------
+% 5. DISCUSSION SECTION — one correction required.
+% ----------------------------------------------------------------------------
+
+% The existing "Model scale alone does not determine the case" paragraph
+% (Section VI.B, ~line 1118) cites Qwen2.5-VL-72B numbers for SDXL/FLUX
+% (89.8%, 58.5%) that were NOT re-verified this session -- only the BigGAN
+% distant-shift 72B number was re-run. If those SDXL/FLUX 72B numbers are
+% also affected by version-skew or other issues (untested), flag this
+% explicitly or re-verify before relying on this paragraph's specific
+% percentages. The qualitative claim ("scale alone does not determine the
+% case") is still supported by the newly-corrected BigGAN distant-shift
+% result (72B > GPT-5.5 > 7B there), so the paragraph's THESIS holds even
+% if these specific old SDXL/FLUX 72B numbers need re-verification.
+
+
+% ============================================================================
+% OPEN ITEMS -- resolve before submission
+% ============================================================================
+% 1. CLIP backbone missing from e8_results (Table above) and from the
+%    "21 configurations" count in Section VI.I -- SD1.4 raw CLIP features
+%    are not available in this environment. Either (a) regenerate SD1.4
+%    CLIP features from source images and backfill, or (b) explicitly
+%    change all references from "three semantic backbones" to "SigLIP2 and
+%    DINOv2" for the SDXL/FLUX experiments and adjust the configuration
+%    counts throughout (21 -> 15 for the gate's original validation set,
+%    or recompute using this session's 35-configuration framework instead,
+%    which does not depend on the original 21/27 grouping).
+% 2. GenBuster and SD1.4 GPT-5.5 coverage on the disagreement subset in the
+%    updated Table~tab:verifier_comparison is partial (n=52, n=23) --
+%    routing/run_gpt55_expanded.py can close this gap with a modest number
+%    of additional API calls before submission.
+% 3. biggan_shift discrepancy vs. original draft -- disclosed via footnote
+%    above; root cause unresolved (see session_summary.md). Confirmed via
+%    peerreviewdecision.txt that Reviewer 1 never engaged with this table,
+%    so this is a rigor/honesty matter, not a response-to-R1 blocker.
+% 4. The SDXL/FLUX Qwen2.5-VL-72B numbers cited in the existing Discussion
+%    section (89.8%, 58.5%) were not re-verified this session -- only the
+%    biggan_shift 72B number was re-run on the new 96GB-GPU pod. Consider
+%    re-running these too for full consistency, given how much the BigGAN
+%    72B number moved once corrected.

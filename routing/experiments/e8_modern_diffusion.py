@@ -251,11 +251,18 @@ def load_image_b64(path, max_size=1024):
     return base64.b64encode(buf.getvalue()).decode()
 
 
+GPT_MAX_OUTPUT_TOKENS = [2048, 4096]  # gpt-5.5 spends output-token budget on
+# hidden reasoning before writing the visible REAL/FAKE answer; 100 was too
+# low and silently truncated most responses to empty. Escalate budget on
+# empty responses instead of defaulting to a fixed label.
+
+
 def call_gpt55(client, model, b64):
     import openai
     delay = RETRY_BASE
     for attempt in range(MAX_RETRIES):
         try:
+            budget = GPT_MAX_OUTPUT_TOKENS[min(attempt, len(GPT_MAX_OUTPUT_TOKENS) - 1)]
             t0 = time.perf_counter()
             resp = client.responses.create(
                 model=model,
@@ -263,15 +270,23 @@ def call_gpt55(client, model, b64):
                     {"type": "input_text",  "text": GPT_PROMPT},
                     {"type": "input_image", "image_url": f"data:image/jpeg;base64,{b64}"},
                 ]}],
-                max_output_tokens=100,
+                max_output_tokens=budget,
             )
             lat = (time.perf_counter() - t0) * 1000
-            raw = resp.output_text.strip().upper()
-            y   = 1 if ("FAKE" in raw and "REAL" not in raw) else \
-                  0 if ("REAL" in raw and "FAKE" not in raw) else 1
+            raw = (resp.output_text or "").strip().upper()
             usage = resp.usage
             in_tok  = getattr(usage, "input_tokens",  0) or 0
             out_tok = getattr(usage, "output_tokens", 0) or 0
+
+            if not raw:
+                # Truncated before the model wrote a visible answer; escalate
+                # the budget and retry rather than guessing a label.
+                if attempt < MAX_RETRIES - 1:
+                    continue
+                return None, "EMPTY_AFTER_RETRY", in_tok, out_tok, lat
+
+            y = 1 if ("FAKE" in raw and "REAL" not in raw) else \
+                0 if ("REAL" in raw and "FAKE" not in raw) else None
             return y, raw, in_tok, out_tok, lat
         except openai.RateLimitError:
             if attempt < MAX_RETRIES - 1:
@@ -283,6 +298,7 @@ def call_gpt55(client, model, b64):
                 time.sleep(delay); delay *= 2
             else:
                 raise
+    return None, "EMPTY_AFTER_RETRY", 0, 0, 0
 
 
 def run_gpt55_on_disagree(ds_name, cfg, sem_name, df_disagree, model, api_key, out_csv):

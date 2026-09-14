@@ -30,3 +30,6 @@ CNNDetection/checkpoints/
 
 # Claude Code internal state
 .claude/
+
+# OAuth/service-account credentials
+service-account-key.json
