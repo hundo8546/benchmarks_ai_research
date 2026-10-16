@@ -1,11 +1,12 @@
 """
-Retrain bandit routers on new Qwen v2 predictions.
+Retrain learned escalation classifiers on new Qwen v2 predictions.
 
-The original bandits were trained on old Qwen outputs (broken text decoding,
-near-zero fake recall on static images). After updating to score-decoded Qwen
-with the neutral prompt, those bandit policies are mismatched against the new
-verifier. This script retrains the bandit on each dataset using the same
-feature vector and reward formulation, then saves new pickle files that
+The original learned escalation classifiers were trained on old Qwen outputs
+(broken text decoding, near-zero fake recall on static images). After
+updating to score-decoded Qwen with the neutral prompt, those learned-
+escalation-classifier policies are mismatched against the new verifier. This
+script retrains the learned escalation classifier on each dataset using the
+same feature vector and reward formulation, then saves new pickle files that
 analysis2.py will load.
 
 Run this before analysis2.py. Takes ~10 seconds total.
@@ -107,11 +108,12 @@ def load_dataset(prefix: str, qwen_filename: str, val_paths_file: str):
 
 
 # ============================================================
-# BANDIT TRAINING
+# LEARNED ESCALATION CLASSIFIER TRAINING
 # ============================================================
 def compute_bandit_targets(df: pd.DataFrame, lam: float = BANDIT_LAMBDA) -> pd.DataFrame:
     """
-    Compute per-sample targets for the bandit by simulating the reward of
+    Compute per-sample targets for the learned escalation classifier by
+    simulating the reward of
     stopping at CNN vs escalating to Qwen, including latency cost.
     Target = 1 if escalate reward > stop reward, else 0.
     """
@@ -130,8 +132,8 @@ def compute_bandit_targets(df: pd.DataFrame, lam: float = BANDIT_LAMBDA) -> pd.D
 
 def train_bandit(df: pd.DataFrame, val_paths: np.ndarray):
     """
-    Train a logistic regression bandit on the non-val portion of the dataset.
-    Returns (model, scaler) ready to be pickled.
+    Train a logistic regression learned escalation classifier on the non-val
+    portion of the dataset. Returns (model, scaler) ready to be pickled.
     """
     df = compute_bandit_targets(df)
 
@@ -147,7 +149,7 @@ def train_bandit(df: pd.DataFrame, val_paths: np.ndarray):
     if len(np.unique(y_train)) < 2:
         raise RuntimeError(
             f"Only one class in training targets (all {np.unique(y_train)}). "
-            f"Cannot train bandit — try adjusting LAMBDA or check your data."
+            f"Cannot train learned escalation classifier — try adjusting LAMBDA or check your data."
         )
 
     # Class balance info
@@ -172,8 +174,8 @@ def train_bandit(df: pd.DataFrame, val_paths: np.ndarray):
 
 def evaluate_bandit_on_val(df: pd.DataFrame, val_paths: np.ndarray, model, scaler):
     """
-    Quick sanity-check eval of the trained bandit on the val split.
-    Reports routed accuracy and escalation rate.
+    Quick sanity-check eval of the trained learned escalation classifier on
+    the val split. Reports routed accuracy and escalation rate.
     """
     val_df = df[df["path"].isin(val_paths)].reset_index(drop=True)
 
@@ -195,7 +197,7 @@ def evaluate_bandit_on_val(df: pd.DataFrame, val_paths: np.ndarray, model, scale
 # ============================================================
 def main():
     print("=" * 60)
-    print("Retraining bandits on new Qwen v2 predictions")
+    print("Retraining learned escalation classifiers on new Qwen v2 predictions")
     print("=" * 60)
 
     for prefix, qwen_filename, val_paths_file, output_pickle in DATASETS:

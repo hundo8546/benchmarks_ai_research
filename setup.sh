@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== [1/8] Installing pip dependencies ==="
+# echo "=== [1/8] Installing pip dependencies ==="
 pip install --upgrade torch torchvision torchaudio
 pip install \
   pandas \
@@ -23,63 +23,63 @@ pip install \
   ipykernel \
   typer
 
-echo ""
-echo "=== [2/8] Creating required directories ==="
-mkdir -p /workspace/data/genbuster-mini/extracted
-mkdir -p /workspace/benchmarks_ai_research/CNNDetection/checkpoints
-mkdir -p /workspace/benchmarks_ai_research/routing
+# echo ""
+# echo "=== [2/8] Creating required directories ==="
+# mkdir -p /workspace/data/genbuster-mini/extracted
+# mkdir -p /workspace/benchmarks_ai_research/CNNDetection/checkpoints
+# mkdir -p /workspace/benchmarks_ai_research/routing
+
+# echo ""
+# echo "=== [3/8] Setting PYTHONPATH ==="
+# export PYTHONPATH=$PYTHONPATH:/workspace/benchmarks_ai_research/CNNDetection
+# echo 'export PYTHONPATH=$PYTHONPATH:/workspace/benchmarks_ai_research/CNNDetection' >> ~/.bashrc
+
+# echo ""
+# echo "=== [4/8] HuggingFace login ==="
+# read -p "Enter HuggingFace token: " HF_TOKEN
+# python -c "from huggingface_hub import login; login(token='$HF_TOKEN')"
 
 echo ""
-echo "=== [3/8] Setting PYTHONPATH ==="
-export PYTHONPATH=$PYTHONPATH:/workspace/benchmarks_ai_research/CNNDetection
-echo 'export PYTHONPATH=$PYTHONPATH:/workspace/benchmarks_ai_research/CNNDetection' >> ~/.bashrc
+# echo "=== [5/8] Downloading GenBuster dataset ==="
+# python -c "
+# from huggingface_hub import snapshot_download
+# snapshot_download(
+#     repo_id='l8cv/GenBuster-200K-mini',
+#     repo_type='dataset',
+#     local_dir='/workspace/data/genbuster-mini'
+# )
+# "
 
-echo ""
-echo "=== [4/8] HuggingFace login ==="
-read -p "Enter HuggingFace token: " HF_TOKEN
-python -c "from huggingface_hub import login; login(token='$HF_TOKEN')"
+# echo ""
+# echo "=== [6/8] Extracting GenBuster dataset ==="
+# python -c "
+# import py7zr, zipfile, os
 
-echo ""
-echo "=== [5/8] Downloading GenBuster dataset ==="
-python -c "
-from huggingface_hub import snapshot_download
-snapshot_download(
-    repo_id='l8cv/GenBuster-200K-mini',
-    repo_type='dataset',
-    local_dir='/workspace/data/genbuster-mini'
-)
-"
+# base = '/workspace/data/genbuster-mini'
+# dest = base + '/extracted'
+# candidates = [base + '/GenBuster-200K-mini.7z', base + '/GenBuster-200K-mini.zip']
+# archive = next((p for p in candidates if os.path.exists(p)), None)
 
-echo ""
-echo "=== [6/8] Extracting GenBuster dataset ==="
-python -c "
-import py7zr, zipfile, os
+# if archive is None:
+#     print('WARNING: Archive not found at', ' or '.join(candidates))
+# elif archive.endswith('.7z'):
+#     py7zr.SevenZipFile(archive, mode='r').extractall(path=dest)
+#     print('Extraction complete:', archive)
+# else:
+#     with zipfile.ZipFile(archive) as zf:
+#         zf.extractall(path=dest)
+#     print('Extraction complete:', archive)
+# "
 
-base = '/workspace/data/genbuster-mini'
-dest = base + '/extracted'
-candidates = [base + '/GenBuster-200K-mini.7z', base + '/GenBuster-200K-mini.zip']
-archive = next((p for p in candidates if os.path.exists(p)), None)
+# echo ""
+# echo "=== [7/8] Downloading CNNDetection weights ==="
+# wget -q --show-progress \
+#   -O /workspace/benchmarks_ai_research/CNNDetection/checkpoints/blur_jpg_prob0.1.pth \
+#   "https://www.dropbox.com/s/h7tkpcgiwuftb6g/blur_jpg_prob0.1.pth?dl=1"
 
-if archive is None:
-    print('WARNING: Archive not found at', ' or '.join(candidates))
-elif archive.endswith('.7z'):
-    py7zr.SevenZipFile(archive, mode='r').extractall(path=dest)
-    print('Extraction complete:', archive)
-else:
-    with zipfile.ZipFile(archive) as zf:
-        zf.extractall(path=dest)
-    print('Extraction complete:', archive)
-"
-
-echo ""
-echo "=== [7/8] Downloading CNNDetection weights ==="
-wget -q --show-progress \
-  -O /workspace/benchmarks_ai_research/CNNDetection/checkpoints/blur_jpg_prob0.1.pth \
-  "https://www.dropbox.com/s/h7tkpcgiwuftb6g/blur_jpg_prob0.1.pth?dl=1"
-
-wget -q --show-progress \
-  -O /workspace/benchmarks_ai_research/CNNDetection/checkpoints/blur_jpg_prob0.5.pth \
-  "https://www.dropbox.com/s/2g2jagq2jn1fd0i/blur_jpg_prob0.5.pth?dl=1"
+# wget -q --show-progress \
+#   -O /workspace/benchmarks_ai_research/CNNDetection/checkpoints/blur_jpg_prob0.5.pth \
+#   "https://www.dropbox.com/s/2g2jagq2jn1fd0i/blur_jpg_prob0.5.pth?dl=1"
 
 echo ""
 echo "=== [8/8] Verifying imports ==="

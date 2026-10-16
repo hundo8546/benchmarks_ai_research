@@ -113,7 +113,7 @@ def evaluate_methods(df, dataset_name):
         float(df["qwen_input_tokens"].mean()),
         float(df["qwen_output_tokens"].mean()))
 
-    # Bandit (if available)
+    # Learned escalation classifier (if available)
     prefix = DATASETS[dataset_name]["prefix"]
     bandit_pkl = os.path.join(ROUTING_BASE, f"{prefix}bandit_model.pkl")
     if not os.path.exists(bandit_pkl):
@@ -141,12 +141,12 @@ def evaluate_methods(df, dataset_name):
             b_lats = np.where(actions == 1,
                               LATENCY_CHEAP_MS + df["latency_qwen_ms"].values,
                               LATENCY_CHEAP_MS)
-            row("Bandit", bandit_pred, float(np.mean(b_lats)),
+            row("Learned escalation classifier", bandit_pred, float(np.mean(b_lats)),
                 float(np.mean(actions)),
                 float(np.mean(np.where(actions == 1, df["qwen_input_tokens"].values, 0))),
                 float(np.mean(np.where(actions == 1, df["qwen_output_tokens"].values, 0))))
         except Exception as e:
-            print(f"  Bandit failed for {dataset_name}: {e}")
+            print(f"  Learned escalation classifier failed for {dataset_name}: {e}")
 
     return pd.DataFrame(rows)
 

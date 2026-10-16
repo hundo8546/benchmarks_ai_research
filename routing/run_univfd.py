@@ -1,11 +1,14 @@
 import sys
 sys.path.insert(0, '/workspace/benchmarks_ai_research/UniversalFakeDetect')
 
+import os
 import torch
 import numpy as np
 import pandas as pd
 from PIL import Image
 from torchvision import transforms
+from decord import VideoReader, cpu
+import cv2
 from models.clip_models import CLIPModel
 
 BASE = "/workspace/benchmarks_ai_research/routing/"
@@ -28,13 +31,21 @@ transform = transforms.Compose([
                          [0.26862954, 0.26130258, 0.27577711])
 ])
 
+def load_image(path):
+    if os.path.splitext(path)[1].lower() == ".mp4":
+        vr = VideoReader(path, ctx=cpu(0))
+        frame = vr[0].asnumpy()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(frame)
+    return Image.open(path).convert("RGB")
+
 def run_inference(paths, y_true, label):
     preds, probs = [], []
     for i, path in enumerate(paths):
         if i % 50 == 0:
             print(f"{label}: {i}/{len(paths)}")
         try:
-            img = Image.open(path).convert("RGB")
+            img = load_image(path)
             x = transform(img).unsqueeze(0).to(device)
             with torch.no_grad():
                 logit = model(x)

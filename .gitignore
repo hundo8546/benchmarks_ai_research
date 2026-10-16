@@ -33,3 +33,28 @@ CNNDetection/checkpoints/
 
 # OAuth/service-account credentials
 service-account-key.json
+.openai_api_key
+.env
+.env.*
+
+# OpenAI Batch API request/response payloads (base64-encoded images; ~6GB,
+# regenerable from routing/build_batch_request_sets.py + already-downloaded
+# source images). The small, valuable outputs (CONSOLIDATED_*.csv, parsed
+# predictions, manifests, custom_id maps) are plain .csv/.md files in the
+# same directory and are NOT excluded by this rule.
+routing/results/batch_requests/*.jsonl
+routing/results/batch_requests/outputs/*.jsonl
+*.buggy_backup
+
+# Regenerable intermediate feature caches (re-extractable from source images
+# via the robustness ablation scripts)
+routing/results/postprocessing_robustness_cache/
+routing/results/compression_extended_cache/
+*.leaky_backup
+
+# Pre-existing, unrelated nested git repository -- not part of this session's
+# work; excluded rather than added as an embedded repo / submodule.
+/UniversalFakeDetect/
+
+# Explicit keep: small reference files that would otherwise match *.txt above
+!claude_context_notes/coco_citation.txt

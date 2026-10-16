@@ -1,10 +1,11 @@
 """
-Retrain bandit routers on FFT + SigLIP2 features (fixing the Table 15 vs 16
-unfair-comparison issue raised in review): the original bandit
-(retrain_bandits.py) was trained on CNNSpot + CLIP features while the
-disagreement rule it's compared against uses FFT + SigLIP2 + Qwen. This
-script retrains the bandit with the same FFT + SigLIP2 backbone so both
-routing policies are compared on equal footing.
+Retrain learned escalation classifiers on FFT + SigLIP2 features (fixing the
+Table 15 vs 16 unfair-comparison issue raised in review): the original
+learned escalation classifier (retrain_bandits.py) was trained on CNNSpot +
+CLIP features while the disagreement rule it's compared against uses
+FFT + SigLIP2 + Qwen. This script retrains the learned escalation classifier
+with the same FFT + SigLIP2 backbone so both routing policies are compared
+on equal footing.
 
 Mirrors retrain_bandits.py's feature engineering and reward formulation,
 substituting:
@@ -164,9 +165,10 @@ def train_bandit(df: pd.DataFrame, val_paths: np.ndarray):
     if len(train_idx) == 0:
         # Qwen predictions don't cover the training-split portion of this
         # dataset (only the held-out val set). Fall back to an internal
-        # 70/30 split of the available (val-covered) rows so the bandit can
-        # still be fit; this deviates from the standard train/val protocol
-        # and should be caveated wherever these numbers are reported.
+        # 70/30 split of the available (val-covered) rows so the learned
+        # escalation classifier can still be fit; this deviates from the
+        # standard train/val protocol and should be caveated wherever these
+        # numbers are reported.
         internal_split = True
         rng = np.random.default_rng(42)
         all_idx = df.index.values
@@ -186,7 +188,7 @@ def train_bandit(df: pd.DataFrame, val_paths: np.ndarray):
     if len(np.unique(y_train)) < 2:
         raise RuntimeError(
             f"Only one class in training targets (all {np.unique(y_train)}). "
-            f"Cannot train bandit."
+            f"Cannot train learned escalation classifier."
         )
 
     pos_rate = np.mean(y_train)
@@ -224,7 +226,7 @@ def evaluate_bandit(df: pd.DataFrame, eval_idx, model, scaler):
 
 def main():
     print("=" * 60)
-    print("Retraining bandits on FFT + SigLIP2 + Qwen features")
+    print("Retraining learned escalation classifiers on FFT + SigLIP2 + Qwen features")
     print("=" * 60)
 
     for ds_name, prefix, qwen_filename, val_paths_file, output_pickle in DATASETS:
@@ -247,7 +249,7 @@ def main():
             eval_label = "official val split"
 
         val_acc, val_esc, eval_df = evaluate_bandit(df, eval_idx, model, scaler)
-        print(f"  {eval_label}: bandit accuracy={val_acc:.3f}  escalation_rate={val_esc:.3f}")
+        print(f"  {eval_label}: learned escalation classifier accuracy={val_acc:.3f}  escalation_rate={val_esc:.3f}")
 
         # Disagreement-rule accuracy on the same evaluation rows, for direct comparison
         dis_pred = np.where(eval_df["disagree"] == 1, eval_df["y_qwen"], eval_df["y_fft"])
@@ -256,7 +258,7 @@ def main():
         print(f"  {eval_label}: disagreement-rule accuracy={dis_acc:.3f}  escalation_rate={dis_esc:.3f}")
         if internal_split:
             print(f"  CAVEAT: {ds_name} Qwen predictions only cover the official val "
-                  f"split, so this bandit was fit/evaluated on an internal split of "
+                  f"split, so this learned escalation classifier was fit/evaluated on an internal split of "
                   f"those same 400 samples rather than the training-split protocol "
                   f"used for SD14/BigGAN. Not directly comparable to the other two "
                   f"datasets' numbers without a Qwen rerun on GenBuster's training split.")

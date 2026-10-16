@@ -44,7 +44,7 @@ COLORS = {
     "Entropy thresh": "#378ADD",
     "Entropy matched rate": "#5DA5DA",
     "Always escalate": "#D85A30",
-    "Bandit": "#BA7517",
+    "Learned escalation classifier": "#BA7517",
     "Disagree thresh": "#1D9E75",
 }
 
@@ -54,7 +54,7 @@ METHOD_ORDER = [
     "Disagree ensemble",
     "Entropy thresh",
     "Entropy matched rate",
-    "Bandit",
+    "Learned escalation classifier",
     "Disagree thresh",
     "Always escalate",
 ]
@@ -348,7 +348,7 @@ def run_all_methods(df: pd.DataFrame, bandit, scaler) -> Dict[str, Dict]:
     results["Disagree ensemble"] = run_disagree_ensemble(df)
     results["Entropy thresh"] = run_entropy_threshold(df, tau=0.5)
     results["Disagree thresh"] = run_disagree_thresh(df)
-    results["Bandit"] = run_bandit(df, bandit, scaler)
+    results["Learned escalation classifier"] = run_bandit(df, bandit, scaler)
     results["Always escalate"] = run_always_escalate(df)
 
     disagree_rate = results["Disagree thresh"]["escalation_rate"]
@@ -404,7 +404,7 @@ def compute_escalation_breakdown(df: pd.DataFrame, results: Dict[str, Dict]) -> 
     }
 
     rows = []
-    bandit_esc = np.array(results["Bandit"]["escalated"])
+    bandit_esc = np.array(results["Learned escalation classifier"]["escalated"])
     disagree_esc = np.array(results["Disagree thresh"]["escalated"])
     entropy_esc = np.array(results["Entropy thresh"]["escalated"])
 
@@ -415,7 +415,7 @@ def compute_escalation_breakdown(df: pd.DataFrame, results: Dict[str, Dict]) -> 
         rows.append({
             "Case": label,
             "n": len(subset),
-            "Bandit esc.": float(np.mean(bandit_esc[idx])),
+            "Learned escalation classifier esc.": float(np.mean(bandit_esc[idx])),
             "Disagree esc.": float(np.mean(disagree_esc[idx])),
             "Entropy esc.": float(np.mean(entropy_esc[idx])),
         })
@@ -574,7 +574,7 @@ def plot_token_pareto(summary_gb, summary_sd, summary_bg):
     methods_to_show = [
         "Entropy thresh",
         "Entropy matched rate",
-        "Bandit",
+        "Learned escalation classifier",
         "Disagree thresh",
         "Always escalate",
     ]
@@ -724,7 +724,8 @@ def plot_escalation(esc_gb, esc_sd, esc_bg):
         x = np.arange(len(esc))
         w = 0.25
 
-        ax.bar(x - w, esc["Bandit esc."], w, label="Bandit", color=COLORS["Bandit"], alpha=0.9)
+        ax.bar(x - w, esc["Learned escalation classifier esc."], w, label="Learned escalation classifier",
+               color=COLORS["Learned escalation classifier"], alpha=0.9)
         ax.bar(x, esc["Disagree esc."], w, label="Disagree thresh", color=COLORS["Disagree thresh"], alpha=0.9)
         ax.bar(x + w, esc["Entropy esc."], w, label="Entropy thresh", color=COLORS["Entropy thresh"], alpha=0.9)
 
@@ -929,7 +930,7 @@ def plot_ablation_features(abl_rows: List[Dict]):
     ax.set_ylabel("Accuracy")
     ax.set_ylim(0.3, 1.0)
     ax.axhline(0.5, color="gray", linestyle=":", linewidth=0.8, alpha=0.6)
-    ax.set_title("Feature ablation: bandit routing accuracy (GenBuster)", fontsize=11, fontweight="bold")
+    ax.set_title("Feature ablation: learned-escalation-classifier routing accuracy (GenBuster)", fontsize=11, fontweight="bold")
 
     for bar, acc in zip(bars, accs):
         ax.text(
@@ -956,12 +957,12 @@ def plot_ablation_entropy(tau_rows: List[Dict]):
     escs = [r["Esc Rate"] for r in tau_rows]
 
     ax1.plot(taus, accs, marker="o", linewidth=2, color=COLORS["Entropy thresh"], label="Accuracy")
-    ax2.plot(taus, escs, marker="s", linewidth=2, linestyle="--", color=COLORS["Bandit"], label="Escalation rate")
+    ax2.plot(taus, escs, marker="s", linewidth=2, linestyle="--", color=COLORS["Learned escalation classifier"], label="Escalation rate")
 
     ax1.axhline(0.5, color="gray", linestyle=":", linewidth=0.8, alpha=0.5)
     ax1.set_xlabel("Entropy threshold tau")
     ax1.set_ylabel("Accuracy", color=COLORS["Entropy thresh"])
-    ax2.set_ylabel("Escalation rate", color=COLORS["Bandit"])
+    ax2.set_ylabel("Escalation rate", color=COLORS["Learned escalation classifier"])
     ax1.set_ylim(0.3, 1.0)
     ax2.set_ylim(0.0, 1.0)
     ax1.set_title("Entropy threshold sensitivity (GenBuster)", fontsize=11, fontweight="bold")
@@ -985,13 +986,13 @@ def plot_soft_disagreement(disagree_thresh_rows: List[Dict]):
     esc_vals = [r["Esc Rate"] for r in disagree_thresh_rows]
 
     ax1.plot(thresh_vals, accs_vals, color=COLORS["Disagree thresh"], marker="o", linewidth=2, label="Accuracy")
-    ax2.plot(thresh_vals, esc_vals, color=COLORS["Bandit"], marker="s", linewidth=2, linestyle="--", label="Escalation rate")
+    ax2.plot(thresh_vals, esc_vals, color=COLORS["Learned escalation classifier"], marker="s", linewidth=2, linestyle="--", label="Escalation rate")
 
     ax1.axvline(0.0, color="gray", linestyle=":", linewidth=0.8, alpha=0.5)
     ax1.axhline(0.5, color="gray", linestyle=":", linewidth=0.8, alpha=0.3)
     ax1.set_xlabel("Prob-gap threshold")
     ax1.set_ylabel("Accuracy", color=COLORS["Disagree thresh"])
-    ax2.set_ylabel("Escalation rate", color=COLORS["Bandit"])
+    ax2.set_ylabel("Escalation rate", color=COLORS["Learned escalation classifier"])
     ax1.set_ylim(0.3, 1.0)
     ax2.set_ylim(0.0, 1.1)
     ax1.set_title("Soft disagreement threshold sensitivity (GenBuster)", fontsize=11, fontweight="bold")
@@ -1093,7 +1094,7 @@ def plot_transfer(transfer_rows: List[Dict]):
     ax.set_yticklabels(train_names)
     ax.set_xlabel("Test dataset")
     ax.set_ylabel("Train dataset")
-    ax.set_title("Cross-dataset bandit transfer accuracy", fontsize=11, fontweight="bold")
+    ax.set_title("Cross-dataset learned-escalation-classifier transfer accuracy", fontsize=11, fontweight="bold")
 
     for i in range(3):
         for j in range(3):
@@ -1274,7 +1275,7 @@ print(r"\toprule")
 print(r"Method & Input Tokens & Output Tokens & Esc. Rate \\")
 print(r"\midrule")
 
-for method in ["Entropy thresh", "Entropy matched rate", "Bandit", "Disagree thresh", "Always escalate"]:
+for method in ["Entropy thresh", "Entropy matched rate", "Learned escalation classifier", "Disagree thresh", "Always escalate"]:
     r = res_gb[method]
 
     print(
@@ -1305,5 +1306,5 @@ for method in ["CNN-only", "Disagree thresh", "Always escalate"]:
 
 # Escalation sanity
 print("\nEscalation rates:")
-for method in ["Disagree thresh", "Entropy thresh", "Entropy matched rate", "Bandit"]:
+for method in ["Disagree thresh", "Entropy thresh", "Entropy matched rate", "Learned escalation classifier"]:
     print(f"{method:<25} {res_gb[method]['escalation_rate']:.3f}")

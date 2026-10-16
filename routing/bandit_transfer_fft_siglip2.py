@@ -1,15 +1,18 @@
 """
-Cross-dataset bandit transfer matrix using the fair FFT + SigLIP2 + Qwen
-bandit (see retrain_bandits_fft_siglip2.py), matching the backbone used by
-the disagreement rule it's compared against (Table 15 vs 16 fairness fix).
+Cross-dataset learned-escalation-classifier transfer matrix using the fair
+FFT + SigLIP2 + Qwen learned escalation classifier (see
+retrain_bandits_fft_siglip2.py), matching the backbone used by the
+disagreement rule it's compared against (Table 15 vs 16 fairness fix).
 
-For each (train, test) pair, train a bandit on `train`'s training-split rows
-and evaluate on `test`'s val split. Diagonal entries are in-domain.
+For each (train, test) pair, train a learned escalation classifier on
+`train`'s training-split rows and evaluate on `test`'s val split. Diagonal
+entries are in-domain.
 
 GenBuster has no Qwen coverage outside its own val set, so it cannot serve
 as a `train` source with the standard protocol; its row reuses the
-internal-split-trained bandit from retrain_bandits_fft_siglip2.py (fit on a
-held-out subset of its own val set) — caveated in the output.
+internal-split-trained learned escalation classifier from
+retrain_bandits_fft_siglip2.py (fit on a held-out subset of its own val set)
+— caveated in the output.
 """
 import os
 import sys
@@ -61,21 +64,21 @@ def main():
         df, val_paths = load_dataset(ds_name, qwen_filename, val_paths_file)
         data[ds_name] = (df, val_paths)
 
-    print("\nFitting in-train-domain bandits...")
+    print("\nFitting in-train-domain learned escalation classifiers...")
     models = {}
     for ds_name in ["SD14", "BigGAN"]:
         df, val_paths = data[ds_name]
         model, scaler = fit_full_bandit(ds_name, df, val_paths)
         models[ds_name] = (model, scaler)
 
-    # GenBuster: reuse the internal-split bandit (no train-split Qwen coverage)
-    print("GenBuster: using internal-split bandit (no train-split Qwen coverage)")
+    # GenBuster: reuse the internal-split learned escalation classifier (no train-split Qwen coverage)
+    print("GenBuster: using internal-split learned escalation classifier (no train-split Qwen coverage)")
     df_gb, val_paths_gb = data["GenBuster"]
     model_gb, scaler_gb, internal_split, _ = train_bandit(df_gb, val_paths_gb)
     models["GenBuster"] = (model_gb, scaler_gb)
 
     print("\n" + "=" * 70)
-    print("Cross-dataset FFT+SigLIP2 bandit transfer accuracy")
+    print("Cross-dataset FFT+SigLIP2 learned escalation classifier transfer accuracy")
     print("=" * 70)
     print(f"{'Train':<12} {'Test':<12} {'Accuracy':>10} {'EscRate':>10}")
     print("-" * 70)
@@ -95,7 +98,7 @@ def main():
     out_path = os.path.join(BASE, "bandit_transfer_fft_siglip2.csv")
     df_out.to_csv(out_path, index=False)
     print(f"\nSaved {out_path}")
-    print("NOTE: GenBuster row uses a bandit fit on an internal split of its own "
+    print("NOTE: GenBuster row uses a learned escalation classifier fit on an internal split of its own "
           "val set (no train-split Qwen coverage exists) -- caveat when reporting.")
 
 

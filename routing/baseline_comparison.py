@@ -3,12 +3,6 @@ Reviewer 1 Comment 3 — random / majority-class / best-cheap-detector baselines
 on the verifier-on-disagreement-subset cells across Tables:
   verifier_comparison, e8_results, cross_family_deployment, limited_data.
 
-biggan_shift is NOT included here: the distant-shift (SD14-stale-probe ->
-GenImage BigGAN, n=1500) per-sample predictions are not present in this repo
-checkout, and GenImage BigGAN images are not currently downloaded (blocked
-on rclone GenImage transfer). See claude_context_notes/resubmissionplan.md
-Section 3.3/3.1.
-
 Usage:
     python baseline_comparison.py
 """

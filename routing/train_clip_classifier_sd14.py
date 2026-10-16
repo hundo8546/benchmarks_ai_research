@@ -20,7 +20,7 @@ groups = df["generator"].values
 print("\nGenerator distribution:")
 print(df["generator"].value_counts())
 
-# First split: separate clip vs bandit data
+# First split: separate clip vs learned-escalation-classifier (routing-pool) data
 # Use stratified split to maintain class distribution
 clip_idx, bandit_idx = train_test_split(
     np.arange(len(X)), 

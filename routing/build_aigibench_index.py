@@ -84,6 +84,25 @@ def main():
         print("No real images found — check extraction.")
         return
 
+    # Phase 0 fix: exclude SD14's own eval-set real images from the pool we
+    # sample SDXL/FLUX "real" images from. Without this, the same physical
+    # photo can be scored both as SD14 in-domain real AND as SDXL/FLUX
+    # deployment-shift real, since both draws come from this same
+    # REAL_DIR pool (measured overlap before this fix: ~31.5%/33.1%, see
+    # routing/pipeline/dedup.py). Same seed=42, same n_samples, same output
+    # format — this is the only change.
+    sd14_val_paths_npy = "/workspace/benchmarks_ai_research/routing/sd14_bandit_val_paths.npy"
+    if os.path.exists(sd14_val_paths_npy):
+        import numpy as np
+        sd14_eval_paths = set(np.load(sd14_val_paths_npy, allow_pickle=True).tolist())
+        before = len(real_imgs)
+        real_imgs = [p for p in real_imgs if p not in sd14_eval_paths]
+        print(f"  Excluded {before - len(real_imgs)} real images already in "
+              f"SD14's eval split -> {len(real_imgs)} real images remain to sample from")
+    else:
+        print(f"  WARNING: {sd14_val_paths_npy} not found, cannot exclude "
+              "SD14 eval-set real images — overlap check should be rerun")
+
     for generator, gen_dir, out_name in [
         ("sdxl",      SDXL_DIR, "sdxl_index.csv"),
         ("flux1-dev", FLUX_DIR, "flux_index.csv"),
