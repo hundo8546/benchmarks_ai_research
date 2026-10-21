@@ -379,11 +379,13 @@ semantic prediction rather than resolving genuine difficulty.
 
 ### Comment 3 — Precision on the "significantly outperforms random triggering" claim
 
-**Action:** Rewritten with the reviewer's own numbers: the gain is practically
-substantial only on SD1.4 (0.867 vs. 0.839); on BigGAN the gain is statistically
-outside the random baseline's CI but small in absolute terms (0.998 vs. 0.994,
-consistent with a ceiling effect); on GenBuster the cascade does not outperform the
-random baseline (0.898 vs. 0.904).
+**Action:** Rewritten to state the gain per dataset. Table `cheap_trigger` is now
+recomputed on the same evaluation sets as Table `main_results`, and its random baseline
+keeps the semantic prediction for inputs it does not escalate. The gain is practically
+substantial only on SD1.4 (0.874 vs. 0.833). On BigGAN it is statistically outside the
+random baseline's CI but small in absolute terms (0.995 vs. 0.990, consistent with a
+ceiling effect). On GenBuster the cascade does not outperform the random baseline
+(0.899 vs. 0.900).
 
 ### Comment 4 — Unified Case 1/2/3/Breakdown summary table
 
