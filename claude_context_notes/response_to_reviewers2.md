@@ -192,7 +192,8 @@ conclusions changed in the process, and the text says so:
 
 **Action:** Table 5 and the Limitations-section class-wise paragraph rebuilt from
 one consistent, 100%-coverage probe snapshot. Confusion matrices released.
-Provenance of the original discrepancy documented in the Limitations section. All
+The provenance of the original discrepancy is explained in this response (the
+manuscript reports only the corrected figures). All
 tables regenerated from a single pipeline entry point on the canonical evaluation
 sets.
 
