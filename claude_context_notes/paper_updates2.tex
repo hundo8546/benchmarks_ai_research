@@ -107,7 +107,7 @@ This work makes the following contributions:
     
     \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%. A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
 
-    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, independently validating disagreement as the dominant routing signal while providing no measurable improvement over the parameter-free rule. A joint artifact-and-semantic confidence-routing baseline, evaluated at matched escalation rates with thresholds fit on held-out data, is outperformed by the disagreement rule in all 7 tested configurations.
+    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, independently validating disagreement as the dominant routing signal while providing no measurable improvement over the parameter-free rule. Against a joint artifact-and-semantic confidence-routing baseline with thresholds fit on held-out data, the disagreement rule is more accurate on two of three in-domain benchmarks but has no accuracy advantage under deployment shift, where the calibrated confidence rule is tied or better; disagreement's advantage is that it needs no threshold or calibration data.
 
     \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 20--21 of 32 eligible configurations at $N=100$ and 24--26 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
 
@@ -895,6 +895,62 @@ Section~VI.C.
 Selective routing reduces latency substantially relative to uniform Qwen invocation
 (Table~\ref{tab:main_results}). In-domain, the semantic-only baseline remains faster and
 more accurate than escalation, separating routing efficiency from verifier utility.
+
+\textbf{Joint confidence-routing baseline.} The entropy baseline in
+Table~\ref{tab:main_results} thresholds only the artifact detector's confidence. As a
+stronger comparison, we define a joint signal
+$H_{\text{joint}}(x) = \max\big(H(p_a(x)),\, H(p_s(x))\big)$, the binary entropy of the
+less confident of the two cheap probes, and escalate when $H_{\text{joint}}(x) > \tau$.
+The threshold $\tau$ is the $(1-\hat{p}_D)$-quantile of $H_{\text{joint}}$ on a
+validation split, where $\hat{p}_D$ is the disagreement rate on that same split, so both
+rules target the same escalation rate. In-domain, the validation split is a seeded 50\%
+sub-split of each dataset's probe-training pool, disjoint from the evaluation set. SDXL
+and FLUX have no training split, so $\tau$ is fit on SD~1.4's validation split with the
+same stale probes and then frozen. Inputs that are not escalated keep the semantic
+probe's prediction. Escalated inputs receive the same verifier labels the disagreement
+rule uses: Qwen2.5-VL-7B in-domain, and on SDXL/FLUX the uniform GPT-5.5 run of
+Section~\ref{sec:cost_accounting}, which labels every image.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\caption{Disagreement routing versus joint confidence routing. Accuracy with escalation rate in parentheses; $\Delta$ = joint confidence $-$ disagreement, with a paired-bootstrap 95\% CI (10{,}000 resamples). $^\ast$ CI excludes zero.}
+\label{tab:confidence_routing}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+Config & Verifier & $n$ & Disagreement & Joint conf. & $\Delta$ [95\% CI] \\
+\midrule
+GenBuster & Qwen-7B & 1{,}000 & 0.899 (0.259) & 0.894 (0.267) & $-$0.005 [$-$0.025, $+$0.014] \\
+SD~1.4 & Qwen-7B & 2{,}000 & 0.874 (0.266) & 0.852 (0.250) & $-$0.022$^\ast$ [$-$0.037, $-$0.007] \\
+BigGAN & Qwen-7B & 2{,}000 & 0.995 (0.007) & 0.988 (0.016) & $-$0.007$^\ast$ [$-$0.011, $-$0.004] \\
+\midrule
+SDXL/SigLIP2 & GPT-5.5 & 4{,}000 & 0.925 (0.363) & 0.938 (0.357) & $+$0.014$^\ast$ [$+$0.006, $+$0.021] \\
+SDXL/DINOv2 & GPT-5.5 & 4{,}000 & 0.930 (0.385) & 0.923 (0.354) & $-$0.006 [$-$0.015, $+$0.002] \\
+FLUX/SigLIP2 & GPT-5.5 & 4{,}000 & 0.940 (0.419) & 0.942 (0.318) & $+$0.001 [$-$0.005, $+$0.008] \\
+FLUX/DINOv2 & GPT-5.5 & 4{,}000 & 0.893 (0.415) & 0.894 (0.335) & $+$0.002 [$-$0.008, $+$0.011] \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Table~\ref{tab:confidence_routing} shows that the disagreement rule is significantly more
+accurate on SD~1.4 and BigGAN and statistically tied on GenBuster. Under the SDXL/FLUX
+shift it has no accuracy advantage. The joint rule is significantly better on
+SDXL/SigLIP2 and tied on the other three configurations, and on FLUX it matches the
+disagreement rule's accuracy while escalating about 10 percentage points fewer inputs.
+Because the frozen threshold does not transfer exactly to the evaluation set, we also
+matched escalation counts exactly by escalating the $k$ highest-$H_{\text{joint}}$
+inputs, where $k$ is the disagreement rule's count (no labels used). This gives the same
+picture: the joint rule is significantly better in three of the four shifted
+configurations (by 0.9 to 1.7 points) and tied in the fourth, while the disagreement rule
+stays ahead on SD~1.4 and BigGAN. If non-escalated inputs instead keep the more confident
+probe's prediction, the joint rule loses accuracy under shift, so its strength there comes
+mainly from falling back to the semantic probe. Disagreement routing is therefore not a
+more accurate signal than calibrated confidence routing in general. Its advantages are
+practical. It needs no threshold, no calibration data, and no probability outputs, and in
+no configuration is it more than 1.7 points less accurate than the calibrated joint rule.
 
 
 \begin{figure*}[h]
@@ -1733,11 +1789,11 @@ cheap-detector reliability, though the severity varies by dataset.
 For RQ2, the disagreement rule does not require parameters or calibration. A learned
 escalation classifier using the same detector outputs does not provide a consistent advantage, which
 supports binary disagreement as the dominant routing signal in this setting. A joint
-artifact-and-semantic confidence-routing baseline, evaluated at matched escalation
-rates with thresholds fit on held-out data, is outperformed by the disagreement rule
-in all 7 tested configurations, strengthening this conclusion with a fair comparison
-against a non-trivial confidence baseline rather than only a weaker single-detector
-entropy threshold.
+artifact-and-semantic confidence-routing baseline with held-out thresholds qualifies
+this. The disagreement rule is more accurate on SD~1.4 and BigGAN in-domain, but under
+the SDXL/FLUX shift the calibrated confidence rule is tied or better in every
+configuration. Disagreement is a calibration-free routing signal that performs close to
+a calibrated confidence rule, not a more accurate one.
 
 For RQ3, disagreement-based escalation reduces verifier cost, but its accuracy benefit is
 conditional. It recovers accuracy under the SDXL and FLUX shifts when paired with a

@@ -80,25 +80,32 @@ implied latency for BOTH rules from those same constants, rather than
 re-deriving a separate "cost-matched" variant that would coincide with it
 exactly (this equivalence is itself reported, not assumed silently).
 
+Because tau is frozen on the validation split, the achieved eval escalation
+rates of the two rules can differ. Column `rate_matching` therefore also
+reports `exact_count`: escalate the k highest-H_joint eval samples, k = the
+disagreement rule's escalation count (no labels used).
+
 ────────────────────────────────────────────────────────────────────────
-VERIFIER COVERAGE CAVEAT (SDXL/FLUX only)
+NON-ESCALATED PREDICTION
 ────────────────────────────────────────────────────────────────────────
-GPT-5.5 was only ever run on the FFT-vs-semantic DISAGREEMENT subset for
-the e8 SDXL/FLUX configs (`experiments/e8_modern_diffusion.py`) -- there is
-no cached GPT-5.5 prediction for samples where the two cheap detectors
-already agree. Because the joint-confidence rule can select a different
-subset for escalation than the disagreement rule, it can select some
-agreement-region samples (y_fft == y_sem) that have no cached verifier
-prediction, and this module makes NO live API calls (out of scope here).
-For those samples we fall back to the shared cheap prediction
-y_fft (== y_sem in the agreement region); this is a NEUTRAL fallback, not
-an optimistic one, because the disagreement rule also uses exactly that
-value for every agreement-region sample (escalated or not -- there is
-nothing to escalate to there). The count of such fallback samples is
-reported per config (`n_escalate_agree_no_verifier`) so the gap is
-auditable rather than silently absorbed into the accuracy number.
-In-domain GenBuster/SD14/BigGAN have no such gap: Qwen2.5-VL-7B predictions
-are cached for the FULL eval set there, not just the disagreement subset.
+A sample the confidence rule does not escalate keeps a cheap prediction.
+Two variants are reported (column `fallback`):
+  semantic        the semantic probe's prediction (the stronger cheap
+                  detector on every benchmark; primary row)
+  more_confident  whichever probe has the lower entropy on that sample
+Both coincide with the shared prediction wherever the probes agree. The
+disagreement rule's non-escalated samples are all agreement-region, so its
+prediction there is the same under either variant.
+
+────────────────────────────────────────────────────────────────────────
+VERIFIER LABELS
+────────────────────────────────────────────────────────────────────────
+In-domain: Qwen2.5-VL-7B, cached for the full eval set.
+SDXL/FLUX: GPT-5.5 from the uniform (every-image) Batch API run,
+results/batch_requests/CONSOLIDATED_full_sdxl_flux.csv, which covers all
+4,000 samples per benchmark. Both rules read the same labels, and with them
+the disagreement rule reproduces tab_e8_results' GPT-5.5 cascade accuracy
+exactly.
 
 CPU-only: all heavy imports (torch/cv2/decord, pulled in transitively via
 extractors.common) are deferred to inside
@@ -120,6 +127,53 @@ E8_CONFIGS = [("SDXL", "SigLIP2"), ("SDXL", "DINOv2"), ("FLUX", "SigLIP2"), ("FL
 
 SUBVAL_SEED = 42
 SUBVAL_FRAC = 0.5  # fraction of the probe-training pool held out as sub-val
+
+UNIFORM_GPT55_CSV = os.path.join(ROUTING_BASE, "results", "batch_requests",
+                                 "CONSOLIDATED_full_sdxl_flux.csv")
+FALLBACKS = ("semantic", "more_confident")
+
+
+def _fallback_pred(y_a, y_s, H_a, H_s, kind):
+    if kind == "semantic":
+        return np.asarray(y_s)
+    return np.where(np.asarray(H_a) < np.asarray(H_s), y_a, y_s)
+
+
+def _exact_count_mask(H_joint, k):
+    """Escalate the k highest-H_joint samples: matches the disagreement rule's
+    escalation count exactly, using no labels."""
+    mask = np.zeros(len(H_joint), dtype=bool)
+    mask[np.argsort(-np.asarray(H_joint), kind="stable")[:k]] = True
+    return mask
+
+
+def _rule_rows(y_true, y_a, y_s, y_ver, H_a, H_s, H_joint, dis_mask, tau, base, baseline_utils_mod, latency_fn):
+    """One row per (rate_matching, fallback). rate_matching='val_tau' is the
+    primary protocol (tau frozen on the validation split); 'exact_count' is a
+    robustness check that escalates exactly as many eval samples as the
+    disagreement rule. The disagreement rule is identical in every row."""
+    dis_pred = np.where(dis_mask, y_ver, y_s)
+    dis_acc = float(np.mean(dis_pred == y_true))
+    dis_esc = float(np.mean(dis_mask))
+    masks = {"val_tau": np.asarray(H_joint) > tau,
+             "exact_count": _exact_count_mask(H_joint, int(np.sum(dis_mask)))}
+    rows = []
+    for matching, conf_mask in masks.items():
+        conf_esc = float(np.mean(conf_mask))
+        for kind in FALLBACKS:
+            conf_pred = np.where(conf_mask, y_ver, _fallback_pred(y_a, y_s, H_a, H_s, kind))
+            diff, lo, hi = baseline_utils_mod.paired_bootstrap_diff_ci(
+                y_true, conf_pred, dis_pred, n_boot=10000, seed=42)
+            rows.append({
+                **base, "rate_matching": matching, "fallback": kind,
+                "disagreement_rule_acc": dis_acc, "disagreement_rule_esc_rate": dis_esc,
+                "confidence_rule_acc": float(np.mean(conf_pred == y_true)),
+                "confidence_rule_esc_rate": conf_esc,
+                "acc_diff_conf_minus_dis": diff, "diff_ci_lo": lo, "diff_ci_hi": hi,
+                "latency_disagreement_ms": latency_fn(dis_esc),
+                "latency_confidence_ms": latency_fn(conf_esc),
+            })
+    return rows
 
 
 def _entropy(p):
@@ -179,7 +233,9 @@ def _load_indomain_probframe(ds_name, rb, DS_CFG):
     qwen_file = {"GenBuster": "qwen_preds.csv", "SD14": "sd14_qwen_preds.csv",
                  "BigGAN": "biggan_qwen_preds.csv"}[ds_name]
     df_qwen = pd.read_csv(os.path.join(ROUTING_BASE, qwen_file))
-    df = df.merge(df_qwen[["path", "y_qwen"]], on="path", how="inner")
+    # Left join: fitting tau needs only probe outputs, so the sub-val split must
+    # not shrink to the rows that happen to have Qwen coverage.
+    df = df.merge(df_qwen[["path", "y_qwen"]], on="path", how="left")
 
     df["H_a"] = df["entropy1"]           # FFT entropy, already H(p_fake) per get_fft_frame
     df["H_s"] = df["siglip2_entropy"]    # SigLIP2 entropy, already H(p_fake) per get_siglip2_frame
@@ -195,42 +251,28 @@ def _indomain_cell(ds_name, rb, DS_CFG, splits_mod, main_results_mod, baseline_u
     eval_mask = splits_mod.get_eval_mask(df, ds_name, path_col="path")
     pool_df = df[train_mask].reset_index(drop=True)
     eval_df = df[eval_mask].reset_index(drop=True)
+    n_eval_missing_qwen = int(eval_df["y_qwen"].isna().sum())
+    if n_eval_missing_qwen:
+        raise ValueError(f"{ds_name}: {n_eval_missing_qwen} eval rows lack a Qwen prediction")
 
     sub_train, sub_val = _subval_split(pool_df)
     tau, p_d_val = _fit_tau(sub_val["H_joint"].values, sub_val["disagree"].values)
 
-    # Disagreement rule on the eval set (ground truth comparison point --
-    # matches main_results.py's "Casc.(S)" row exactly).
-    dis_mask_eval = eval_df["disagree"].values
-    dis_pred = np.where(dis_mask_eval, eval_df["y_qwen"].values, eval_df["y_fft"].values)
-    dis_acc = float(np.mean(dis_pred == eval_df["y_true"].values))
-    dis_esc_rate = float(np.mean(dis_mask_eval))
-
-    # Joint-confidence rule, tau frozen on sub_val, applied to the eval set.
-    conf_mask_eval = eval_df["H_joint"].values > tau
-    conf_pred = np.where(conf_mask_eval, eval_df["y_qwen"].values, eval_df["y_fft"].values)
-    conf_acc = float(np.mean(conf_pred == eval_df["y_true"].values))
-    conf_esc_rate = float(np.mean(conf_mask_eval))
-
-    diff_point, diff_lo, diff_hi = baseline_utils_mod.paired_bootstrap_diff_ci(
-        eval_df["y_true"].values, conf_pred, dis_pred, n_boot=10000, seed=42)
-
-    lat_dis = _latency(ds_name, dis_esc_rate, main_results_mod)
-    lat_conf = _latency(ds_name, conf_esc_rate, main_results_mod)
-
-    return {
+    base = {
         "regime": "indomain", "dataset": ds_name, "semantic": "SigLIP2",
         "verifier": "Qwen2.5-VL-7B", "n_eval": int(len(eval_df)),
         "n_subval": int(len(sub_val)), "n_subtrain": int(len(sub_train)),
         "tau": tau, "p_D_subval": p_d_val,
-        "disagreement_rule_acc": dis_acc, "disagreement_rule_esc_rate": dis_esc_rate,
-        "confidence_rule_acc": conf_acc, "confidence_rule_esc_rate": conf_esc_rate,
-        "acc_diff_conf_minus_dis": diff_point, "diff_ci_lo": diff_lo, "diff_ci_hi": diff_hi,
-        "latency_disagreement_ms": lat_dis, "latency_confidence_ms": lat_conf,
-        "n_escalate_agree_no_verifier": 0, "frac_escalate_agree_no_verifier": 0.0,
         "validation_source": ("50% sub-split of this dataset's own probe-training "
                                "pool (pipeline.splits.get_train_mask), seed=42"),
     }
+    return _rule_rows(
+        y_true=eval_df["y_true"].values, y_a=eval_df["y_fft"].values,
+        y_s=eval_df["y_siglip2"].values, y_ver=eval_df["y_qwen"].values.astype(int),
+        H_a=eval_df["H_a"].values, H_s=eval_df["H_s"].values, H_joint=eval_df["H_joint"].values,
+        dis_mask=eval_df["disagree"].values, tau=tau,
+        base=base, baseline_utils_mod=baseline_utils_mod,
+        latency_fn=lambda esc: _latency(ds_name, esc, main_results_mod))
 
 
 # ────────────────────────────────────────────────────────────────────────
@@ -259,11 +301,12 @@ def _load_e8_probframe(ds_name, sem_name, e8_mod):
     df["H_s"] = _entropy(df["p_sem"])
     df["H_joint"] = np.maximum(df["H_a"], df["H_s"])
 
-    gpt_csv = os.path.join(ROUTING_BASE, f"{prefix}gpt55_{sem_name.lower()}_disagree_preds.csv")
-    df_gpt = pd.read_csv(gpt_csv)
-    gpt_col = "y_gpt55" if "y_gpt55" in df_gpt.columns else "y_verifier"
-    gpt_lookup = dict(zip(df_gpt["path"], df_gpt[gpt_col]))
-    df["y_gpt55"] = df["path"].map(gpt_lookup)  # NaN for agreement-region samples (never run)
+    df_gpt = pd.read_csv(UNIFORM_GPT55_CSV)
+    df["y_gpt55"] = df["path"].map(dict(zip(df_gpt["path"], df_gpt["y_verifier"])))
+    n_missing = int(df["y_gpt55"].isna().sum())
+    if n_missing:
+        raise ValueError(f"{ds_name}/{sem_name}: {n_missing} samples lack a uniform GPT-5.5 label")
+    df["y_gpt55"] = df["y_gpt55"].astype(int)
     return df
 
 
@@ -300,73 +343,29 @@ def _e8_cell(ds_name, sem_name, e8_mod, splits_mod, baseline_utils_mod):
     sub_val = _sd14_subval_for_e8(sem_name, e8_mod, splits_mod)
     tau, p_d_val = _fit_tau(sub_val["H_joint"].values, sub_val["disagree"].values)
 
-    n_total = len(df)
-    dis_mask = df["disagree"].values
-    dis_esc_rate = float(np.mean(dis_mask))
-
-    # Disagreement-rule cascade: escalate iff disagree; GPT-5.5 is cached
-    # for exactly this subset (by construction -- that's what e8_modern_
-    # diffusion.py ran it on).
-    dis_pred = np.where(dis_mask, df["y_gpt55"].values, df["y_fft"].values)
-    dis_has_label = ~(dis_mask & df["y_gpt55"].isna().values)
-    dis_acc = float(np.mean((dis_pred[dis_has_label]) == df["y_true"].values[dis_has_label]))
-    n_dis_missing_gpt = int(np.sum(dis_mask & df["y_gpt55"].isna().values))
-
-    # Joint-confidence rule, tau frozen on SD14 sub_val.
-    conf_mask = df["H_joint"].values > tau
-    conf_esc_rate = float(np.mean(conf_mask))
-
-    # Coverage gap: confidence rule escalating an AGREEMENT-region sample
-    # (no cached GPT-5.5 there). Fall back to the shared cheap value
-    # (y_fft == y_sem in the agreement region) -- see module docstring.
-    agree_mask = ~dis_mask
-    gap_mask = conf_mask & agree_mask
-    n_gap = int(np.sum(gap_mask))
-
-    conf_pred = df["y_fft"].values.copy()
-    # Disagreement-region samples the confidence rule chooses to escalate:
-    # GPT-5.5 is cached there (disagreement superset covers them).
-    use_gpt = conf_mask & dis_mask & df["y_gpt55"].notna().values
-    conf_pred[use_gpt] = df["y_gpt55"].values[use_gpt]
-    # Disagreement-region samples escalated by confidence but missing a
-    # cached GPT-5.5 label (shouldn't occur since dis_mask implies gpt ran,
-    # but guard anyway) fall back to y_fft already in conf_pred.
-    conf_valid = ~(conf_mask & dis_mask & df["y_gpt55"].isna().values)
-    conf_acc = float(np.mean(conf_pred[conf_valid] == df["y_true"].values[conf_valid]))
-
-    diff_point, diff_lo, diff_hi = baseline_utils_mod.paired_bootstrap_diff_ci(
-        df["y_true"].values[conf_valid & dis_has_label],
-        conf_pred[conf_valid & dis_has_label],
-        dis_pred[conf_valid & dis_has_label],
-        n_boot=10000, seed=42)
-
-    # Latency: FFT + semantic cheap stage + esc_rate * GPT-5.5 mean latency
-    # observed on the cached disagreement-run file (same convention as
-    # experiments/e8_modern_diffusion.py's own reporting).
+    # Latency: cheap stage + esc_rate * mean GPT-5.5 latency measured on the
+    # disagreement-run file (the uniform batch run records no latency).
     gpt_lat = float(pd.read_csv(
         os.path.join(ROUTING_BASE, f"{e8_mod.E8_DATASETS[ds_name]['prefix']}"
                                     f"gpt55_{sem_name.lower()}_disagree_preds.csv")
     ).get("latency_ms", pd.Series([float("nan")])).mean())
     cheap_lat = e8_mod.LATENCY_FFT_MS + e8_mod.LATENCY_SEM_MS
-    lat_dis = cheap_lat + dis_esc_rate * gpt_lat
-    lat_conf = cheap_lat + conf_esc_rate * gpt_lat
 
-    return {
+    base = {
         "regime": "e8_deployment_shift", "dataset": ds_name, "semantic": sem_name,
-        "verifier": "GPT-5.5", "n_eval": int(n_total),
+        "verifier": "GPT-5.5", "n_eval": int(len(df)),
         "n_subval": int(len(sub_val)), "n_subtrain": None,
         "tau": tau, "p_D_subval": p_d_val,
-        "disagreement_rule_acc": dis_acc, "disagreement_rule_esc_rate": dis_esc_rate,
-        "confidence_rule_acc": conf_acc, "confidence_rule_esc_rate": conf_esc_rate,
-        "acc_diff_conf_minus_dis": diff_point, "diff_ci_lo": diff_lo, "diff_ci_hi": diff_hi,
-        "latency_disagreement_ms": lat_dis, "latency_confidence_ms": lat_conf,
-        "n_escalate_agree_no_verifier": n_gap,
-        "frac_escalate_agree_no_verifier": float(n_gap / n_total) if n_total else float("nan"),
-        "n_disagree_missing_gpt55": n_dis_missing_gpt,
         "validation_source": ("50% sub-split of SD14's own probe-training pool "
                                "(pipeline.splits.get_train_mask), scored with the SAME "
                                "stale probes deployed zero-shot on SDXL/FLUX; seed=42"),
     }
+    return _rule_rows(
+        y_true=df["y_true"].values, y_a=df["y_fft"].values, y_s=df["y_sem"].values,
+        y_ver=df["y_gpt55"].values, H_a=df["H_a"].values, H_s=df["H_s"].values,
+        H_joint=df["H_joint"].values, dis_mask=df["disagree"].values, tau=tau,
+        base=base, baseline_utils_mod=baseline_utils_mod,
+        latency_fn=lambda esc: cheap_lat + esc * gpt_lat)
 
 
 def compute_confidence_routing_comparison():
@@ -398,9 +397,9 @@ def compute_confidence_routing_comparison():
 
     rows = []
     for ds_name in IN_DOMAIN_DATASETS:
-        rows.append(_indomain_cell(ds_name, rb, DS_CFG, splits_mod, main_results_mod, baseline_utils_mod))
+        rows.extend(_indomain_cell(ds_name, rb, DS_CFG, splits_mod, main_results_mod, baseline_utils_mod))
     for ds_name, sem_name in E8_CONFIGS:
-        rows.append(_e8_cell(ds_name, sem_name, e8_mod, splits_mod, baseline_utils_mod))
+        rows.extend(_e8_cell(ds_name, sem_name, e8_mod, splits_mod, baseline_utils_mod))
 
     return pd.DataFrame(rows)
 

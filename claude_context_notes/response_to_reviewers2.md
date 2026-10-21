@@ -240,12 +240,27 @@ improvement" claim. The contextual bandit needs an explicit reward, exploration
 procedure, and training algorithm, or should not be called a bandit.
 
 **Response:** We built the joint artifact-and-semantic confidence-routing baseline
-requested, evaluated at matched escalation rates with thresholds fit on a separate
-validation split, on the same SDXL/FLUX configurations supporting our positive
-result. Disagreement-based routing outperforms it in all 7 tested configurations,
-each with a 95% CI excluding zero — a substantially stronger result than the single
-weaker entropy baseline previously reported, strengthening rather than only
-defending the paper's central routing claim. On Table 11: the previously reported
+requested. It escalates when the less confident of the two cheap probes has entropy
+above a threshold. The threshold is fit on a separate validation split to target the
+disagreement rule's escalation rate. Non-escalated inputs keep the semantic probe's
+prediction, and escalated inputs get the same verifier labels as the disagreement rule
+(on SDXL/FLUX, the uniform GPT-5.5 run that labels every image). We evaluated it on the
+three in-domain benchmarks and on the four SDXL/FLUX configurations behind our positive
+result (new Table `confidence_routing`, Section V).
+
+The reviewer's concern is partly borne out. In-domain, disagreement is significantly
+more accurate on SD 1.4 (−2.2 points for the joint rule) and BigGAN (−0.7) and tied on
+GenBuster. Under the SDXL/FLUX shift, disagreement has no accuracy advantage. The joint
+rule is significantly better on SDXL/SigLIP2 (+1.4 points, 95% CI [+0.6, +2.1]) and tied
+on the other three, and on FLUX it matches the disagreement rule while escalating about
+10 points fewer inputs. With escalation counts matched exactly on the evaluation set,
+the joint rule is significantly better in three of the four shifted configurations
+(+0.9 to +1.7 points). We have revised C4 and the RQ2 conclusion accordingly.
+Disagreement is a calibration-free routing signal that stays close to a calibrated
+confidence rule (never more than 1.7 points behind). It is not a more accurate signal
+in general.
+
+On Table 11: the previously reported
 0.917 figure is not reproducible from any current per-sample data (the underlying
 protocol has since been superseded); recomputed from the current, single,
 consistent pipeline, the learned classifier and the disagreement rule produce
@@ -262,7 +277,9 @@ escalation classifier" rather than implement an unneeded reinforcement-learning
 variant of a method whose main empirical finding (it converges to the disagreement
 rule) does not depend on that framing.
 
-**Action:** New joint confidence-routing baseline and results (7/7 wins, with CIs).
+**Action:** New joint confidence-routing baseline, method paragraph and Table
+`confidence_routing` (Section V, Routing Analysis), with paired-bootstrap CIs and an
+exact-rate-matched robustness check; C4 and the RQ2 conclusion revised to match.
 Table 11 numbers corrected and given a significance test under two protocols.
 "Contextual bandit" relabeled "learned escalation classifier" throughout the paper.
 

@@ -35,6 +35,7 @@ exposing one or more `compute_<table>() -> pd.DataFrame` functions:
   pipeline/tables/transfer.py       tab_transfer
   pipeline/tables/per_generator.py  tab_per_generator (archival N=400 subset -- see its docstring)
   pipeline/tables/cheap_trigger.py  tab_cheap_trigger (NEWLY IMPLEMENTED, no prior live source -- see its docstring)
+  pipeline/tables/confidence_routing.py  tab_confidence_routing
 
 To add a new table: add a new sibling module under pipeline/tables/ exposing
 its own compute_<x>() -> pd.DataFrame, then add one entry to the TABLES list
@@ -54,7 +55,8 @@ ROUTING_BASE = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(ROUTING_BASE, "results")
 sys.path.insert(0, ROUTING_BASE)
 
-from pipeline.tables import main_results, per_generator, cheap_trigger, baselines, gate, transfer
+from pipeline.tables import (main_results, per_generator, cheap_trigger, baselines, gate, transfer,
+                             confidence_routing)
 
 
 def _git_commit():
@@ -146,6 +148,12 @@ def main():
         _write("tab_cheap_trigger", cheap_trigger.compute_cheap_trigger(), log)
     except Exception as e:
         _fail("tab_cheap_trigger", e, log)
+
+    print("\n=== confidence_routing ===")
+    try:
+        _write("tab_confidence_routing", confidence_routing.compute_confidence_routing_comparison(), log)
+    except Exception as e:
+        _fail("tab_confidence_routing", e, log)
 
     # ---- per_generator (archival N=400 descriptive subset) --------------------
     print("\n=== per_generator (archival N=400 descriptive subset, NOT the "
