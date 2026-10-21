@@ -281,7 +281,7 @@ def _indomain_cell(ds_name, rb, DS_CFG, splits_mod, main_results_mod, baseline_u
 # the same stale probes.
 # ────────────────────────────────────────────────────────────────────────
 
-def _load_e8_probframe(ds_name, sem_name, e8_mod):
+def load_e8_frame(ds_name, sem_name, e8_mod):
     cfg = e8_mod.E8_DATASETS[ds_name]
     prefix = cfg["prefix"]
     feat_key = e8_mod.SEMANTICS[sem_name]
@@ -339,7 +339,7 @@ def _sd14_subval_for_e8(sem_name, e8_mod, splits_mod):
 
 
 def _e8_cell(ds_name, sem_name, e8_mod, splits_mod, baseline_utils_mod):
-    df = _load_e8_probframe(ds_name, sem_name, e8_mod)
+    df = load_e8_frame(ds_name, sem_name, e8_mod)
     sub_val = _sd14_subval_for_e8(sem_name, e8_mod, splits_mod)
     tau, p_d_val = _fit_tau(sub_val["H_joint"].values, sub_val["disagree"].values)
 

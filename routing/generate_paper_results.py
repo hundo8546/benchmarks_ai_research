@@ -33,10 +33,16 @@ exposing one or more `compute_<table>() -> pd.DataFrame` functions:
                                      tab_cross_family_deployment, tab_limited_data, tab_biggan_shift
   pipeline/tables/gate.py           tab_sensitivity, tab_threeway
   pipeline/tables/transfer.py       tab_transfer
-  pipeline/tables/per_generator.py  tab_per_generator (archival N=400 subset -- see its docstring)
+  pipeline/tables/per_generator.py  tab_per_generator
   pipeline/tables/cheap_trigger.py  tab_cheap_trigger (NEWLY IMPLEMENTED, no prior live source -- see its docstring)
   pipeline/tables/confidence_routing.py  tab_confidence_routing
   pipeline/tables/gate_holdout.py   tab_gate_holdout, tab_agreement_path_audit
+  pipeline/tables/e8_cascade.py     tab_e8_cascade, tab_cost_accuracy_tradeoff, tab_real_image_sources
+  pipeline/tables/robustness.py     tab_robustness (reads e7/e9 robustness outputs)
+  pipeline/tables/cost_accounting.py tab_cost_accounting
+  pipeline/tables/case_mapping.py   tab_case_mapping (run last: reads other tab_*.csv)
+  pipeline/tables/baselines.py also writes tab_limited_data_cascade and
+                                     tab_cross_family_deployment_cascade (the printed table columns)
 
 To add a new table: add a new sibling module under pipeline/tables/ exposing
 its own compute_<x>() -> pd.DataFrame, then add one entry to the TABLES list
@@ -57,7 +63,7 @@ RESULTS_DIR = os.path.join(ROUTING_BASE, "results")
 sys.path.insert(0, ROUTING_BASE)
 
 from pipeline.tables import (main_results, per_generator, cheap_trigger, baselines, gate, transfer,
-                             confidence_routing, gate_holdout)
+                             confidence_routing, gate_holdout, e8_cascade)
 
 
 def _git_commit():
@@ -115,11 +121,15 @@ def main():
     print("\n=== baselines family (verifier_comparison / e8_results / "
           "cross_family_deployment / limited_data / biggan_shift) ===")
     try:
-        df_base_raw, _bc = baselines.compute_baselines_raw()
+        df_base_raw, bc = baselines.compute_baselines_raw()
         _write("tab_baselines", df_base_raw, log)
         for family in baselines.TABLE_FAMILIES:
             sub = df_base_raw[df_base_raw["table"] == family].reset_index(drop=True)
             _write(f"tab_{family}", sub, log)
+        df_casc = pd.DataFrame(bc.CASCADE_ROWS)
+        for family in ("limited_data", "cross_family_deployment"):
+            sub = df_casc[df_casc["table"] == family].dropna(axis=1, how="all").reset_index(drop=True)
+            _write(f"tab_{family}_cascade", sub, log)
     except Exception as e:
         _fail("tab_baselines (and its per-family views)", e, log)
 
@@ -140,6 +150,7 @@ def main():
     print("\n=== transfer ===")
     try:
         _write("tab_transfer", transfer.compute_transfer(), log)
+        _write("tab_transfer_reconciliation", transfer.compute_transfer_reconciliation(), log)
     except Exception as e:
         _fail("tab_transfer", e, log)
 
@@ -149,6 +160,16 @@ def main():
         _write("tab_cheap_trigger", cheap_trigger.compute_cheap_trigger(), log)
     except Exception as e:
         _fail("tab_cheap_trigger", e, log)
+
+    print("\n=== e8_cascade / cost_accuracy_tradeoff / real_image_sources ===")
+    for label, fn in [("tab_e8_cascade", e8_cascade.compute_e8_cascade),
+                      ("tab_cost_accuracy_tradeoff", e8_cascade.compute_cost_accuracy_tradeoff),
+                      ("tab_real_image_sources", e8_cascade.compute_real_image_sources),
+                      ("tab_positive_cell_audit", e8_cascade.compute_positive_cell_audit)]:
+        try:
+            _write(label, fn(), log)
+        except Exception as e:
+            _fail(label, e, log)
 
     print("\n=== gate_holdout / agreement_path_audit ===")
     try:
@@ -163,13 +184,29 @@ def main():
     except Exception as e:
         _fail("tab_confidence_routing", e, log)
 
-    # ---- per_generator (archival N=400 descriptive subset) --------------------
-    print("\n=== per_generator (archival N=400 descriptive subset, NOT the "
-          "canonical N=1000 GenBuster eval set) ===")
+    print("\n=== per_generator ===")
     try:
         _write("tab_per_generator", per_generator.compute_per_generator(), log)
     except Exception as e:
         _fail("tab_per_generator", e, log)
+
+    print("\n=== cost_accounting / case_mapping (reads the tables above) ===")
+    for label, mod_name, fn_name in [("tab_robustness", "robustness", "compute_robustness"),
+                                     ("tab_cost_accounting", "cost_accounting", "compute_cost_accounting"),
+                                     ("tab_case_mapping", "case_mapping", "compute_case_mapping")]:
+        try:
+            mod = __import__(f"pipeline.tables.{mod_name}", fromlist=[fn_name])
+            _write(label, getattr(mod, fn_name)(), log)
+        except Exception as e:
+            _fail(label, e, log)
+
+    print("\n=== figures ===")
+    for script in ("plot_main_results_figures.py", "plot_fig_d_cost_accuracy_tradeoff.py"):
+        out = subprocess.run([sys.executable, os.path.join(ROUTING_BASE, "experiments", script)],
+                             capture_output=True, text=True)
+        status = "OK" if out.returncode == 0 else f"FAIL: {out.stderr.strip()[-500:]}"
+        log.append(f"[{'OK' if out.returncode == 0 else 'FAIL'}] figure script {script}")
+        print(f"  [{status}] {script}")
 
     finished = datetime.datetime.now(datetime.timezone.utc).isoformat()
     log.append("")

@@ -10,7 +10,7 @@ increasing-cost order, so the reader sees the full tradeoff curve the cascade si
 on between the two extremes.
 
 Data is read LIVE (no hardcoding) from:
-  routing/results/tab_cost_accuracy_three_way.csv
+  routing/results/tab_cost_accuracy_tradeoff.csv (pipeline/tables/e8_cascade.py)
 
 Output: routing/plot_fig_d_cost_accuracy_tradeoff.png
         routing/plot_fig_d_cost_accuracy_tradeoff.pdf
@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
 HERE = os.path.dirname(__file__)
-CSV_PATH = os.path.join(HERE, "..", "results", "tab_cost_accuracy_three_way.csv")
+CSV_PATH = os.path.join(HERE, "..", "results", "tab_cost_accuracy_tradeoff.csv")
 
 # ---------------------------------------------------------------------------
 # Load data live
@@ -35,13 +35,13 @@ with open(CSV_PATH, newline="") as f:
     for row in csv.DictReader(f):
         rows.append({
             "dataset": row["dataset"].upper(),
-            "backbone": row["backbone"],
+            "backbone": row["semantic"],
             "cheap_acc": float(row["cheap_only_acc"]),
-            "cheap_cost": float(row["cheap_only_cost_usd"]),
+            "cheap_cost": 0.0,
             "cascade_acc": float(row["cascade_acc"]),
             "cascade_cost": float(row["cascade_cost_usd"]),
-            "uniform_acc": float(row["uniform_gpt55_acc"]),
-            "uniform_cost": float(row["uniform_gpt55_cost_usd"]),
+            "uniform_acc": float(row["uniform_acc"]),
+            "uniform_cost": float(row["uniform_cost_usd"]),
         })
 
 _dataset_order = {"SDXL": 0, "FLUX": 1}

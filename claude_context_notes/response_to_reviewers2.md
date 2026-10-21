@@ -40,15 +40,15 @@ N, and GenBuster/Qwen at 129 for N=200. The table caption lists both. Three
 configurations have disagreement pools under 40 samples and cannot support a
 meaningful split; we report the remaining 32. Under this held-out protocol, our
 significance-aware rule (Comment 2) reaches ≥90% test-set agreement in 18/32 at
-N=50, 21/32 at N=100, and 24/32 at N=200. That is visibly lower than the same-pool
-figures (21/35, 24/35, 28/35). We have revised our practical recommendation
+N=50, 21/32 at N=100, and 26/32 at N=200. That is visibly lower than the same-pool
+figures (22/35, 24/35, 28/35). We have revised our practical recommendation
 accordingly: N≥100 is reliable in only about two-thirds of eligible configurations,
 so we now recommend N≈200 or the full available pool, and we state explicitly that
 close-margin configurations can remain unreliable even then. For the four SDXL/FLUX
 GPT-5.5 configurations behind our positive result, the table also reports how often
 the significance-aware gate enables escalation. Three escalate in ≥85% of draws at
-every N. FLUX/SigLIP2, the smallest-margin case, escalates in only 32% of draws at
-N=50 and 53% at N=100 (86% at N=200), and the text says so.
+every N. FLUX/SigLIP2, the smallest-margin case, escalates in only 38% of draws at
+N=50 and 64% at N=100 (94% at N=200), and the text says so.
 
 **Action:** New Section VI.I.1 and Table "gate_holdout" (with capped-N footnote,
 missed-beneficial-escalation rates and positive-cell escalation rates). Revised
@@ -71,11 +71,11 @@ uncertainty-aware one: escalate only if the paired-bootstrap 95% confidence
 interval (10,000 resamples) on the accuracy gap lies entirely above zero. Evaluated
 under the same held-out protocol as Comment 1, this reduces the mean
 harmful-escalation rate by roughly an order of magnitude relative to the naive rule
-at every tested N (e.g. 6.7% → 0.3% at N=50). The cost is that it escalates less
-often. It misses a beneficial escalation in 12–17% of draws (naive rule: 2–8%), and
+at every tested N (e.g. 6.6% → 0.2% at N=50). The cost is that it escalates less
+often. It misses a beneficial escalation in 11–17% of draws (naive rule: 2–8%), and
 its mean regret is higher at every N. As a result it matches the test oracle less
-often than the naive rule once calibration data is plentiful (24 vs. 26 of 32 at
-N=200; 26 vs. 29 with the half pool). The paper now presents the two rules as a
+often than the naive rule once calibration data is plentiful (26 vs. 28 of 32 with
+the half pool). The paper now presents the two rules as a
 risk trade-off rather than one dominating the other. We
 also added an agreement-path audit across every evaluated dataset (not only
 GenBuster): in-domain agreement-path accuracy is 96.8–99.8% with 0.2–3.2%
@@ -103,13 +103,14 @@ gate's fallback branch is, by its own stated definition, `argmax(A1, A2)`. What
 differed was not the gate's behavior but what our original sensitivity analysis
 measured — a Boolean escalate/fallback agreement check for the binary rule versus a
 full three-valued identity check for the three-way rule. We traced the one place
-this produces different reported numbers (N=10: 13/35 vs. 12/35) to a single
-configuration where resampled-accuracy ties between the two cheap detectors are
-common enough at that coarse sample size (a binomial tie probability of ≈3.5%,
-confirmed exactly against the observed tie count) that `argmax`'s first-index
-tie-break affects the three-way check but not the binary one; the arithmetic closes
-exactly (84 shared mismatches + 23 tie-driven mismatches = 107/1,000, matching the
-observed gap), and the discrepancy vanishes by N=20.
+this produces different reported numbers (N=10: 14/35 vs. 13/35) to a single
+configuration. At that coarse sample size the resampled accuracy of the weaker cheap
+detector ties the stronger one's (29/1,000 resamples, close to the ≈3.5% binomial
+expectation) or exceeds it (14/1,000). This changes which cheap detector is selected,
+which the three-way check counts and the binary check does not. The arithmetic closes
+exactly: 89 shared mismatches plus 27 wrong-cheap-detector mismatches equals
+116/1,000, matching the observed 91.1% vs. 88.4% gap. The discrepancy vanishes by
+N=20.
 
 **Action:** Exact pseudocode for both rules added to Section VI.I. The "cannot
 represent" claim corrected to describe the three-way rule's actual contribution
@@ -171,9 +172,29 @@ simpler result than, and a correction of, the earlier claim that real-class reca
 declined. Full TP/FP/TN/FN confusion matrices for all four cells are released
 alongside the per-sample prediction files.
 
+Prompted by this comment, we audited every table and inline number in the paper against
+the results pipeline and found the same class of problem elsewhere. Several tables
+still carried values from earlier pipeline states:
+- the GenBuster CLIP row of the main results (it still showed the pre-fix, leaky probe);
+- the cheap-trigger, transfer, probe-degradation and cross-family tables;
+- a per-generator table computed on an older 400-sample subset.
+
+Every table and figure is now produced by one entry point
+(`routing/generate_paper_results.py`) from the same canonical evaluation sets as the
+main results table. Wherever two tables report the same quantity they now agree
+exactly. For example, the cross-family FFT column equals the in-domain FFT accuracy,
+and the 100% row of the probe-degradation sweep equals the main results. Two
+conclusions changed in the process, and the text says so:
+- One cross-family pairing (BigGAN→GenBuster) is now a small, significant gain over
+  in-domain FFT.
+- The cascade's cost share in the cost analysis is 42–51% of uniform escalation,
+  because it is now priced from the tokens of the escalated images.
+
 **Action:** Table 5 and the Limitations-section class-wise paragraph rebuilt from
 one consistent, 100%-coverage probe snapshot. Confusion matrices released.
-Provenance of the original discrepancy documented in the Limitations section.
+Provenance of the original discrepancy documented in the Limitations section. All
+tables regenerated from a single pipeline entry point on the canonical evaluation
+sets.
 
 ---
 
@@ -237,10 +258,17 @@ response text, released with the per-sample files. GPT-5.5 coverage is complete
 benchmarks (Comment 4), achieved via ~18,500 new calls over the OpenAI Batch API;
 coverage remains partial and explicitly disclosed for the Qwen columns of Table 5
 and the previously-noted GenBuster/SD1.4 cells of the verifier-comparison table.
+For the four favorable SDXL/FLUX configurations, new Table `positive_cells` reports
+the full disagreement-subset size (1,452–1,675), its real/fake composition (about
+two-thirds fake), GPT-5.5 and best-cheap accuracy on the subset, and a
+paired-bootstrap 95% CI on the gap (+8.1 to +20.4 points, every interval above zero),
+all at 100% GPT-5.5 coverage. The baseline and gate analyses now also use these full
+subsets with the uniform-run labels; previously they used only the samples that also
+had Qwen coverage.
 
-**Action:** New Section IV.C.1 with full audit detail. Per-sample prediction files
-with timestamp/retry/token columns released. 19 previously-mislabeled rows
-corrected.
+**Action:** New Section IV.C.1 with full audit detail, and new Table
+`positive_cells` (Section V). Per-sample prediction files with timestamp/retry/token
+columns released. 19 previously-mislabeled rows corrected.
 
 ---
 
@@ -322,12 +350,14 @@ same confound; GenBuster, where both classes share identical native resolution,
 shows none, serving as a clean negative control. The exact FFT/DCT feature
 definition (32-bin radial FFT magnitude profile, L2-normalized; 8×8-block DCT with
 the bottom-right 3×3 high-frequency submatrix pooled into 8 summary statistics;
-3 color-channel coherence correlations; 256×256 preprocessing resize;
-`LogisticRegression(C=0.1, random_state=42)`) is now documented in full.
+3 color-channel coherence correlations; 256×256 preprocessing resize; standardized
+features with `LogisticRegression(C=0.1, max_iter=2000, random_state=42)`) is now
+documented in full in the Implementation section, checked against the extractor code.
 
 **Action:** Resolution-only control classifier and resolution-matching ablation
 (new figure and Limitations discussion). Compression robustness extended to all
-three detectors; two new post-processing perturbations added. Full FFT/DCT
+three detectors, and two new post-processing perturbations added, reported in new
+Table `robustness` (Limitations). Full FFT/DCT
 reproducibility documentation added. This finding is flagged as a direct caveat on
 the in-domain BigGAN artifact-detector baseline used in the cross-family deployment
 comparison (Section VI.B).
@@ -348,14 +378,22 @@ separated from the hardcoded cheap-detector latency constants used elsewhere. We
 closed the cascade-vs-uniform comparison gap directly: using the OpenAI Batch API,
 we ran GPT-5.5 on every image in both SDXL and FLUX (8,000 calls, 100% successful),
 not only the disagreement subset. Uniform escalation reaches 99.6%/97.1% accuracy at
-$13.61/$18.47 for the full benchmark; the cascade reaches 89.3–94.0% at 58–64% of
-that cost. We report this as an explicit, incomplete-but-substantial tradeoff —
+$13.61/$18.47 for the full benchmark. The cascade reaches 89.3–94.0% at 42–51% of
+that cost. This is priced from the tokens of the images the cascade actually
+escalates, which use more tokens per call than the average image, so the cost share
+is higher than the 36–42% escalation rate. We report this as an explicit, incomplete-but-substantial tradeoff —
 3.0–7.8 percentage points remain achievable by uniform escalation that the cascade
 does not recover — rather than implying the cascade matches uniform accuracy at
 lower cost.
 
+Section VI.J also reports mean tokens per GPT-5.5 call for every dataset (e.g. 783
+input / 96 output on SDXL, 783 / 177 on FLUX), with a citation for the pricing. The
+formulation section now says that C_tok is reported wherever the verifier is an API
+model, rather than for every method.
+
 **Action:** New Section VI.J with a cost-accuracy table and figure directly
-comparing cheap-only, cascade, and uniform GPT-5.5 policies on SDXL/FLUX.
+comparing cheap-only, cascade, and uniform GPT-5.5 policies on SDXL/FLUX, plus
+per-dataset token means.
 
 ---
 

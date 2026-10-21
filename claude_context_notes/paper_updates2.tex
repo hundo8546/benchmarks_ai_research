@@ -52,7 +52,7 @@
 
 
 \begin{abstract}
-With the rapid proliferation of AI-generated multimedia content, the growing need for reliable detection of AI-generated media, including deepfakes and misinformation, has been largely unmet. Uniformly applying large vision-language models (VLMs) to all content can be prohibitively expensive. In this work, we formulate detection as a model selection problem over a set of complementary detectors. We show that disagreement between artifact-based and semantic detectors provides a strong, parameter-free indicator of input difficulty, and that this signal remains stable even when the semantic probe faces deployment shift to unseen generator families. We construct a selective-computation cascade in which lightweight detectors process all inputs and a stronger verifier is invoked only for disagreement cases. On in-domain benchmarks, a well-trained semantic detector achieves the best cost-accuracy tradeoff without VLM escalation. The cascade's utility emerges under generator evolution, but only when the verifier remains stronger than the stale semantic detector on the routed disagreement subset. On SDXL and FLUX, escalating to GPT-5.5 only on disagreement cases recovers up to 7.9 percentage points of accuracy over a stale semantic probe at 58--64\% of the cost of escalating on every input, closing most but not all of the gap to a uniform always-escalate policy (which reaches 97--100\% accuracy at full cost). In contrast, under a more distant BigGAN shift, escalation provides no benefit, showing that routing effectiveness depends on verifier strength and distributional distance rather than disagreement alone. We additionally show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially attributable to a native-resolution shortcut in the benchmark rather than generative-artifact detection, identified via a resolution-only control classifier and a resolution-matching ablation. We further introduce a verifier validation gate with a prespecified, uncertainty-aware decision rule. Evaluated on a genuinely held-out calibration/test split (not the full-subset oracle used in earlier validation), the gate reaches at least 90\% test-set agreement with the oracle decision in 20--21 of 32 eligible configurations at $N=100$ and 24--26 at $N=200$, and reduces harmful escalations by an order of magnitude relative to a point-estimate decision rule; a three-way detector selector is shown to be equivalent to the binary gate as a decision procedure.
+With the rapid proliferation of AI-generated multimedia content, the growing need for reliable detection of AI-generated media, including deepfakes and misinformation, has been largely unmet. Uniformly applying large vision-language models (VLMs) to all content can be prohibitively expensive. In this work, we formulate detection as a model selection problem over a set of complementary detectors. We show that disagreement between artifact-based and semantic detectors provides a strong, parameter-free indicator of input difficulty, and that this signal remains stable even when the semantic probe faces deployment shift to unseen generator families. We construct a selective-computation cascade in which lightweight detectors process all inputs and a stronger verifier is invoked only for disagreement cases. On in-domain benchmarks, a well-trained semantic detector achieves the best cost-accuracy tradeoff without VLM escalation. The cascade's utility emerges under generator evolution, but only when the verifier remains stronger than the stale semantic detector on the routed disagreement subset. On SDXL and FLUX, escalating to GPT-5.5 only on disagreement cases recovers up to 7.9 percentage points of accuracy over a stale semantic probe at 42--51\% of the cost of escalating on every input, closing most but not all of the gap to a uniform always-escalate policy (which reaches 97--100\% accuracy at full cost). In contrast, under a more distant BigGAN shift, escalation provides no benefit, showing that routing effectiveness depends on verifier strength and distributional distance rather than disagreement alone. We additionally show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially attributable to a native-resolution shortcut in the benchmark rather than generative-artifact detection, identified via a resolution-only control classifier and a resolution-matching ablation. We further introduce a verifier validation gate with a prespecified, uncertainty-aware decision rule. Evaluated on a genuinely held-out calibration/test split (not the full-subset oracle used in earlier validation), the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 32 eligible configurations at $N=100$ and 26 of 32 at $N=200$, and reduces harmful escalations by an order of magnitude relative to a point-estimate decision rule; a three-way detector selector is shown to be equivalent to the binary gate as a decision procedure.
 
 \end{abstract}
 
@@ -109,7 +109,7 @@ This work makes the following contributions:
 
     \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, independently validating disagreement as the dominant routing signal while providing no measurable improvement over the parameter-free rule. Against a joint artifact-and-semantic confidence-routing baseline with thresholds fit on held-out data, the disagreement rule is more accurate on two of three in-domain benchmarks but has no accuracy advantage under deployment shift, where the calibrated confidence rule is tied or better; disagreement's advantage is that it needs no threshold or calibration data.
 
-    \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 20--21 of 32 eligible configurations at $N=100$ and 24--26 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
+    \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 32 eligible configurations at $N=100$ and 26 of 32 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
 
     \item \textbf{C6:} We show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially explained by a native-resolution shortcut rather than genuine generative-artifact detection: a classifier using only image width and height matches the trained detector's accuracy, and resolution-matching the two classes collapses the trained detector's accuracy to chance.
 \end{itemize}
@@ -280,7 +280,7 @@ The routing objective is to minimize the expected cost under either metric while
 \[
 \min_{\pi} \; \mathbb{E}_x[C(x, \pi)] \quad \text{s.t.} \quad \text{Accuracy}(\pi) \geq \alpha.
 \]
-We report both $C_{\text{lat}}$ and $C_{\text{tok}}$ in all evaluated methods, as the deployment scenarios vary between self-hosted (latency-bound) and API-based (token-bound) inference.
+We report $C_{\text{lat}}$ for every evaluated method and $C_{\text{tok}}$ wherever the verifier is an API model (GPT-5.5; Section~\ref{sec:cost_accounting}), as the deployment scenarios vary between self-hosted (latency-bound) and API-based (token-bound) inference.
 
 \subsection{Disagreement as a Difficulty Signal}
 
@@ -449,7 +449,16 @@ evaluation practice~\cite{wen2025busterxmllmpoweredaigeneratedvideo}.
 \subsection{Implementation}
 
 The pipeline integrates three heterogeneous detection components. The first stage is an artifact-based detector. The primary artifact detector is a dual-stream frequency-domain probe that combines radial FFT magnitude profiles~\cite{dzanic2020fourier} with DCT high-frequency statistics~\cite{frank2020leveraging, Corvi_2023_ICASSP} and color channel
-coherence features, trained as a logistic regression classifier. CNNSpot~\cite{wang2020cnn} is retained as an artifact detector baseline. The second stage is a semantic detector. Visual embeddings are extracted with one of three backbones: CLIP
+coherence features, trained as a logistic regression classifier. Each image is resized
+to $256{\times}256$ and converted to grayscale for the first two streams, giving a
+43-dimensional feature vector: (i) a 32-bin radial profile of the log-magnitude of the
+centered 2-D FFT (mean over each normalized-radius bin), L2-normalized; (ii) eight
+statistics (mean, standard deviation, skewness, kurtosis, and the 5th, 25th, 75th and
+95th percentiles) of the bottom-right $3{\times}3$ coefficients of every non-overlapping
+$8{\times}8$ block DCT; and (iii) the three pairwise Pearson correlations between the R,
+G and B channels. Features are standardized and classified with
+\texttt{LogisticRegression(C=0.1, max\_iter=2000, random\_state=42)}.
+CNNSpot~\cite{wang2020cnn} is retained as an artifact detector baseline. The second stage is a semantic detector. Visual embeddings are extracted with one of three backbones: CLIP
 ViT-B/32~\cite{pmlr-v139-radford21a}, SigLIP2~\cite{tschannen2025siglip2}, or
 DINOv2~\cite{oquab2023dinov2}. It's then passed through a logistic regression classifier trained on the first 50\% of each dataset. All three semantic probes use the same training split and evaluation protocol. The third and final stage is an optional VLM verifier which is only invoked 
 on disagreement cases.
@@ -698,8 +707,8 @@ detector's training artifacts and the target generator family.
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=.7\textwidth]{plot_accuracy_comparison (1).png}
-   \caption{Detector accuracy across the three in-domain benchmarks. Results compare artifact detectors, semantic probes, and the FFT+SigLIP2+Qwen disagreement cascade.}
+    \includegraphics[width=.7\textwidth]{plot_accuracy_comparison.png}
+   \caption{Detector accuracy across the three in-domain benchmarks (values in Table~\ref{tab:main_results}). Bars are colored by method family: artifact detectors, semantic probes, FFT+semantic disagreement cascades with Qwen2.5-VL-7B, and reference policies (artifact-entropy routing and always escalating).}
 
     \label{fig:accuracy_comparison}
 \end{figure*}
@@ -720,13 +729,13 @@ Method & Acc. & Lat. & Acc. & Lat. & Acc. & Lat. \\
 FFT          & 0.727 &  2.5 & 0.775 &  2.5 & 0.997 &  2.5 \\
 CNNSpot      & 0.534 & 45.8 & 0.487 & 45.8 & 0.705 & 45.8 \\
 UnivFD       & 0.518 & 56.2 & 0.518 & 56.2 & 0.910 & 56.2 \\
-CLIP         & 0.904 & 10.4 & 0.933 & 10.4 & 0.992 & 10.4 \\
+CLIP         & 0.943 & 10.4 & 0.933 & 10.4 & 0.992 & 10.4 \\
 SigLIP2      & 0.966 & 10.4 & 0.926 & 10.4 & 0.992 & 10.4 \\
 DINOv2       & 0.953 & 10.4 & 0.877 & 10.4 & 0.984 & 10.4 \\
 Entropy      & 0.742 & 17.9 & 0.695 & 14.3 & 0.997 & 12.9 \\
-Casc. (C)    & 0.876 & 55.1 & 0.887 & 36.9 & 0.995 & 13.3 \\
-Casc. (S)    & 0.899 & 57.9 & 0.874 & 31.9 & 0.995 & 13.2 \\
-Casc. (D)    & 0.895 & 58.4 & 0.851 & 32.5 & 0.991 & 13.5 \\
+Casc. (C)    & 0.891 & 62.0 & 0.887 & 34.2 & 0.995 & 13.4 \\
+Casc. (S)    & 0.899 & 62.2 & 0.874 & 35.0 & 0.995 & 13.4 \\
+Casc. (D)    & 0.895 & 64.3 & 0.851 & 37.0 & 0.991 & 14.0 \\
 Always esc.  & 0.713 & 190.2 & 0.576 & 83.2 & 0.690 & 70.6 \\
 \bottomrule
 \end{tabular}
@@ -816,6 +825,32 @@ DINOv2  & 0.819 / $-$0.032 & 0.930 / $+$0.079 & 0.738 / $-$0.080 & 0.893 / $+$0.
 \end{tabular}
 \end{table*}
 
+Table~\ref{tab:positive_cells} audits the four GPT-5.5 cells behind this positive
+result on their full disagreement subsets, all of which GPT-5.5 labeled. About two
+thirds of each subset is fake. GPT-5.5 exceeds the best cheap detector on the subset by
+8.1 to 20.4 points, with every paired-bootstrap interval well above zero. The smallest
+margin is FLUX/SigLIP2, where the stale probe remains comparatively strong.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Audit of the SDXL/FLUX GPT-5.5 cells on the full FFT+semantic disagreement subset (100\% GPT-5.5 coverage). Best cheap is the stale semantic probe in every cell. Gap = GPT-5.5 $-$ best cheap, with a paired-bootstrap 95\% CI (10{,}000 resamples).}
+\label{tab:positive_cells}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Config & $n$ & Real/Fake & GPT-5.5 & Best cheap & Gap [95\% CI] \\
+\midrule
+SDXL/SigLIP2 & 1{,}452 & 458/994 & 0.996 & 0.828 & $+$0.168 [0.148, 0.187] \\
+SDXL/DINOv2 & 1{,}539 & 507/1032 & 0.997 & 0.793 & $+$0.204 [0.184, 0.225] \\
+FLUX/SigLIP2 & 1{,}675 & 490/1185 & 0.971 & 0.890 & $+$0.081 [0.065, 0.098] \\
+FLUX/DINOv2 & 1{,}659 & 522/1137 & 0.967 & 0.787 & $+$0.180 [0.159, 0.202] \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
 
 \subsection{Routing Analysis}
 
@@ -863,26 +898,29 @@ FFT wrong, models disagree   & 249 & 1.00 \\
 \end{table}
 
 Table~\ref{tab:per_generator} breaks down accuracy by generator on GenBuster.
-CNNSpot's low fake recall confirms poor transfer from GAN artifacts to modern video
-content. The cascade is more consistent across generators, though Qwen remains too weak
-to surpass the semantic-only baseline.
+CNNSpot is 4--17\% accurate on every fake generator, confirming poor transfer from GAN
+artifacts to modern video content. FFT ranges from 61\% (LTX-Video) to 80\%
+(HunyuanVideo). The cascade improves on FFT for four of the five groups and ties it on
+HunyuanVideo. SigLIP2 alone is more accurate than the cascade on every generator and on
+real videos, consistent with Case~2: Qwen is weaker than the semantic probe on the
+routed subset.
 
 
 \begin{table}[h]
 \centering
-\caption{Per-generator detection accuracy on a 400-sample stratified subset of GenBuster-200K-mini. These descriptive results are separate from the $N{=}1{,}000$ aggregate evaluation.}
+\caption{Per-generator detection accuracy on the GenBuster evaluation set of Table~\ref{tab:main_results} ($N{=}1{,}000$). Cascade is FFT+SigLIP2 disagreement routing to Qwen2.5-VL-7B.}
 \label{tab:per_generator}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrcccc}
 \toprule
-Generator & $n$ & CNNSpot & Cascade & CLIP \\
+Generator & $n$ & CNNSpot & FFT & SigLIP2 & Cascade \\
 \midrule
-CogVideoX     & 73  & 0.178 & 0.822 & 0.849 \\
-EasyAnimate   & 73  & 0.041 & 0.918 & 0.904 \\
-HunyuanVideo  & 16  & 0.000 & 0.875 & 0.813 \\
-LTX-Video     & 33  & 0.152 & 0.879 & 0.788 \\
+CogVideoX     & 155  & 0.155 & 0.665 & 0.987 & 0.845 \\
+EasyAnimate   & 200  & 0.060 & 0.775 & 0.985 & 0.955 \\
+HunyuanVideo  & 50   & 0.040 & 0.800 & 0.860 & 0.800 \\
+LTX-Video     & 95   & 0.168 & 0.611 & 0.958 & 0.842 \\
 \midrule
-Real   & 205 & 0.951 & 0.922 & 0.980 \\
+Real          & 500  & 0.960 & 0.742 & 0.964 & 0.914 \\
 \bottomrule
 \end{tabular}
 }
@@ -955,8 +993,8 @@ no configuration is it more than 1.7 points less accurate than the calibrated jo
 
 \begin{figure*}[h]
     \centering
-    \includegraphics[width=.85\textwidth]{plot_cost_accuracy_all (1).png}
-    \caption{Cost-accuracy tradeoff for each semantic backbone under in-domain shown left and deployment-shift evaluation shown on right.}
+    \includegraphics[width=.85\textwidth]{plot_cost_accuracy_all.png}
+    \caption{Effect of disagreement escalation for each semantic backbone. Left: in-domain, the cascade (filled) adds latency and lowers accuracy relative to the semantic probe alone (hollow). Right: under the SDXL/FLUX shift, escalating 36--42\% of inputs to GPT-5.5 raises accuracy over the stale probe.}
     \label{fig:cost_accuracy}
 \end{figure*}
 
@@ -1053,19 +1091,19 @@ backbones.
 \toprule
 Backbone & Train frac. & Sem.-only & Cascade & Gain \\
 \midrule
-SigLIP2  & 1\%   & 0.740 & 0.794 & $+$0.054 \\
-SigLIP2  & 5\%   & 0.842 & 0.833 & $-$0.008 \\
-SigLIP2  & 10\%  & 0.898 & 0.854 & $-$0.044 \\
-SigLIP2  & 25\%  & 0.908 & 0.863 & $-$0.046 \\
-SigLIP2  & 50\%  & 0.919 & 0.869 & $-$0.050 \\
-SigLIP2  & 100\% & 0.927 & 0.867 & $-$0.060 \\
+SigLIP2  & 1\%   & 0.744 & 0.804 & $+$0.060 \\
+SigLIP2  & 5\%   & 0.834 & 0.839 & $+$0.005 \\
+SigLIP2  & 10\%  & 0.881 & 0.861 & $-$0.020 \\
+SigLIP2  & 25\%  & 0.891 & 0.860 & $-$0.031 \\
+SigLIP2  & 50\%  & 0.924 & 0.875 & $-$0.049 \\
+SigLIP2  & 100\% & 0.926 & 0.874 & $-$0.052 \\
 \midrule
-DINOv2   & 1\%   & 0.669 & 0.769 & $+$0.100 \\
-DINOv2   & 5\%   & 0.781 & 0.798 & $+$0.017 \\
-DINOv2   & 10\%  & 0.808 & 0.810 & $+$0.002 \\
-DINOv2   & 25\%  & 0.829 & 0.808 & $-$0.021 \\
-DINOv2   & 50\%  & 0.852 & 0.821 & $-$0.031 \\
-DINOv2   & 100\% & 0.890 & 0.842 & $-$0.048 \\
+DINOv2   & 1\%   & 0.675 & 0.757 & $+$0.083 \\
+DINOv2   & 5\%   & 0.759 & 0.792 & $+$0.034 \\
+DINOv2   & 10\%  & 0.806 & 0.818 & $+$0.011 \\
+DINOv2   & 25\%  & 0.838 & 0.832 & $-$0.006 \\
+DINOv2   & 50\%  & 0.861 & 0.841 & $-$0.020 \\
+DINOv2   & 100\% & 0.877 & 0.851 & $-$0.025 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1092,18 +1130,18 @@ advantage.
 
 \begin{table}[h]
 \centering
-\caption{Cross-dataset learned-escalation-classifier transfer on fixed held-out subsets using FFT+SigLIP2+Qwen features. The GenBuster in-domain cell (diagonal) is reproduced here from the current, single, consistent pipeline; an earlier draft reported 0.917 for this cell, measured under a since-superseded protocol that is no longer reproducible against current per-sample data (see text). Results are interpreted within this transfer experiment.}
+\caption{Cross-dataset learned-escalation-classifier transfer on the evaluation sets of Table~\ref{tab:main_results}, using FFT+SigLIP2+Qwen features. Rows give the training dataset, columns the test dataset.}
 \label{tab:transfer}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lccc}
 \toprule
 Train $\rightarrow$ Test & GenBuster & BigGAN & SD14 \\
 \midrule
-GenBuster & \textbf{0.899} & 0.998 & 0.867 \\
-BigGAN    & 0.843 & \textbf{0.998} & 0.758 \\
-SD14      & 0.897 & 0.998 & \textbf{0.867} \\
+GenBuster & \textbf{0.899} & 0.995 & 0.874 \\
+BigGAN    & 0.854 & \textbf{0.992} & 0.793 \\
+SD14      & 0.899 & 0.995 & \textbf{0.874} \\
 \midrule
-Disagreement rule (no training) & 0.899 & 0.998 & 0.867 \\
+Disagreement rule (no training) & 0.899 & 0.995 & 0.874 \\
 \bottomrule
 \end{tabular}
 }
@@ -1148,9 +1186,10 @@ performance is strong across all three datasets, so the off-diagonal tests isola
 effect of cross-family degradation.
 
 The cascade improves over the stale SigLIP2 probe in all six pairings, but that baseline
-alone overstates the value of escalation. Against the in-domain FFT detector, five
-pairings are worse and the lone positive difference is statistically indistinguishable
-from zero.
+alone overstates the value of escalation. Against the in-domain FFT detector, four
+pairings are significantly worse, one (SD~1.4$\to$GenBuster) is indistinguishable from
+zero, and one (BigGAN$\to$GenBuster) is a small significant gain of 3.0 points
+(95\% CI $[+0.005, +0.055]$).
 
 These results illustrate \textbf{Case 2} from Section~III.D. The transferred semantic
 probe is weak, so the cascade appears to recover accuracy relative to that stale probe.
@@ -1178,14 +1217,14 @@ different Case~3 configuration.
 \toprule
 Train & Test & FFT & Stale SigLIP2 & Casc. & $\Delta_{\text{stale}}$ & $\Delta_{\text{FFT}}$ \\
 \midrule
-GenBuster & SD~1.4 & 0.748 & 0.552 & 0.654 & +0.102 & -0.094 \\
-GenBuster & BigGAN & 0.998 & 0.554 & 0.787 & +0.233 & -0.210 \\
-SD~1.4 & GenBuster & 0.735 & 0.547 & 0.730 & +0.182 & -0.005$^\dagger$ \\
-SD~1.4 & BigGAN & 0.998 & 0.613 & 0.833 & +0.221 & -0.165 \\
-BigGAN & GenBuster & 0.735 & 0.517 & 0.738 & +0.220 & +0.003$^\dagger$ \\
-BigGAN & SD~1.4 & 0.748 & 0.515 & 0.604 & +0.090 & -0.144 \\
+GenBuster & SD~1.4 & 0.775 & 0.512 & 0.636 & $+$0.124 & $-$0.140 \\
+GenBuster & BigGAN & 0.997 & 0.530 & 0.776 & $+$0.246 & $-$0.221 \\
+SD~1.4 & GenBuster & 0.727 & 0.502 & 0.702 & $+$0.200 & $-$0.025$^\dagger$ \\
+SD~1.4 & BigGAN & 0.997 & 0.638 & 0.821 & $+$0.184 & $-$0.176 \\
+BigGAN & GenBuster & 0.727 & 0.523 & 0.757 & $+$0.234 & $+$0.030 \\
+BigGAN & SD~1.4 & 0.775 & 0.515 & 0.608 & $+$0.093 & $-$0.167 \\
 \midrule
-\multicolumn{2}{l}{Mean} & & & & +0.175 & -0.102 \\
+\multicolumn{2}{l}{Mean} & & & & $+$0.180 & $-$0.116 \\
 \bottomrule
 \end{tabular}
 }
@@ -1440,8 +1479,8 @@ pixel content, reaches 99.55\% accuracy on this same split -- within 0.15 points
 trained FFT detector. Forcing the real class through the same native-resolution
 downsampling the fake class structurally undergoes before the shared
 256$\times$256-resize feature pipeline collapses the \emph{same trained} FFT detector's
-accuracy from 99.7\% to 50.1\%, exact chance. A compression-robustness check
-(Section~\ref{sec:cost_accounting}) shows the detector's BigGAN accuracy is also nearly
+accuracy from 99.7\% to 50.1\%, exact chance. A robustness check
+(Table~\ref{tab:robustness}) shows the detector's BigGAN accuracy is also nearly
 invariant to JPEG compression (99.7\%$\to$99.65\% at quality 50), consistent with a
 coarse, compression-resistant resize signature rather than fine generative texture,
 while accuracy collapses sharply under Gaussian blur and aggressive downscale-upscale
@@ -1460,6 +1499,40 @@ in-domain-trained BigGAN FFT detector as the comparator that out-performs the ca
 and that comparator's strength should now be read with this confound in mind rather
 than as unqualified evidence of a strong, generalizable forensic detector.
 Figure~\ref{fig:resolution_shortcut} summarizes this evidence visually.
+
+Table~\ref{tab:robustness} extends the robustness check to all three cheap detectors.
+FFT is the most fragile on every benchmark: blur at $\sigma{=}2$ and a 4$\times$ rescale
+round trip push it to or below chance on SD~1.4 and BigGAN, and to 51--54\% on
+GenBuster. The semantic probes degrade far less. SigLIP2 stays within 1 point of its
+clean accuracy on GenBuster under every perturbation and loses at most 3 points on
+SD~1.4, though it drops to 81--83\% on BigGAN under the strongest blur and rescale.
+JPEG compression costs SigLIP2 at most 0.8 points and DINOv2 up to 4 points, and hits
+FFT hardest on SD~1.4 (77.5\%$\to$67.1\% at quality 50). Because disagreement routing depends on the artifact detector, these
+perturbations would raise the disagreement rate and move more inputs to the verifier.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Cheap-detector accuracy under post-processing on the in-domain evaluation sets: JPEG quality $q$, Gaussian blur $\sigma$, and a down/up-scale round trip by factor $s$.}
+\label{tab:robustness}
+\begin{tabular}{llcccccccc}
+\toprule
+Dataset & Detector & Clean & $q{=}95$ & $q{=}75$ & $q{=}50$ & $\sigma{=}1$ & $\sigma{=}2$ & $s{=}0.5$ & $s{=}0.25$ \\
+\midrule
+GenBuster & FFT & 0.727 & 0.724 & 0.722 & 0.725 & 0.660 & 0.511 & 0.710 & 0.537 \\
+GenBuster & SigLIP2 & 0.966 & 0.967 & 0.966 & 0.963 & 0.967 & 0.968 & 0.966 & 0.966 \\
+GenBuster & DINOv2 & 0.953 & 0.953 & 0.946 & 0.933 & 0.954 & 0.951 & 0.951 & 0.953 \\
+\midrule
+SD~1.4 & FFT & 0.775 & 0.795 & 0.711 & 0.671 & 0.683 & 0.493 & 0.647 & 0.491 \\
+SD~1.4 & SigLIP2 & 0.926 & 0.926 & 0.936 & 0.937 & 0.917 & 0.897 & 0.917 & 0.907 \\
+SD~1.4 & DINOv2 & 0.877 & 0.866 & 0.835 & 0.837 & 0.849 & 0.819 & 0.859 & 0.831 \\
+\midrule
+BigGAN & FFT & 0.997 & 0.997 & 0.996 & 0.997 & 0.883 & 0.292 & 0.952 & 0.339 \\
+BigGAN & SigLIP2 & 0.992 & 0.988 & 0.984 & 0.988 & 0.975 & 0.807 & 0.977 & 0.833 \\
+BigGAN & DINOv2 & 0.984 & 0.975 & 0.957 & 0.945 & 0.974 & 0.924 & 0.963 & 0.902 \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \begin{figure}[h]
     \centering
@@ -1578,22 +1651,22 @@ cannot support a meaningful split; we report the remaining 32.
 
 Under this protocol (Table~\ref{tab:gate_holdout}), the significance-aware rule
 reaches $\geq$90\% agreement with the test oracle in 18/32 configurations at
-$N{=}50$, 21/32 at $N{=}100$ and 24/32 at $N{=}200$ (naive rule: 17/32, 20/32,
-26/32). These counts are below the same-pool figures of 21/35, 24/35 and 28/35 in
+$N{=}50$, 21/32 at $N{=}100$ and 26/32 at $N{=}200$ (naive rule: 17/32, 21/32,
+26/32). These counts are below the same-pool figures of 22/35, 24/35 and 28/35 in
 Table~\ref{tab:sensitivity}, confirming that the earlier numbers measured resampling
 stability rather than held-out generalization. We revise the practical recommendation
 accordingly. $N{=}100$ gives reliable decisions in only about two-thirds of eligible
-configurations, so practitioners should budget closer to $N{\approx}200$ or use the
-full calibration pool, and should still expect some close-margin configurations to
+configurations, while $N{=}200$ reaches about four-fifths, so practitioners should
+budget closer to $N{\approx}200$ or use the full calibration pool, and should still expect some close-margin configurations to
 stay unreliable.
 
 The two rules make a different trade, not a better or worse one. The
 significance-aware rule cuts harmful escalations by roughly an order of magnitude
-(6.7\% vs.\ 0.3\% at $N{=}50$). It pays for this by escalating less: in 12--17\% of
+(6.6\% vs.\ 0.2\% at $N{=}50$). It pays for this by escalating less: in 11--17\% of
 draws it falls back although the verifier was best on the test set, against 2--8\%
 for the naive rule, and its mean regret is higher at every $N$. This is also why it
-matches the test oracle less often than the naive rule at $N{=}200$ (24 vs.\ 26) and
-with the half pool (26 vs.\ 29). With that much calibration data the naive rule's
+matches the test oracle less often than the naive rule with the half pool (26 vs.\
+28). With that much calibration data the naive rule's
 point estimate is usually right, while the confidence interval still excludes zero
 only when the verifier's margin is large. The significance-aware rule suits
 deployments where an unwarranted escalation is costly. The naive rule suits those
@@ -1603,10 +1676,10 @@ The lower panel of Table~\ref{tab:gate_holdout} shows how often the
 significance-aware gate enables escalation on the four SDXL/FLUX GPT-5.5
 configurations behind the paper's positive result. Three of them escalate in at least
 85\% of draws at every $N$. FLUX/SigLIP2, where the verifier's margin over the stale
-probe is smallest, escalates in only 32\% of draws at $N{=}50$ and 53\% at $N{=}100$,
-rising to 86\% at $N{=}200$ and 100\% with the half pool. With 100 or fewer labeled
-calibration samples, the gate would therefore forgo the FLUX/SigLIP2 gain about half
-the time.
+probe is smallest, escalates in only 38\% of draws at $N{=}50$ and 64\% at $N{=}100$,
+rising to 94\% at $N{=}200$ and 100\% with the half pool. With 100 or fewer labeled
+calibration samples, the gate would therefore forgo the FLUX/SigLIP2 gain in a third
+or more of deployments.
 
 \subsubsection{Calibration Sample-Size Sensitivity (Same-Pool Oracle)}
 
@@ -1629,8 +1702,8 @@ the oracle decision computed from the full pool. Table~\ref{tab:sensitivity} sum
 \toprule
 Decision rule & $N{=}10$ & $N{=}20$ & $N{=}50$ & $N{=}100$ & $N{=}200$ \\
 \midrule
-Binary gate         & 13/35 & 19/35 & 21/35 & 24/35 & 28/35 \\
-Three-way selector  & 12/35 & 19/35 & 21/35 & 24/35 & 28/35 \\
+Binary gate         & 14/35 & 19/35 & 22/35 & 24/35 & 28/35 \\
+Three-way selector  & 13/35 & 19/35 & 22/35 & 24/35 & 28/35 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1647,21 +1720,21 @@ Three-way selector  & 12/35 & 19/35 & 21/35 & 24/35 & 28/35 \\
 \toprule
 Decision rule & $N{=}50$ & $N{=}100$ & $N{=}200$ & Half-pool \\
 \midrule
-Naive (point-estimate)         & 17/32 & 20/32 & 26/32 & 29/32 \\
-\ \ harmful-esc.\ rate         & 6.7\% & 5.5\% & 3.5\% & 2.2\% \\
-\ \ missed-benefit rate        & 8.2\% & 6.0\% & 3.6\% & 2.4\% \\
-\ \ mean regret (points)       & 1.43 & 0.75 & 0.34 & 0.21 \\
-Significance-aware             & 18/32 & 21/32 & 24/32 & 26/32 \\
-\ \ harmful-esc.\ rate         & 0.3\% & 0.2\% & 0.3\% & 0.5\% \\
-\ \ missed-benefit rate        & 17.1\% & 15.6\% & 13.1\% & 12.1\% \\
-\ \ mean regret (points)       & 2.02 & 1.27 & 0.87 & 0.67 \\
-Rules choose differently       & 16.5\% & 15.4\% & 12.9\% & 11.6\% \\
+Naive (point-estimate)         & 17/32 & 21/32 & 26/32 & 28/32 \\
+\ \ harmful-esc.\ rate         & 6.6\% & 5.5\% & 4.0\% & 2.2\% \\
+\ \ missed-benefit rate        & 8.1\% & 6.4\% & 3.5\% & 2.0\% \\
+\ \ mean regret (points)       & 1.39 & 0.76 & 0.35 & 0.18 \\
+Significance-aware             & 18/32 & 21/32 & 26/32 & 26/32 \\
+\ \ harmful-esc.\ rate         & 0.2\% & 0.4\% & 0.5\% & 0.5\% \\
+\ \ missed-benefit rate        & 17.1\% & 15.1\% & 12.5\% & 11.3\% \\
+\ \ mean regret (points)       & 2.00 & 1.27 & 0.78 & 0.62 \\
+Rules choose differently       & 16.5\% & 14.7\% & 12.8\% & 11.3\% \\
 \midrule
 \multicolumn{5}{l}{Significance-aware gate escalates (share of draws)} \\
-\ \ SDXL/SigLIP2               & 91.6\% & 99.6\% & 100.0\% & 100.0\% \\
-\ \ SDXL/DINOv2                & 97.2\% & 100.0\% & 100.0\% & 100.0\% \\
-\ \ FLUX/SigLIP2               & 31.6\% & 52.8\% & 86.4\% & 100.0\% \\
-\ \ FLUX/DINOv2                & 84.8\% & 98.4\% & 100.0\% & 100.0\% \\
+\ \ SDXL/SigLIP2               & 96.0\% & 100.0\% & 100.0\% & 100.0\% \\
+\ \ SDXL/DINOv2                & 98.4\% & 100.0\% & 100.0\% & 100.0\% \\
+\ \ FLUX/SigLIP2               & 37.6\% & 64.0\% & 93.6\% & 100.0\% \\
+\ \ FLUX/DINOv2                & 86.8\% & 99.2\% & 100.0\% & 100.0\% \\
 \bottomrule
 \end{tabular}
 }
@@ -1701,26 +1774,25 @@ Practitioners deploying the gate on a configuration suspected to be close-margin
 should use a larger calibration batch or treat the recommendation as provisional.
 
 The three-way selector's agreement rate matches the binary gate's at every tested
-$N$ except $N=10$, where it trails by one configuration (13/35 vs.\ 12/35). We traced
+$N$ except $N=10$, where it trails by one configuration (14/35 vs.\ 13/35). We traced
 this to a single configuration (SD~1.4/SigLIP2 at 100\% training fraction, Qwen2.5-VL-7B
 verifier; oracle accuracies $A_1{=}0.216$, $A_2{=}0.784$, $A_3{=}0.587$, with
 $A_1 + A_2 = 1$ since every disagreement-subset item is, by construction, one the two
 cheap detectors predict oppositely). At $N{=}10$, the resampled accuracy of a cheap
-detector can only take 11 discrete values ($k/10$), making an exact tie between
-$\hat A_1$ and $\hat A_2$ far more likely than at larger $N$: a tie occurs in 35/1{,}000
-resamples, matching $\mathrm{Binomial}(10, 0.216).\mathrm{pmf}(5) \approx 3.52\%$
-almost exactly. \texttt{argmax} resolves ties to the first-listed detector ($f_1$,
-the artifact detector) regardless of its true accuracy; the binary rule's Boolean
-escalate/fallback outcome is unaffected by which cheap detector a tie resolves to,
-but the three-way rule's full-identity agreement check is. Of the 1{,}000 resamples,
-84 have $\hat A_3 > \max(\hat A_1, \hat A_2)$ (a mismatch both rules share) and an
-additional 23 are exact ties resolved to $f_1$ by \texttt{argmax} where the oracle
-selects $f_2$ (a mismatch only the three-way rule's stricter check counts): $84 + 23 =
-107 = 1{,}000 - 893$, closing the arithmetic exactly against the observed 89.3\% vs.\
-91.6\% agreement rates for the two rules on this one configuration. This
-single-configuration, tie-breaking artifact -- not a difference in the gate's underlying
-decision -- accounts for the entire $N{=}10$ discrepancy, and vanishes by $N{=}20$ as
-the resampled-accuracy grid becomes fine enough that exact ties are rare.
+detector can only take 11 discrete values ($k/10$), so the resampled $\hat A_1$ can tie
+or even exceed $\hat A_2$ although $A_1$ is far below $A_2$. A tie occurs in 29 of the
+1{,}000 resamples, close to the $\mathrm{Binomial}(10, 0.216).\mathrm{pmf}(5) \approx
+3.5\%$ expectation, and $\hat A_1 > \hat A_2$ in 14 more. \texttt{argmax} resolves ties
+to the first-listed detector ($f_1$, the artifact detector). Which cheap detector is
+chosen does not change the binary rule's escalate/fallback outcome, but it does change
+the three-way rule's full-identity agreement check. Of the 1{,}000 resamples, 89 have
+$\hat A_3 > \max(\hat A_1, \hat A_2)$, a mismatch both rules share. A further 27 select
+$f_1$ where the oracle selects $f_2$, a mismatch only the three-way check counts:
+$89 + 27 = 116 = 1{,}000 - 884$, which closes the arithmetic exactly against the
+observed 91.1\% vs.\ 88.4\% agreement rates on this configuration. This
+single-configuration resampling artifact, not a difference in the gate's underlying
+decision, accounts for the entire $N{=}10$ discrepancy. It vanishes by $N{=}20$, where
+the resampled accuracies are fine-grained enough that such reversals are rare.
 
 \subsubsection{Extending the Gate to Three-Way Selection}
 \label{sec:threeway}
@@ -1762,16 +1834,22 @@ been possible: no prior evaluation in this line of work included a full-coverage
 GPT-5.5 run on an entire benchmark, only disagreement-subset-restricted calls. We
 closed this gap for the two SDXL/FLUX configurations supporting this paper's
 positive escalation result (Table~\ref{tab:e8_results}), using the OpenAI Batch API
-(verified pricing: \$2.50/\$15.00 per million input/output tokens for gpt-5.5 at
-standard context length, roughly half the synchronous-API price, appropriate here
-since none of this evaluation is latency-sensitive) to run GPT-5.5 on every image in
-both benchmarks (8{,}000 calls, 100\% successful on first pass).
+(Batch-tier pricing of \$2.50/\$15.00 per million input/output tokens for gpt-5.5 at
+standard context length~\cite{openai_pricing}, half the synchronous-API price,
+appropriate here since none of this evaluation is latency-sensitive) to run GPT-5.5 on
+every image in both benchmarks (8{,}000 calls, 100\% successful on first pass). A
+GPT-5.5 call used on average 783 input and 96 output tokens on SDXL and 783 input and
+177 output tokens on FLUX. In the in-domain disagreement-subset runs the averages were
+1{,}271/233 (GenBuster), 339/211 (SD~1.4) and 192/184 (BigGAN) input/output tokens.
 
 Table~\ref{tab:cost_accuracy_tradeoff} and Figure~\ref{fig:cost_accuracy_tradeoff}
 report the resulting three-point comparison. Uniform escalation reaches 99.6\%
 accuracy on SDXL and 97.1\% on FLUX, at \$13.61 and \$18.47 respectively for the full
 4{,}000-image benchmark. The disagreement-routed cascade reaches 92.5--93.0\% (SDXL)
-and 89.3--94.0\% (FLUX) at 58--64\% of that cost (escalating on 36--42\% of inputs). The
+and 89.3--94.0\% (FLUX) at 42--51\% of that cost, escalating 36--42\% of inputs. The cost
+share exceeds the escalation share because disagreement images use more tokens per call
+than the average image (for example, 965 vs.\ 783 input tokens on SDXL/SigLIP2), so the
+cascade's cost is computed from the tokens of the images it actually escalates. The
 cascade therefore does not recover the full accuracy achievable by uniform escalation
 -- 3.0 to 7.8 percentage points remain on the table across the four
 backbone/dataset cells -- in exchange for a substantial, but not complete, cost
@@ -1783,24 +1861,26 @@ improvement over always escalating.
 \begin{table}[h]
 \centering
 \footnotesize
-\caption{Cheap-only, cascade, and uniform GPT-5.5 accuracy and cost (full 4{,}000-image benchmark, Batch-API pricing) on SDXL/FLUX.}
+\caption{Cheap-only, cascade, and uniform GPT-5.5 accuracy and cost on SDXL/FLUX (full 4{,}000-image benchmark, Batch-API pricing applied to per-call token counts). Cost share is cascade cost as a share of uniform cost.}
 \label{tab:cost_accuracy_tradeoff}
-\begin{tabular}{llcccc}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
 \toprule
-Dataset & Sem. & Cheap-only & Cascade (\$) & Uniform (\$) & Gap \\
+Dataset & Sem. & Cheap-only & Cascade (\$) & Uniform (\$) & Gap & Cost share \\
 \midrule
-SDXL & SigLIP2 & 0.864 & 0.925 (\$4.94) & 0.996 (\$13.61) & 0.071 \\
-SDXL & DINOv2  & 0.851 & 0.930 (\$5.24) & 0.996 (\$13.61) & 0.067 \\
-FLUX & SigLIP2 & 0.906 & 0.940 (\$7.74) & 0.971 (\$18.47) & 0.030 \\
-FLUX & DINOv2  & 0.818 & 0.893 (\$7.66) & 0.971 (\$18.47) & 0.078 \\
+SDXL & SigLIP2 & 0.864 & 0.925 (\$5.72) & 0.996 (\$13.61) & 0.071 & 42\% \\
+SDXL & DINOv2  & 0.851 & 0.930 (\$6.01) & 0.996 (\$13.61) & 0.067 & 44\% \\
+FLUX & SigLIP2 & 0.906 & 0.940 (\$9.40) & 0.971 (\$18.47) & 0.030 & 51\% \\
+FLUX & DINOv2  & 0.818 & 0.893 (\$9.25) & 0.971 (\$18.47) & 0.078 & 50\% \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=.95\columnwidth]{plot_fig_d_cost_accuracy_tradeoff.png}
-    \caption{Cost vs.\ accuracy for cheap-only, cascade, and uniform GPT-5.5 escalation on SDXL and FLUX. The cascade recovers most, but not all, of the accuracy gap to uniform escalation at roughly 58--64\% of its cost.}
+    \caption{Cost vs.\ accuracy for cheap-only, cascade, and uniform GPT-5.5 escalation on SDXL and FLUX. The cascade recovers most, but not all, of the accuracy gap to uniform escalation at 42--51\% of its cost.}
     \label{fig:cost_accuracy_tradeoff}
 \end{figure}
 
