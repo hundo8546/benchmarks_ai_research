@@ -208,6 +208,15 @@ def main():
         log.append(f"[{'OK' if out.returncode == 0 else 'FAIL'}] figure script {script}")
         print(f"  [{status}] {script}")
 
+    print("\n=== paper_results bundle + audit ===")
+    try:
+        import build_results_bundle
+        n_bad, _, _ = build_results_bundle.build()
+        log.append(f"[{'OK' if n_bad == 0 else 'AUDIT'}] paper_results bundle: {n_bad} audit mismatches")
+        print(f"  [{'OK' if n_bad == 0 else 'AUDIT'}] paper_results/ written, {n_bad} audit mismatches")
+    except Exception as e:
+        _fail("paper_results bundle", e, log)
+
     finished = datetime.datetime.now(datetime.timezone.utc).isoformat()
     log.append("")
     log.append(f"run finished {finished} UTC")

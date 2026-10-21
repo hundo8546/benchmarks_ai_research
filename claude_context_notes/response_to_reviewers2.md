@@ -239,7 +239,7 @@ evaluation dates, and failed/truncated-call counts should be documented; the fou
 favorable SDXL/FLUX configurations need sample counts, class composition, routed
 accuracies, paired CIs, and API-coverage completeness.
 
-**Response:** New Section IV.C.1 ("GPT-5.5 and Qwen Verifier Audit") provides this
+**Response:** New Section IV.B.1 ("GPT-5.5 and Qwen Verifier Audit") provides this
 in full. Model identifier (`gpt-5.5` via the OpenAI Responses API); no explicit
 reasoning/verbosity/temperature parameter is set, disclosed as relying on API
 defaults rather than implying a configured value we do not control. The original
@@ -267,7 +267,7 @@ all at 100% GPT-5.5 coverage. The baseline and gate analyses now also use these 
 subsets with the uniform-run labels; previously they used only the samples that also
 had Qwen coverage.
 
-**Action:** New Section IV.C.1 with full audit detail, and new Table
+**Action:** New Section IV.B.1 with full audit detail, and new Table
 `positive_cells` (Section V). Per-sample prediction files with timestamp/retry/token
 columns released. 19 previously-mislabeled rows corrected.
 
@@ -293,7 +293,7 @@ result (new Table `confidence_routing`, Section V).
 The reviewer's concern is partly borne out. In-domain, disagreement is significantly
 more accurate on SD 1.4 (−2.2 points for the joint rule) and BigGAN (−0.7) and tied on
 GenBuster. Under the SDXL/FLUX shift, disagreement has no accuracy advantage. The joint
-rule is significantly better on SDXL/SigLIP2 (+1.4 points, 95% CI [+0.6, +2.1]) and tied
+rule is significantly better on SDXL/SigLIP2 (+1.4 points, 95% CI [+0.6, +2.2]) and tied
 on the other three, and on FLUX it matches the disagreement rule while escalating about
 10 points fewer inputs. With escalation counts matched exactly on the evaluation set,
 the joint rule is significantly better in three of the four shifted configurations
@@ -441,9 +441,13 @@ ceiling effect). On GenBuster the cascade does not outperform the random baselin
 
 ### Comment 4 — Unified Case 1/2/3/Breakdown summary table
 
-**Action:** Added as a figure (Section VI.A, "The Three Cascade Cases in
-Practice") rather than a text table, mapping every tested configuration in the
-paper onto its Case assignment with the specific evidence justifying each.
+**Action:** Added a compact table (Table `case_mapping`) next to a figure in Section
+VI.B ("The Three Cascade Cases in Practice"). The table gives Case 1/2/3/Breakdown
+counts for each experimental setting; the figure maps every tested configuration
+individually. Case 3 is assigned mechanically: the verifier must beat the best cheap
+detector on the disagreement subset with a 95% CI above zero. Six configurations
+qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and the
+1% SigLIP2 probe-degradation cell.
 
 ---
 

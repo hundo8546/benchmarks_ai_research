@@ -752,7 +752,7 @@ Always esc.  & 0.713 & 190.2 & 0.576 & 83.2 & 0.690 & 70.6 \\
 Dataset & Verifier & Acc. & $n$ & Best-cheap & Clears? \\
 \midrule
 GenBuster & Qwen2.5-VL-7B  & 0.703 & 259 & 0.961 & No \\
-GenBuster & GPT-5.5        & 0.865 &  52 & 0.961 & No \\
+GenBuster & GPT-5.5        & 0.865 &  52 & 0.962 & No \\
 \midrule
 SD~1.4    & Qwen2.5-VL-7B  & 0.586 & 532 & 0.784 & No \\
 SD~1.4    & GPT-5.5        & 0.739 &  23 & 0.826 & No \\
@@ -965,10 +965,10 @@ GenBuster & Qwen-7B & 1{,}000 & 0.899 (0.259) & 0.894 (0.267) & $-$0.005 [$-$0.0
 SD~1.4 & Qwen-7B & 2{,}000 & 0.874 (0.266) & 0.852 (0.250) & $-$0.022$^\ast$ [$-$0.037, $-$0.007] \\
 BigGAN & Qwen-7B & 2{,}000 & 0.995 (0.007) & 0.988 (0.016) & $-$0.007$^\ast$ [$-$0.011, $-$0.004] \\
 \midrule
-SDXL/SigLIP2 & GPT-5.5 & 4{,}000 & 0.925 (0.363) & 0.938 (0.357) & $+$0.014$^\ast$ [$+$0.006, $+$0.021] \\
-SDXL/DINOv2 & GPT-5.5 & 4{,}000 & 0.930 (0.385) & 0.923 (0.354) & $-$0.006 [$-$0.015, $+$0.002] \\
-FLUX/SigLIP2 & GPT-5.5 & 4{,}000 & 0.940 (0.419) & 0.942 (0.318) & $+$0.001 [$-$0.005, $+$0.008] \\
-FLUX/DINOv2 & GPT-5.5 & 4{,}000 & 0.893 (0.415) & 0.894 (0.335) & $+$0.002 [$-$0.008, $+$0.011] \\
+SDXL/SigLIP2 & GPT-5.5 & 4{,}000 & 0.925 (0.363) & 0.938 (0.357) & $+$0.014$^\ast$ [$+$0.006, $+$0.022] \\
+SDXL/DINOv2 & GPT-5.5 & 4{,}000 & 0.930 (0.385) & 0.923 (0.354) & $-$0.007 [$-$0.015, $+$0.002] \\
+FLUX/SigLIP2 & GPT-5.5 & 4{,}000 & 0.940 (0.419) & 0.942 (0.318) & $+$0.002 [$-$0.006, $+$0.009] \\
+FLUX/DINOv2 & GPT-5.5 & 4{,}000 & 0.893 (0.415) & 0.894 (0.335) & $+$0.002 [$-$0.008, $+$0.012] \\
 \bottomrule
 \end{tabular}
 }
@@ -1093,18 +1093,18 @@ backbones.
 Backbone & Train frac. & Sem.-only & Cascade & Gain \\
 \midrule
 SigLIP2  & 1\%   & 0.744 & 0.804 & $+$0.060 \\
-SigLIP2  & 5\%   & 0.834 & 0.839 & $+$0.005 \\
+SigLIP2 & 5\% & 0.834 & 0.839 & $+$0.006 \\
 SigLIP2  & 10\%  & 0.881 & 0.861 & $-$0.020 \\
-SigLIP2  & 25\%  & 0.891 & 0.860 & $-$0.031 \\
-SigLIP2  & 50\%  & 0.924 & 0.875 & $-$0.049 \\
-SigLIP2  & 100\% & 0.926 & 0.874 & $-$0.052 \\
+SigLIP2 & 25\% & 0.891 & 0.860 & $-$0.032 \\
+SigLIP2 & 50\% & 0.924 & 0.875 & $-$0.050 \\
+SigLIP2 & 100\% & 0.926 & 0.874 & $-$0.053 \\
 \midrule
 DINOv2   & 1\%   & 0.675 & 0.757 & $+$0.083 \\
 DINOv2   & 5\%   & 0.759 & 0.792 & $+$0.034 \\
-DINOv2   & 10\%  & 0.806 & 0.818 & $+$0.011 \\
+DINOv2 & 10\% & 0.806 & 0.818 & $+$0.012 \\
 DINOv2   & 25\%  & 0.838 & 0.832 & $-$0.006 \\
 DINOv2   & 50\%  & 0.861 & 0.841 & $-$0.020 \\
-DINOv2   & 100\% & 0.877 & 0.851 & $-$0.025 \\
+DINOv2 & 100\% & 0.877 & 0.851 & $-$0.026 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1191,13 +1191,15 @@ pairings are significantly worse, one (SD~1.4$\to$GenBuster) is indistinguishabl
 zero, and one (BigGAN$\to$GenBuster) is a small significant gain of 3.0 points
 (95\% CI $[+0.005, +0.055]$).
 
-These results illustrate \textbf{Case 2} from Section~\ref{sec:kstage}. The transferred semantic
-probe is weak, so the cascade appears to recover accuracy relative to that stale probe.
-However, many disagreement cases are inputs that the in-domain FFT detector already
-classifies correctly. Escalating those cases to Qwen replaces correct FFT predictions
-with a less reliable verifier prediction. Under this cross-family setting, a strong
-in-domain artifact detector is therefore preferable to escalating disagreements from a
-poorly transferred semantic probe.
+Five of the six pairings illustrate \textbf{Case 2} from Section~\ref{sec:kstage}. The
+transferred semantic probe is weak, so the cascade appears to recover accuracy relative
+to that stale probe. However, many disagreement cases are inputs that the in-domain FFT
+detector already classifies correctly. Escalating those cases to Qwen replaces correct
+FFT predictions with a less reliable verifier prediction. In these pairings a strong
+in-domain artifact detector is preferable to escalating disagreements from a poorly
+transferred semantic probe. BigGAN$\to$GenBuster is the exception: on its disagreement
+subset Qwen beats the in-domain FFT detector (77.8\% vs.\ 71.5\%), a small Case~3
+instance.
 
 This setting differs from the SD~1.4-to-SDXL/FLUX deployment-shift experiment in
 Table~\ref{tab:e8_results}. Here, the semantic probe is transferred across generator
@@ -1222,9 +1224,9 @@ GenBuster & BigGAN & 0.997 & 0.530 & 0.776 & $+$0.246 & $-$0.221 \\
 SD~1.4 & GenBuster & 0.727 & 0.502 & 0.702 & $+$0.200 & $-$0.025$^\dagger$ \\
 SD~1.4 & BigGAN & 0.997 & 0.638 & 0.821 & $+$0.184 & $-$0.176 \\
 BigGAN & GenBuster & 0.727 & 0.523 & 0.757 & $+$0.234 & $+$0.030 \\
-BigGAN & SD~1.4 & 0.775 & 0.515 & 0.608 & $+$0.093 & $-$0.167 \\
+BigGAN & SD~1.4 & 0.775 & 0.515 & 0.608 & $+$0.093 & $-$0.168 \\
 \midrule
-\multicolumn{2}{l}{Mean} & & & & $+$0.180 & $-$0.116 \\
+\multicolumn{2}{l}{Mean} & & & & $+$0.180 & $-$0.117 \\
 \bottomrule
 \end{tabular}
 }
@@ -1328,8 +1330,8 @@ The artifact detector is already near ceiling, so the cascade adds latency with 
 no accuracy change (Table~\ref{tab:main_results}).
 
 \textbf{Case 2} occurs when the cheap detectors are asymmetric. This describes the
-in-domain GenBuster and SD~1.4 results (Section~\ref{sec:detector_performance}), and appears more clearly in the
-cross-family deployment experiment (Table~\ref{tab:cross_family_deployment},
+in-domain GenBuster and SD~1.4 results (Section~\ref{sec:detector_performance}), and appears more clearly in five of
+the six cross-family pairings (Table~\ref{tab:cross_family_deployment},
 Section~\ref{sec:cross_family_deployment}). A weak transferred probe makes the cascade appear useful against the
 stale baseline, while comparison with the stronger cheap detector removes that apparent
 gain. The BigGAN distant shift is another Case~2 instance because the semantic probe
@@ -1338,7 +1340,9 @@ remains stronger than every tested verifier on the routed subset.
 \textbf{Case 3} occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier
 (Table~\ref{tab:e8_results}). Both cheap detectors degrade, and GPT-5.5 is stronger on
 each routed subset. Replacing it with Qwen makes every gain negative, showing that the
-case assignment depends on the full detector-verifier configuration.
+case assignment depends on the full detector-verifier configuration. Two smaller Case~3
+instances appear elsewhere: the BigGAN$\to$GenBuster cross-family pairing and the
+probe-degradation sweep's SigLIP2 probe at 1\% training data.
 
 A capable verifier does not by itself produce Case~3. In the BigGAN distant-shift
 comparison (Table~\ref{tab:biggan_shift}), all three verifiers, including GPT-5.5 and
@@ -1368,6 +1372,27 @@ dataset, verifier, and backbone combination discussed in Sections~\ref{sec:resul
     \caption{The Case 1/2/3/Breakdown framework (Section~\ref{sec:kstage}) mapped onto every tested configuration in this paper.}
     \label{fig:case_mapping}
 \end{figure}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\caption{Case assignment by experimental setting (counts of configurations; Figure~\ref{fig:case_mapping} shows each one). Case~3 requires the verifier to beat the best cheap detector on the disagreement subset with a paired-bootstrap 95\% CI above zero.}
+\label{tab:case_mapping}
+\begin{tabular}{lccccc}
+\toprule
+Setting & $n$ & Case 1 & Case 2 & Case 3 & Breakdown \\
+\midrule
+In-domain GenBuster, SD~1.4 & 4 & -- & 4 & -- & -- \\
+In-domain BigGAN & 2 & 2 & -- & -- & -- \\
+SDXL/FLUX shift, Qwen-7B & 4 & -- & 4 & -- & -- \\
+SDXL/FLUX shift, GPT-5.5 & 4 & -- & -- & 4 & -- \\
+Cross-family deployment & 6 & -- & 5 & 1 & -- \\
+BigGAN distant shift & 3 & -- & 3 & -- & -- \\
+Probe-degradation sweep & 12 & -- & 11 & 1 & -- \\
+Agreement path (GenBuster) & 1 & -- & -- & -- & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Limitations of Learned Routing}
 \label{sec:learned_routing}
@@ -1738,7 +1763,7 @@ Significance-aware             & 18/32 & 21/32 & 26/32 & 26/32 \\
 \ \ harmful-esc.\ rate         & 0.2\% & 0.4\% & 0.5\% & 0.5\% \\
 \ \ missed-benefit rate        & 17.1\% & 15.1\% & 12.5\% & 11.3\% \\
 \ \ mean regret (points)       & 2.00 & 1.27 & 0.78 & 0.62 \\
-Rules choose differently       & 16.5\% & 14.7\% & 12.8\% & 11.3\% \\
+Rules choose differently & 16.6\% & 14.7\% & 12.8\% & 11.3\% \\
 \midrule
 \multicolumn{5}{l}{Significance-aware gate escalates (share of draws)} \\
 \ \ SDXL/SigLIP2               & 96.0\% & 100.0\% & 100.0\% & 100.0\% \\
