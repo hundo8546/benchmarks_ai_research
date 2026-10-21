@@ -28,23 +28,31 @@ criterion at that size).
 
 **Response:** We agree, and have added a fully independent evaluation
 (Section VI.I.1, "Independent (Held-Out) Gate Evaluation," new
-Table "gate_holdout"). For each of the 35 configurations we now repeatedly
-(500 draws) split the disagreement subset into disjoint calibration and test
-halves, freeze the gate's decision on calibration only, and apply it unchanged to
-the test half, reporting test-set accuracy, regret relative to the best fixed
-detector chosen with test-half oracle knowledge, and the harmful-escalation rate.
-Three configurations have disagreement pools under 40 samples and cannot support a
-meaningful split; we report the remaining 32. Under this genuinely held-out
-protocol, our significance-aware rule (Comment 2) reaches ≥90% test-set agreement
-in 18/32 at N=50, 21/32 at N=100, and 24/32 at N=200 — visibly lower than the
-same-pool-oracle figures (21/35, 24/35, 28/35). We have revised our practical
-recommendation accordingly: N≥100 is reliable in roughly two-thirds of eligible
-configurations under genuine held-out evaluation, not the majority previously
-implied; we now recommend N≈200 or the full available pool, with an explicit
-caveat that close-margin configurations remain unreliable even then.
+Table "gate_holdout"). For each of the 35 configurations and each calibration
+size N ∈ {50, 100, 200}, we draw 250 random splits of the disagreement subset into
+disjoint calibration and test sets of N samples each, plus 250 half/half splits of
+the full pool. We freeze the gate's decision on calibration only and apply it
+unchanged to the test set. We report agreement with the test set's own oracle,
+regret, the harmful-escalation rate, and the missed-beneficial-escalation rate
+(verifier strictly best on test, but the frozen decision fell back). Where a pool
+is too small for N, N is capped at half the pool: GenBuster/GPT-5.5 at 26 for every
+N, and GenBuster/Qwen at 129 for N=200. The table caption lists both. Three
+configurations have disagreement pools under 40 samples and cannot support a
+meaningful split; we report the remaining 32. Under this held-out protocol, our
+significance-aware rule (Comment 2) reaches ≥90% test-set agreement in 18/32 at
+N=50, 21/32 at N=100, and 24/32 at N=200. That is visibly lower than the same-pool
+figures (21/35, 24/35, 28/35). We have revised our practical recommendation
+accordingly: N≥100 is reliable in only about two-thirds of eligible configurations,
+so we now recommend N≈200 or the full available pool, and we state explicitly that
+close-margin configurations can remain unreliable even then. For the four SDXL/FLUX
+GPT-5.5 configurations behind our positive result, the table also reports how often
+the significance-aware gate enables escalation. Three escalate in ≥85% of draws at
+every N. FLUX/SigLIP2, the smallest-margin case, escalates in only 32% of draws at
+N=50 and 53% at N=100 (86% at N=200), and the text says so.
 
-**Action:** New Section VI.I.1 and Table "gate_holdout." Revised sample-size
-recommendation throughout. Old same-pool sensitivity table retained alongside
+**Action:** New Section VI.I.1 and Table "gate_holdout" (with capped-N footnote,
+missed-beneficial-escalation rates and positive-cell escalation rates). Revised
+sample-size recommendation throughout. Old same-pool sensitivity table retained alongside
 (retitled "Same-Pool-Oracle Sensitivity") since it answers a genuinely different
 question (resampling stability) that remains useful, but is now clearly
 subordinate to the held-out result.
@@ -63,7 +71,12 @@ uncertainty-aware one: escalate only if the paired-bootstrap 95% confidence
 interval (10,000 resamples) on the accuracy gap lies entirely above zero. Evaluated
 under the same held-out protocol as Comment 1, this reduces the mean
 harmful-escalation rate by roughly an order of magnitude relative to the naive rule
-at every tested N (e.g. 6.7% → 0.3% at N=50), at a modest cost in mean regret. We
+at every tested N (e.g. 6.7% → 0.3% at N=50). The cost is that it escalates less
+often. It misses a beneficial escalation in 12–17% of draws (naive rule: 2–8%), and
+its mean regret is higher at every N. As a result it matches the test oracle less
+often than the naive rule once calibration data is plentiful (24 vs. 26 of 32 at
+N=200; 26 vs. 29 with the half pool). The paper now presents the two rules as a
+risk trade-off rather than one dominating the other. We
 also added an agreement-path audit across every evaluated dataset (not only
 GenBuster): in-domain agreement-path accuracy is 96.8–99.8% with 0.2–3.2%
 correlated-error rates; under SDXL/FLUX deployment shift it drops to 83.9–91.8%

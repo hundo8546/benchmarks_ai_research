@@ -1558,34 +1558,55 @@ deployment shift specifically, not a universal property of the agreement path.
 
 Validating the gate's decision against an oracle computed from the \emph{same} pool
 used for calibration establishes resampling stability, not generalization to unseen
-inputs. We therefore additionally evaluated the gate under genuine calibration/test
-separation: for each of the 35 configurations, we repeatedly (500 draws) split the
-disagreement subset into disjoint calibration and test halves, froze the gate's
-decision (both the naive point-estimate rule and the significance-aware rule above)
-on the calibration half only, and applied that frozen decision to the test half,
-measuring test-set accuracy, regret relative to the best fixed detector chosen with
-test-half oracle knowledge, and the rate of harmful escalations (the calibration
-decided to escalate, but the verifier's test-half accuracy was in fact below the best
-cheap detector's). Three of the 35 configurations have disagreement pools under 40
-samples (SD~1.4/GPT-5.5, $n{=}23$; BigGAN/Qwen2.5-VL-7B and BigGAN/GPT-5.5, both
-$n{=}14$) and cannot support a meaningful calibration/test split; we report the
-remaining 32.
+inputs. We therefore also evaluated the gate under genuine calibration/test
+separation. For each of the 35 configurations and each calibration size
+$N \in \{50, 100, 200\}$, we drew 250 random splits of the disagreement subset into
+disjoint calibration and test sets of $N$ samples each, plus 250 splits into two
+halves of the full pool. When a pool holds fewer than $2N$ samples, $N$ is capped at
+half the pool: GenBuster/GPT-5.5 ($n{=}52$) is capped at 26 for every $N$, and
+GenBuster/Qwen2.5-VL-7B ($n{=}259$) at 129 for $N{=}200$. On each split we froze the
+gate's decision on the calibration set, under both the naive point-estimate rule and
+the significance-aware rule above (500 bootstrap resamples per draw in this
+simulation), and applied it unchanged to the test set. We record agreement with the
+test set's own oracle decision, regret against the best fixed detector chosen with
+test-set knowledge, harmful escalations (the frozen decision escalates but the
+verifier is below the best cheap detector on the test set), and missed beneficial
+escalations (the verifier is strictly best on the test set but the frozen decision
+falls back). Three of the 35 configurations have disagreement pools under 40 samples
+(SD~1.4/GPT-5.5, $n{=}23$; BigGAN/Qwen2.5-VL-7B and BigGAN/GPT-5.5, both $n{=}14$) and
+cannot support a meaningful split; we report the remaining 32.
 
-Under this genuinely held-out protocol, the significance-aware rule reaches
-$\geq$90\% test-set agreement with the oracle decision in 18/32 configurations at
-$N{=}50$, 21/32 at $N{=}100$, and 24/32 at $N{=}200$ (naive rule: 17/32, 20/32,
-26/32, respectively) -- noticeably below the oracle-based 21/35, 24/35, 28/35 figures
-from the same-pool sensitivity sweep below, confirming that those earlier numbers
-measured resampling stability rather than true held-out generalization. We revise our
-practical recommendation accordingly: $N{\geq}100$ reaches reliable agreement in only
-roughly two-thirds of eligible configurations under genuine held-out evaluation;
-practitioners should budget closer to $N{\approx}200$ or use the full available
-calibration pool, and still expect a minority of close-margin configurations to
-remain unreliable even then. The significance-aware rule's practical value shows most
-clearly in the harmful-escalation rate, which it reduces by roughly an order of
-magnitude relative to the naive rule at every tested $N$ (e.g.\ at $N{=}50$: 6.7\%
-mean harmful-escalation rate for the naive rule vs.\ 0.3\% for the significance-aware
-rule), at a small cost in mean regret.
+Under this protocol (Table~\ref{tab:gate_holdout}), the significance-aware rule
+reaches $\geq$90\% agreement with the test oracle in 18/32 configurations at
+$N{=}50$, 21/32 at $N{=}100$ and 24/32 at $N{=}200$ (naive rule: 17/32, 20/32,
+26/32). These counts are below the same-pool figures of 21/35, 24/35 and 28/35 in
+Table~\ref{tab:sensitivity}, confirming that the earlier numbers measured resampling
+stability rather than held-out generalization. We revise the practical recommendation
+accordingly. $N{=}100$ gives reliable decisions in only about two-thirds of eligible
+configurations, so practitioners should budget closer to $N{\approx}200$ or use the
+full calibration pool, and should still expect some close-margin configurations to
+stay unreliable.
+
+The two rules make a different trade, not a better or worse one. The
+significance-aware rule cuts harmful escalations by roughly an order of magnitude
+(6.7\% vs.\ 0.3\% at $N{=}50$). It pays for this by escalating less: in 12--17\% of
+draws it falls back although the verifier was best on the test set, against 2--8\%
+for the naive rule, and its mean regret is higher at every $N$. This is also why it
+matches the test oracle less often than the naive rule at $N{=}200$ (24 vs.\ 26) and
+with the half pool (26 vs.\ 29). With that much calibration data the naive rule's
+point estimate is usually right, while the confidence interval still excludes zero
+only when the verifier's margin is large. The significance-aware rule suits
+deployments where an unwarranted escalation is costly. The naive rule suits those
+where a missed verifier gain is.
+
+The lower panel of Table~\ref{tab:gate_holdout} shows how often the
+significance-aware gate enables escalation on the four SDXL/FLUX GPT-5.5
+configurations behind the paper's positive result. Three of them escalate in at least
+85\% of draws at every $N$. FLUX/SigLIP2, where the verifier's margin over the stale
+probe is smallest, escalates in only 32\% of draws at $N{=}50$ and 53\% at $N{=}100$,
+rising to 86\% at $N{=}200$ and 100\% with the half pool. With 100 or fewer labeled
+calibration samples, the gate would therefore forgo the FLUX/SigLIP2 gain about half
+the time.
 
 \subsubsection{Calibration Sample-Size Sensitivity (Same-Pool Oracle)}
 
@@ -1619,18 +1640,31 @@ Three-way selector  & 12/35 & 19/35 & 21/35 & 24/35 & 28/35 \\
 \begin{table}[t]
 \centering
 \small
-\caption{Independent (held-out) gate evaluation: fraction of 32 eligible configurations (3 of 35 excluded, disagreement pool $<$40) reaching $\geq$90\% test-set agreement with the test-half oracle, calibration and test halves disjoint, 500 repeats per configuration-$N$ pair. Mean harmful-escalation rate (frozen calibration decision was to escalate, but the verifier underperformed the best cheap detector on the held-out test half) shown below each agreement figure.}
+\caption{Independent (held-out) gate evaluation over 32 eligible configurations (3 of 35 excluded, disagreement pool $<$40), 250 disjoint calibration/test draws per configuration and $N$. Upper panel: configurations reaching $\geq$90\% agreement with the test-set oracle, then the mean rates of harmful escalation (escalated, verifier below best cheap detector on test) and missed beneficial escalation (fell back, verifier strictly best on test), and mean regret. Lower panel: share of draws in which the significance-aware gate enables escalation on the SDXL/FLUX GPT-5.5 configurations. $N$ is capped at half the pool for GenBuster/GPT-5.5 (26 at every $N$) and GenBuster/Qwen2.5-VL-7B (129 at $N{=}200$).}
 \label{tab:gate_holdout}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 Decision rule & $N{=}50$ & $N{=}100$ & $N{=}200$ & Half-pool \\
 \midrule
-Naive (point-estimate)        & 17/32 & 20/32 & 26/32 & 29/32 \\
+Naive (point-estimate)         & 17/32 & 20/32 & 26/32 & 29/32 \\
 \ \ harmful-esc.\ rate         & 6.7\% & 5.5\% & 3.5\% & 2.2\% \\
+\ \ missed-benefit rate        & 8.2\% & 6.0\% & 3.6\% & 2.4\% \\
+\ \ mean regret (points)       & 1.43 & 0.75 & 0.34 & 0.21 \\
 Significance-aware             & 18/32 & 21/32 & 24/32 & 26/32 \\
 \ \ harmful-esc.\ rate         & 0.3\% & 0.2\% & 0.3\% & 0.5\% \\
+\ \ missed-benefit rate        & 17.1\% & 15.6\% & 13.1\% & 12.1\% \\
+\ \ mean regret (points)       & 2.02 & 1.27 & 0.87 & 0.67 \\
+Rules choose differently       & 16.5\% & 15.4\% & 12.9\% & 11.6\% \\
+\midrule
+\multicolumn{5}{l}{Significance-aware gate escalates (share of draws)} \\
+\ \ SDXL/SigLIP2               & 91.6\% & 99.6\% & 100.0\% & 100.0\% \\
+\ \ SDXL/DINOv2                & 97.2\% & 100.0\% & 100.0\% & 100.0\% \\
+\ \ FLUX/SigLIP2               & 31.6\% & 52.8\% & 86.4\% & 100.0\% \\
+\ \ FLUX/DINOv2                & 84.8\% & 98.4\% & 100.0\% & 100.0\% \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 \FloatBarrier
 
