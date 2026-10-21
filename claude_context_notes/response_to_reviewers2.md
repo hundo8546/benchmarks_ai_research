@@ -464,3 +464,18 @@ paper onto its Case assignment with the specific evidence justifying each.
   (`routing/run_pipeline.py`, `routing/generate_paper_results.py`) replacing
   approximately 150 previously scattered scripts, so every reported number has a
   single, traceable, reproducible source.
+- Claims revised after correcting our own analyses:
+  - The joint confidence-routing baseline no longer loses in every configuration
+    (R1 Comment 8).
+  - The cascade's cost share is 42–51% of uniform escalation, priced from the
+    escalated images' own tokens.
+  - BigGAN→GenBuster cross-family deployment is a small significant gain over
+    in-domain FFT.
+- Disclosure, BigGAN distant shift (Section V.D.7). The previous version reported
+  verifier accuracies of 0.801 / 0.689 / 0.467 (GPT-5.5 / Qwen-7B / Qwen-72B). The
+  rebuilt experiment gives 0.582 / 0.515 / 0.623, a different ranking. We ruled out
+  three explanations: the prompt, probe retraining, and the routed subset's class mix.
+  The original per-sample data did not survive, so the cause is unresolved. The paper
+  says this, and it no longer draws any conclusion about model scale from this
+  experiment. The negative result itself (every verifier far below the stale semantic
+  probe) holds in both versions.

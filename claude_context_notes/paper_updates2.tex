@@ -1260,9 +1260,22 @@ semantic predictions with weaker verifier outputs. This matches the Case~2 failu
 from the cross-family experiment (Section~V.D.6).
 
 This negative result shows that the SDXL/FLUX finding does not extend automatically to
-a distant generator family. The 72B model performs best among the tested verifiers yet
-still falls far below the semantic probe, so verifier suitability cannot be inferred
-from scale or general capability.
+a distant generator family. All three verifiers are strongly biased toward ``real'' on
+this subset: they label 3--16\% of inputs fake and recognize only 4.5--28\% of the
+fakes, which are natively $128{\times}128$ and give a VLM little to inspect.
+
+\textbf{Disclosure.} The previous version of this paper reported 0.801, 0.689 and 0.467
+for GPT-5.5, Qwen2.5-VL-7B and Qwen2.5-VL-72B, a different ranking from the values above.
+The per-sample predictions and script behind those numbers did not survive, so we
+rebuilt the experiment from scratch. The rebuilt pool reproduces the earlier stale-probe
+accuracies (stale FFT 38.2\% vs.\ 38.3\% on the full BigGAN set). We checked three
+explanations for the change and none accounts for it: the verifier prompt, retraining
+of the SD~1.4 probes, and the class composition of the routed subset. The natural
+disagreement subset is 44\% real, and at that mix the current verifiers' class-wise
+accuracies imply 0.53, 0.46 and 0.58. Because the verifier ranking has not been stable
+across runs, we draw no conclusion about the effect of model scale. The finding that
+holds in both runs is that every verifier falls far below the stale semantic probe on
+the routed subset, so escalation hurts under this shift.
 
 \begin{table}[h]
 \centering
@@ -1326,11 +1339,11 @@ remains stronger than every tested verifier on the routed subset.
 each routed subset. Replacing it with Qwen makes every gain negative, showing that the
 case assignment depends on the full detector-verifier configuration.
 
-Model scale alone does not determine the case. The clearest evidence is the
-BigGAN distant-shift comparison (Table~\ref{tab:biggan_shift}), where Qwen2.5-VL-72B
-outperforms GPT-5.5 yet remains far below the semantic probe. Both cheap detectors being
-weak is insufficient for Case~3; the verifier must exceed the stronger cheap detector on
-the routed subset, as Eq.~\eqref{eq:gain} requires.
+A capable verifier does not by itself produce Case~3. In the BigGAN distant-shift
+comparison (Table~\ref{tab:biggan_shift}), all three verifiers, including GPT-5.5 and
+the 72B Qwen model, remain far below the stale semantic probe on the routed subset.
+Weak cheap detectors are not enough either; the verifier must exceed the stronger cheap
+detector on the routed subset, as Eq.~\eqref{eq:gain} requires.
 
 The probe-degradation sweep (Table~\ref{tab:limited_data}) demonstrates the
 Case~2-to-Case~3 transition within a controlled experiment. As the semantic probe
