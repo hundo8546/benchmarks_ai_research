@@ -35,13 +35,15 @@ the full pool. We freeze the gate's decision on calibration only and apply it
 unchanged to the test set. We report agreement with the test set's own oracle,
 regret, the harmful-escalation rate, and the missed-beneficial-escalation rate
 (verifier strictly best on test, but the frozen decision fell back). Where a pool
-is too small for N, N is capped at half the pool: GenBuster/GPT-5.5 at 26 for every
-N, and GenBuster/Qwen at 129 for N=200. The table caption lists both. Three
-configurations have disagreement pools under 40 samples and cannot support a
-meaningful split; we report the remaining 32. Under this held-out protocol, our
-significance-aware rule (Comment 2) reaches ≥90% test-set agreement in 18/32 at
-N=50, 21/32 at N=100, and 26/32 at N=200. That is visibly lower than the same-pool
-figures (22/35, 24/35, 28/35). We have revised our practical recommendation
+is too small for N, N is capped at half the pool: GenBuster/GPT-5.5 and
+GenBuster/Qwen at 129 for N=200. The table caption lists both. Two
+configurations (BigGAN/Qwen and BigGAN/GPT-5.5, n=14) have disagreement pools under
+40 samples and cannot support a meaningful split; we report the remaining 33.
+(SD1.4/GPT-5.5 is no longer excluded: its pool grew from 23 to 532 once its
+GPT-5.5 coverage was completed.) Under this held-out protocol, our
+significance-aware rule (Comment 2) reaches ≥90% test-set agreement in 17/33 at
+N=50, 21/33 at N=100, and 25/33 at N=200. That is visibly lower than the same-pool
+figures (22/35, 23/35, 28/35). We have revised our practical recommendation
 accordingly: N≥100 is reliable in only about two-thirds of eligible configurations,
 so we now recommend N≈200 or the full available pool, and we state explicitly that
 close-margin configurations can remain unreliable even then. For the four SDXL/FLUX
@@ -71,10 +73,10 @@ uncertainty-aware one: escalate only if the paired-bootstrap 95% confidence
 interval (10,000 resamples) on the accuracy gap lies entirely above zero. Evaluated
 under the same held-out protocol as Comment 1, this reduces the mean
 harmful-escalation rate by roughly an order of magnitude relative to the naive rule
-at every tested N (e.g. 6.6% → 0.2% at N=50). The cost is that it escalates less
-often. It misses a beneficial escalation in 11–17% of draws (naive rule: 2–8%), and
+at every tested N (e.g. 7.3% → 0.3% at N=50). The cost is that it escalates less
+often. It misses a beneficial escalation in 14–18% of draws (naive rule: 2–9%), and
 its mean regret is higher at every N. As a result it matches the test oracle less
-often than the naive rule once calibration data is plentiful (26 vs. 28 of 32 with
+often than the naive rule once calibration data is plentiful (26 vs. 29 of 33 with
 the half pool). The paper now presents the two rules as a
 risk trade-off rather than one dominating the other. We
 also added an agreement-path audit across every evaluated dataset (not only
@@ -103,14 +105,17 @@ gate's fallback branch is, by its own stated definition, `argmax(A1, A2)`. What
 differed was not the gate's behavior but what our original sensitivity analysis
 measured — a Boolean escalate/fallback agreement check for the binary rule versus a
 full three-valued identity check for the three-way rule. We traced the one place
-this produces different reported numbers (N=10: 14/35 vs. 13/35) to a single
-configuration. At that coarse sample size the resampled accuracy of the weaker cheap
-detector ties the stronger one's (29/1,000 resamples, close to the ≈3.5% binomial
-expectation) or exceeds it (14/1,000). This changes which cheap detector is selected,
-which the three-way check counts and the binary check does not. The arithmetic closes
-exactly: 89 shared mismatches plus 27 wrong-cheap-detector mismatches equals
-116/1,000, matching the observed 91.1% vs. 88.4% gap. The discrepancy vanishes by
-N=20.
+this produces different reported numbers (N=10: 13/35 vs. 11/35) to two
+configurations (SD1.4/SigLIP2 at 100% training fraction, and FLUX/DINOv2, both with
+the Qwen-7B verifier). At that coarse sample size the resampled accuracy of the weaker
+cheap detector ties the stronger one's (19 and 25 of 1,000 resamples) or exceeds it
+(10 and 13). This changes which cheap detector is selected, which the three-way check
+counts and the binary check does not. The arithmetic closes exactly for both: for
+SD1.4, 93 shared mismatches plus 18 wrong-cheap-detector mismatches equals 111/1,000,
+matching the observed 90.7% vs. 88.9% gap; for FLUX/DINOv2, 99 plus 19 equals
+118/1,000, matching 90.1% vs. 88.2%. (The earlier draft reported one configuration
+and 14/35 vs. 13/35; the counts moved because the resampling stream is shared across
+configurations and the configuration set changed.) The discrepancy vanishes by N=20.
 
 **Action:** Exact pseudocode for both rules added to Section VI.I. The "cannot
 represent" claim corrected to describe the three-way rule's actual contribution
@@ -256,9 +261,15 @@ proxies, clustering within a roughly 9-hour window); every call made as part of
 this correction carries an explicit UTC timestamp, retry count, and full raw
 response text, released with the per-sample files. GPT-5.5 coverage is complete
 (100%) for the four SDXL/FLUX configurations and the two new real-image-source
-benchmarks (Comment 4), achieved via ~18,500 new calls over the OpenAI Batch API;
-coverage remains partial and explicitly disclosed for the Qwen columns of Table 5
-and the previously-noted GenBuster/SD1.4 cells of the verifier-comparison table.
+benchmarks (Comment 4), achieved via ~18,500 new calls over the OpenAI Batch API.
+Coverage is also now complete for the Qwen columns of Table 5 (the last 375
+sample-backbone pairs were scored locally) and for the GenBuster/SD1.4 GPT-5.5 cells
+of the verifier-comparison table (259 and 532 samples; the 716 missing labels had
+already been returned by the corrected Batch run and are now merged). With full
+coverage, GPT-5.5 on GenBuster is 0.907 vs. 0.961 for the best cheap detector (below
+it), and on SD1.4 it is 0.814 vs. 0.784 (a +0.030 numerical edge whose paired 95% CI
+[−0.019, +0.079] includes zero), so neither cell clears the baseline and no case
+assignment changed.
 For the four favorable SDXL/FLUX configurations, new Table `positive_cells` reports
 the full disagreement-subset size (1,452–1,675), its real/fake composition (about
 two-thirds fake), GPT-5.5 and best-cheap accuracy on the subset, and a
@@ -479,8 +490,16 @@ qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and 
 - Disclosure, BigGAN distant shift (Section V.D.7). The previous version reported
   verifier accuracies of 0.801 / 0.689 / 0.467 (GPT-5.5 / Qwen-7B / Qwen-72B). The
   rebuilt experiment gives 0.582 / 0.515 / 0.623, a different ranking. We ruled out
-  three explanations: the prompt, probe retraining, and the routed subset's class mix.
-  The original per-sample data did not survive, so the cause is unresolved. The paper
-  says this, and it no longer draws any conclusion about model scale from this
-  experiment. The negative result itself (every verifier far below the stale semantic
-  probe) holds in both versions.
+  three explanations (the prompt, probe retraining, the routed subset's class mix) and
+  then tested input resolution: BigGAN fakes are natively 128x128 and had been sent
+  to the verifiers at that size. Resizing every image (real and fake) to a 512 px
+  longest edge, with nothing else changed, raises GPT-5.5 to 0.710 (fake recall 0.175
+  to 0.435) and Qwen-7B to 0.761 (fake recall 0.045 to 0.700); Qwen-72B does not fit
+  on our GPU and was not rerun. Resolution is therefore a major, likely the main,
+  cause of the discrepancy, but it does not reproduce the earlier numbers or ranking
+  (GPT-5.5 stays below its earlier 0.801; Qwen-7B now exceeds its earlier 0.689 and
+  outranks GPT-5.5). Since the ranking depends on input size, the paper draws no
+  conclusion about model scale. No verifier approaches stale SigLIP2 (0.907) in
+  either condition, so the negative result (escalation hurts under this shift) holds
+  in all runs. Table `biggan_resolution` reports accuracy, real/fake recall and
+  predicted-fake rate for both resolutions.

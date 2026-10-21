@@ -185,6 +185,13 @@ def t_biggan_shift():
     return d, [row(r.verifier, q(r.verifier_acc), q(r.best_cheap_acc)) for r in d.itertuples()], "tab_biggan_shift"
 
 
+def t_biggan_resolution():
+    d = csv("tab_biggan_resolution")
+    rows = [row(r.verifier if r.resolution == "native" else "", r.resolution, q(r.acc), q(r.real_recall),
+                q(r.fake_recall), q(r.pred_fake_rate)) for r in d.itertuples()]
+    return d, rows, "tab_biggan_resolution"
+
+
 def t_confidence_routing():
     d = csv("tab_confidence_routing")
     p = d[(d.rate_matching == "val_tau") & (d.fallback == "semantic")]
@@ -286,6 +293,7 @@ TABLES = [  # paper order; sheet name = LaTeX label
     ("case_mapping", t_case_mapping),
     ("cheap_path", t_cheap_path), ("cheap_trigger", t_cheap_trigger), ("limited_data", t_limited_data),
     ("transfer", t_transfer), ("cross_family_deployment", t_cross_family), ("biggan_shift", t_biggan_shift),
+    ("biggan_resolution", t_biggan_resolution),
     ("robustness", t_robustness), ("sensitivity", t_sensitivity), ("gate_holdout", t_gate_holdout),
     ("threeway", t_threeway), ("cost_accuracy_tradeoff", t_cost),
 ]
@@ -298,6 +306,7 @@ def inline_checks():
     gh = gh[~gh.pool_too_small]
     cr = csv("tab_confidence_routing")
     base = csv("tab_baselines")
+    n_el = gh[["table", "config", "verifier"]].drop_duplicates().shape[0]
     cnt = lambda sp, tag: int((gh[gh.split == sp][f"{tag}_test_oracle_match_rate"] >= .9).sum())
     rng = lambda s, k, p=0: f"{q(k * s.min(), p)}--{q(k * s.max(), p)}"
     return [
@@ -318,10 +327,10 @@ def inline_checks():
          f"accuracy on SDXL and {q(100 * cost[cost.dataset == 'FLUX'].uniform_acc.iloc[0], 1)}\\% on FLUX"),
         ("VI.J", "3.0 to 7.8 percentage points", "tab_cost_accuracy_tradeoff.gap_to_uniform",
          f"{q(100 * cost.gap_to_uniform.min(), 1)} to {q(100 * cost.gap_to_uniform.max(), 1)} percentage points"),
-        ("Abstract", "21 of 32 eligible configurations at $N=100$ and 26 of 32 at $N=200$",
+        ("Abstract", "21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$",
          "tab_gate_holdout (sig, >=0.9)",
-         f"{cnt('N=100', 'sig')} of 32 eligible configurations at $N=100$ and {cnt('N=200', 'sig')} of 32 at $N=200$"),
-        ("VI.I.1", r"(6.6\% vs.\ 0.2\% at $N{=}50$)", "tab_gate_holdout harmful rates at N=50",
+         f"{cnt('N=100', 'sig')} of {n_el} eligible configurations at $N=100$ and {cnt('N=200', 'sig')} of {n_el} at $N=200$"),
+        ("VI.I.1", r"(7.3\% vs.\ 0.3\% at $N{=}50$)", "tab_gate_holdout harmful rates at N=50",
          f"({pct(gh[gh.split == 'N=50'].naive_harmful_escalation_rate.mean())} vs.\\ "
          f"{pct(gh[gh.split == 'N=50'].sig_harmful_escalation_rate.mean())} at $N{{=}}50$)"),
         ("V (confidence routing)", "more than 1.7 points less accurate", "tab_confidence_routing (max conf - dis)",
@@ -352,6 +361,7 @@ PROVENANCE = {
     "cheap_trigger": "pipeline/tables/cheap_trigger.py", "limited_data": "baseline_comparison.py (CASCADE_ROWS)",
     "transfer": "pipeline/tables/transfer.py", "cross_family_deployment": "baseline_comparison.py (CASCADE_ROWS)",
     "biggan_shift": "baseline_comparison.py via pipeline/tables/baselines.py",
+    "biggan_resolution": "pipeline/tables/biggan_resolution.py (reads biggan_distant_shift_*_preds.csv, *_upscaled512_preds.csv)",
     "robustness": "pipeline/tables/robustness.py (reads pipeline/robustness/e7,e9 outputs)",
     "sensitivity": "pipeline/tables/gate.py", "gate_holdout": "pipeline/tables/gate_holdout.py",
     "threeway": "pipeline/tables/gate.py", "case_mapping": "pipeline/tables/case_mapping.py",
