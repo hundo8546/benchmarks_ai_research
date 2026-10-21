@@ -193,6 +193,7 @@ def main():
     print("\n=== cost_accounting / case_mapping (reads the tables above) ===")
     for label, mod_name, fn_name in [("tab_robustness", "robustness", "compute_robustness"),
                                      ("tab_cost_accounting", "cost_accounting", "compute_cost_accounting"),
+                                     ("tab_biggan_resolution", "biggan_resolution", "compute_biggan_resolution"),
                                      ("tab_case_mapping", "case_mapping", "compute_case_mapping")]:
         try:
             mod = __import__(f"pipeline.tables.{mod_name}", fromlist=[fn_name])
