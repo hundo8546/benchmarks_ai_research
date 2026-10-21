@@ -238,7 +238,120 @@ These can be done at any time, but final numbers come from Phases 1–3.
   only is awkward. Either narrow the abstract/intro wording to "frame-level" or flag the
   title to the authors; don't change the title without asking.
 
+## Phase 7 — Remove stale files
+
+Do this after Phases 1–3, once the set of files the paper actually uses has settled.
+The repo has many leftovers from earlier rounds, so this needs care.
+
+**Don't decide by searching for filenames.** Many files are loaded through
+f-string prefixes (`f"{prefix}clip_q50.csv"`, `f"{prefix}bandit_model.pkl"`), so a grep
+for the name misses real dependencies. Trace what is really read instead:
+
+1. **Trace the downstream.** Run `routing/generate_paper_results.py` under a small
+   wrapper that patches `open`, `pd.read_csv`, `np.load`, `joblib.load`/`pickle.load`
+   and `PIL.Image.open`, and logs every path read. Alternatively, use
+   `strace -f -e trace=openat`. Each path that turns up is **keep**.
+2. **Trace the upstream statically.** For each `run_pipeline.py` stage (GPU/API code,
+   so don't run it), list the inputs and outputs it reads and writes, resolving the
+   f-string prefixes for all datasets. Those files are **keep** too.
+3. **Released provenance is keep.** The response letter promises some files, so keep
+   them even if no table reads them:
+   - the per-sample prediction files
+   - the raw Batch API outputs (`routing/results/batch_requests/**`)
+   - the split identifiers (`splits_manifest.csv`)
+   - the overlap report
+   - the confusion matrices
+4. **Write `claude_context_notes/file_inventory.md`.** List every tracked file outside
+   `routing/_archive/` with a status: keep (reason), archive, or delete. **Show it to
+   the user before moving anything.**
+5. **Default: archive, don't delete.** Move files into `routing/_archive/<category>/`
+   with a line in `_archive/MANIFEST.md`, which is the repo's existing convention. Only
+   delete the obvious junk below, and only after the user approves.
+6. **Verify.** Re-run `generate_paper_results.py` after the moves and diff every
+   `tab_*.csv` against the run before. It must be byte-identical.
+
+**Already identified.** These came from a quick look and still need confirming by the
+trace.
+- Obvious junk (delete):
+  - `routing/=0.46.1` — captured pip output from an unquoted `pip install ...>=0.46.1`
+  - `*.old_qwen_backup` (3 pickles)
+  - `*_old_small.npy` (3)
+  - `*.cnnspot_backup` (2)
+  - `routing/prompt_test_*.csv` (the script that produced them is already archived)
+  - `routing/final_results_raw_file.txt`
+- Duplicate result versions in `routing/results/`: `tab_e8_gpt55_reconciled_v2`,
+  `tab_e8_gpt55_FULL_coverage`, `tab_e8_qwen_reconciled`, `tab_e8_qwen_FINAL`,
+  `e8_cascade_accuracy`, `e8_qwen_cascade`, `verifier_validation_gate_check`. Keep only
+  what `tab_e8_results` / `tab_cost_accounting` read; archive the rest.
+- Old q50/q75/q95 compression CSVs at `routing/` root
+  (`{,sd14_,biggan_}{clip,cnnspot}_q{50,75,95}.csv`). They were superseded by
+  `results/e7_compression_extended.csv` if the paper no longer reports the
+  CNNSpot/CLIP-only robustness.
+- Repo root:
+  - `eval_genbuster*.py`, `eval_cnnspot_genbuster.py`
+  - root `hfgenbuster.py` (it differs from `routing/hfgenbuster.py`; check the old one
+    for secrets before archiving)
+  - root `networks/` (a duplicate of `CNNDetection/networks`?)
+  - `benchmark_index.csv` (superseded by `benchmark_index_with_gen.csv`?)
+  - root `bandit_model.pkl` — careful: `routing/experiments/e0_baseline.py:121` falls
+    back to it
+- Vendored model repos:
+  - `DeMamba/` is not referenced by any non-archived code and doesn't appear in the
+    paper, so it's an archive candidate.
+  - `DIRE/` is used by `routing/extractors/extract_dire.py` and `run_revision.sh`.
+    Keep it only if any reported number uses DIRE features; the paper cites it as
+    related work only.
+- `claude_context_notes/`:
+  - **Keep:** `currentpaper.tex` (the version R1 reviewed), `paper_updates2.tex`,
+    `response_to_reviewers2.md`, `coco_citation.txt`, this plan.
+  - **Archive to `claude_context_notes/_round1/`:** `paper_updates.tex`,
+    `response_to_reviewers.md`, `resubmissionplan.md`, `session_summary.md`.
+  - **Ask the user:** `studentcoderskill.md` and `claudecodedwnld.sh` are unrelated to
+    the paper.
+
+## Phase 8 — One file with all the paper's results
+
+Goal: a single file that holds every number in the paper, readable on GitHub without
+Git LFS. Everything under `routing/` is LFS-tracked by `routing/.gitattributes`
+(`*.csv`, `*.npy`), so the bundle goes in a top-level directory instead.
+
+1. **Write `routing/build_results_bundle.py`.** It must be CPU-only, read only
+   `routing/results/*`, and never call a model or an API. Call it as the last step of
+   `generate_paper_results.py` so the bundle can't go stale.
+2. **Output `paper_results/paper_results.xlsx`** with these sheets:
+   - `README`: what the file is, the generation timestamp, the git commit hash, and how
+     to regenerate it.
+   - **One sheet per paper table**, in paper order, named by LaTeX label
+     (`main_results`, `verifier_comparison`, `baselines`, `e8_results`,
+     `real_image_sources`, `cheap_path`, `escalation`, `per_generator`,
+     `cheap_trigger`, `limited_data`, `transfer`, `cross_family_deployment`,
+     `biggan_shift`, `confidence_routing`, `sensitivity`, `gate_holdout`, `threeway`,
+     `cost_accuracy_tradeoff`, plus the new robustness, positive-cell-audit and
+     case-mapping tables). Each sheet holds exactly the values printed in the paper,
+     plus any CI or n columns behind them.
+   - `inline_numbers`: every number quoted in running text, the abstract, the
+     contributions and the response letter. Columns: location (section and line),
+     quoted value, source CSV, column, row filter, recomputed value, match (Y/N).
+   - `figures`: each figure file mapped to the CSV(s) and the plotting script that
+     produce it.
+   - `coverage`: verifier coverage (n covered / n needed) per configuration and
+     verifier.
+   - `gate_per_config`: per-configuration held-out gate results, including effective N,
+     the harmful- and missed-escalation rates, and the escalate fraction for the four
+     positive cells.
+   - `provenance`: table → script → input files, from the Phase 7 trace.
+   - `audit`: the Phase 0 / Phase 6 comparison of the `.tex` against the CSVs, which
+     must show zero mismatches before submission.
+3. **Also write `paper_results/paper_results_long.csv`,** one row per value, with
+   columns `table, row_key, column, value, source_csv, source_column`. It's
+   diff-friendly, so a later run shows exactly which numbers changed. Also add a short
+   `paper_results/README.md`.
+4. **Timing.** Build a first version during Phase 0, since it doubles as the audit
+   checklist. Rebuild it after every phase, and produce the final version in Phase 6.
+   Commit it (as a regular file, not LFS) together with the final paper.
+
 ## Phase 6 — Response letter and final check
+(Run this last, after Phases 7 and 8.)
 
 1. Update `response_to_reviewers2.md`. Every number must match the final paper. Fix the
    section numbers: the audit is IV.B.1 (not IV.C.1), and the case-mapping figure is in
@@ -246,6 +359,7 @@ These can be done at any time, but final numbers come from Phases 1–3.
    next to the figure, generated from `tab_case_mapping.csv`.
 2. Compile the `.tex` (`latexmk`, or at least check for undefined refs and missing
    figure files).
-3. Do a final pass on the Phase 0 audit and confirm zero mismatches. Then grep the paper
+3. Rebuild `paper_results/` (Phase 8) and confirm its `audit` sheet shows zero
+   mismatches. Then grep the paper
    and the letter for every headline number (7/7, 6/35, 21/32, 24/32, 7.9, 58–64,
    36–42, 99.6, 97.1) and check that each one matches its CSV.
