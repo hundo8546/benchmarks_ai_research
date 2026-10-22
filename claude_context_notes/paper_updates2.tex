@@ -106,7 +106,7 @@ This work makes the following contributions:
     
     \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%. A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
 
-    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, showing that disagreement is the dominant signal among the detector outputs it learns from, and provides no measurable improvement over the parameter-free rule. We further show that the cascade's gain under deployment shift does not depend on the routing signal: routing by a calibrated joint artifact-and-semantic confidence rule yields a similar gain. Disagreement, which needs no threshold, no probability outputs and no tuning, stays within 1.7 points of that rule in every configuration, and unlike a confidence score it also identifies which cheap detector is failing.
+    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, showing that disagreement is the dominant signal among the detector outputs it learns from, and provides no measurable improvement over the parameter-free rule. We further show that the cascade's gain under deployment shift does not depend on the routing signal: routing by a calibrated joint artifact-and-semantic confidence rule yields a similar gain. Disagreement, which needs no threshold, no probability outputs and no tuning, stays within 1.7 points of that rule in every configuration. Disagreement cannot say which detector is wrong on a single input, but with a labeled calibration sample the disagreement subset shows which cheap detector is failing there, which is what the gate's three-way selection uses.
 
     \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule at the cost of more missed beneficial escalations. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
 
@@ -281,9 +281,9 @@ The routing objective is to minimize the expected cost under either metric while
 \]
 We report $C_{\text{lat}}$ for every evaluated method and $C_{\text{tok}}$ wherever the verifier is an API model (GPT-5.5; Section~\ref{sec:cost_accounting}), as the deployment scenarios vary between self-hosted (latency-bound) and API-based (token-bound) inference.
 
-\subsection{Disagreement as a Difficulty Signal}
+\subsection{Disagreement as a Routing Signal}
 
-We estimate the input difficulty using disagreement between the artifact-based and semantic detectors:
+We flag inputs for escalation using disagreement between the artifact-based and semantic detectors:
 
 \begin{equation}
 d(x) = \mathbbm{1}\left[\hat{y}_{\text{art}}(x) \neq \hat{y}_{\text{sem}}(x)\right].
@@ -312,7 +312,7 @@ Using the disagreement signal, we define a simple routing policy:
 \label{eq:pidisagree}
 \end{equation}
 
-where $\pi(x) = 1$ indicates that the VLM is invoked. Inputs where the detectors agree are handled by the cheap stage alone while disagreement cases are escalated to the VLM. This enables selective allocation of computation based on estimated difficulty. Note that outputting the
+where $\pi(x) = 1$ indicates that the VLM is invoked. Inputs where the detectors agree are handled by the cheap stage alone while disagreement cases are escalated to the VLM. This enables selective allocation of computation based on disagreement. Note that outputting the
 semantic detector's prediction on all inputs is equivalent to this routing policy without VLM escalation, since the artifact and semantic detectors produce identical predictions on
 agreement cases by definition. In-domain, this semantic-only baseline achieves the best
 cost-accuracy tradeoff. The cascade's value is under deployment shift, where a stale
@@ -952,11 +952,12 @@ escalating under shift does not hinge on the routing signal: with GPT-5.5 as ver
 confidence routing improves on the stale semantic probe by 3.6--7.7 points across the
 four SDXL/FLUX configurations, against 3.4--7.9 points for disagreement. The cascade and
 its validation gate therefore apply with either signal, and disagreement is the default
-because it needs no setup. Second, disagreement carries information a confidence score
-does not. Because it compares an artifact detector with a semantic one, the routed subset
-shows \emph{which} detector is failing, and the case analysis of
-Section~\ref{sec:three_cases} rests on that distinction. A confidence score flags
-uncertain inputs but not the source of the uncertainty.
+because it needs no setup. Second, disagreement supports a decision a confidence score
+does not. For a single input, disagreement cannot say which of the two detectors is
+wrong. With a labeled calibration sample, however, the disagreement subset shows
+\emph{which} cheap detector is failing there, because it compares an artifact detector
+with a semantic one. The gate's three-way selection (Section~\ref{sec:threeway}) uses
+exactly this, and the case analysis of Section~\ref{sec:three_cases} rests on it.
 
 
 \begin{figure*}[h]
@@ -1242,7 +1243,7 @@ routed subset (0.907): the best upscaled verifier reaches 0.761, so escalation s
 \label{sec:discussion}
 
 This section interprets the empirical results presented in Section V. We first examine
-why artifact-semantic disagreement separates easy from hard inputs, then map the
+why artifact-semantic disagreement flags inputs where a cheap detector is unreliable, then map the
 three K-stage cascade cases from Section~\ref{sec:kstage} onto the empirical results and assess whether
 learned routing improves on the disagreement signal, then characterize the role of the
 semantic probe and VLM verifier under in-domain and deployment-shift conditions, and
@@ -1268,7 +1269,10 @@ without establishing that a verifier will improve them.
 The K-stage formulation (Section~\ref{sec:kstage}) predicts three qualitative cascade cases, and
 the empirical results exhibit all three. \textbf{Case 1} occurs on BigGAN in-domain.
 The artifact detector is already near ceiling, so the cascade adds latency with almost
-no accuracy change (Table~\ref{tab:main_results}).
+no accuracy change (Table~\ref{tab:main_results}). That near-ceiling accuracy is largely
+a native-resolution shortcut in the benchmark rather than generative-artifact detection
+(Section~\ref{sec:limitations}), so this instance of Case~1 reflects the benchmark as
+much as the detector.
 
 \textbf{Case 2} occurs when the cheap detectors are asymmetric. This describes the
 in-domain GenBuster and SD~1.4 results (Section~\ref{sec:detector_performance}), and appears more clearly in five of
@@ -1295,7 +1299,11 @@ The probe-degradation sweep (Table~\ref{tab:limited_data}) demonstrates the
 Case~2-to-Case~3 transition within a controlled experiment. As the semantic probe
 weakens, verifier escalation changes from harmful to useful. The absence of the same
 transition on GenBuster confirms that relative routed-subset strength, rather than the
-training fraction itself, determines the case.
+training fraction itself, determines the case. Table~\ref{tab:case_mapping} counts a
+sweep row as Case~3 only when the verifier beats the \emph{best} cheap detector on the
+disagreement subset with a paired-bootstrap 95\% CI above zero. Several rows of
+Table~\ref{tab:limited_data} show a positive cascade gain over the semantic probe without
+meeting that bar, so they count as Case~2.
 
 The \textbf{breakdown condition} occurs when both cheap detectors share a blind spot.
 Such errors remain invisible to disagreement-based routing by construction
@@ -1655,10 +1663,10 @@ Significance-aware & -- & -- & 17/33 & 21/33 & 25/33 & 26/33 \\
 \ \ missed-benefit rate & -- & -- & 18.2\% & 16.6\% & 15.5\% & 14.0\% \\
 \ \ mean regret (points) & -- & -- & 2.10 & 1.37 & 0.94 & 0.74 \\
 Rules choose differently & -- & -- & 18.1\% & 16.3\% & 14.9\% & 13.7\% \\
-\ \ SDXL/SigLIP2 & -- & -- & 93.2\% & 100.0\% & 100.0\% & 100.0\% \\
-\ \ SDXL/DINOv2 & -- & -- & 98.8\% & 100.0\% & 100.0\% & 100.0\% \\
 \midrule
 \multicolumn{7}{l}{\textit{Significance-aware gate escalates (share of draws)}} \\
+\ \ SDXL/SigLIP2 & -- & -- & 93.2\% & 100.0\% & 100.0\% & 100.0\% \\
+\ \ SDXL/DINOv2 & -- & -- & 98.8\% & 100.0\% & 100.0\% & 100.0\% \\
 \ \ FLUX/SigLIP2 & -- & -- & 38.0\% & 63.2\% & 90.8\% & 100.0\% \\
 \ \ FLUX/DINOv2 & -- & -- & 86.8\% & 97.6\% & 100.0\% & 100.0\% \\
 \bottomrule
@@ -1805,8 +1813,9 @@ this. The disagreement rule is more accurate on SD~1.4 and BigGAN in-domain, but
 the SDXL/FLUX shift the calibrated confidence rule is tied or better in every
 configuration, and the cascade's gain under shift holds with either signal.
 Disagreement is the simplest signal that delivers it: it needs no threshold or
-probability outputs, stays close to a calibrated confidence rule, and also reveals which
-cheap detector is failing.
+probability outputs and stays close to a calibrated confidence rule. With a labeled
+calibration sample, its disagreement subset also shows which cheap detector is failing
+there, which is what the gate's three-way selection uses.
 
 For RQ3, disagreement-based escalation reduces verifier cost, but its accuracy benefit is
 conditional. It recovers accuracy under the SDXL and FLUX shifts when paired with a

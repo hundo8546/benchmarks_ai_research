@@ -317,10 +317,11 @@ points across the four SDXL/FLUX configurations, against 3.4–7.9 for disagreem
 contribution is therefore the gated cascade under deployment shift, and it applies with
 either signal. We no longer claim disagreement is a more accurate signal than calibrated
 confidence. We present it as the default because it needs no threshold, no probability
-outputs and no tuning, stays within 1.7 points of the calibrated rule, and is the only
-one of the two that shows which cheap detector is failing, which the paper's Case 1/2/3
-analysis relies on. C4, the confidence-routing discussion and the RQ2 conclusion are
-revised accordingly.
+outputs and no tuning, and stays within 1.7 points of the calibrated rule. Disagreement
+cannot say which detector is wrong on a single input, but with a labeled calibration
+sample the disagreement subset shows which cheap detector is failing there. This is what
+the gate's three-way selection uses, and the paper's Case 1/2/3 analysis relies on it.
+C4, the confidence-routing discussion and the RQ2 conclusion are revised accordingly.
 
 On Table 11: the previously reported
 0.917 figure is not reproducible from any current per-sample data (the underlying
