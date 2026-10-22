@@ -463,6 +463,15 @@ flags artifact-detector-specific failure, not a case both detectors find hard
 Conclusion now state plainly that this study evaluates isolated frames, i.e.
 frame-level forensic detection, and does not validate temporal video forensics.
 
+### Assessment questions (contribution)
+
+We agree that disagreement routing, model cascades and selection with labeled calibration
+data are established ideas, and that Eq. (4) is a direct decomposition rather than a
+theoretical advance. The paper's contribution is empirical: when disagreement-based
+escalation helps or harms AI-generated image detection, as the reviewer puts it. C2 now
+says we evaluate, rather than propose, the routing rule, and the revisions above aim at
+the quality of that evidence.
+
 ---
 
 ## Reviewer 2

@@ -102,7 +102,7 @@ This work makes the following contributions:
 \begin{itemize}
     \item \textbf{C1:} We show that the disagreement between artifact-based and semantic detectors identifies inputs where cheap detectors are less reliable, across generator families, and remains informative under deployment shift to unseen generators, while correlated errors on the agreement path rise 4--8$\times$ under that shift.
 
-    \item \textbf{C2:} We propose a routing rule that uses disagreement to select inputs for verifier invocation without a confidence threshold or a trained policy. Whether escalation should be enabled at all is a separate decision, made by the validation gate (C5) from a small labeled sample.
+    \item \textbf{C2:} We evaluate a simple routing rule that uses disagreement to select inputs for verifier invocation without a confidence threshold or a trained policy. Whether escalation should be enabled at all is a separate decision, made by the validation gate (C5) from a small labeled sample.
     
     \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%, and the gain remains significant when real and fake images are size-matched (Section~\ref{sec:sizematched}). A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
 
