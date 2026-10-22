@@ -38,6 +38,7 @@ exposing one or more `compute_<table>() -> pd.DataFrame` functions:
   pipeline/tables/confidence_routing.py  tab_confidence_routing
   pipeline/tables/gate_holdout.py   tab_gate_holdout, tab_agreement_path_audit
   pipeline/tables/e8_cascade.py     tab_e8_cascade, tab_cost_accuracy_tradeoff, tab_real_image_sources
+  pipeline/tables/e8_sizematched.py tab_e8_cascade_sizematched (original vs. size-matched SDXL/FLUX)
   pipeline/tables/robustness.py     tab_robustness (reads e7/e9 robustness outputs)
   pipeline/tables/cost_accounting.py tab_cost_accounting
   pipeline/tables/case_mapping.py   tab_case_mapping (run last: reads other tab_*.csv)
@@ -63,7 +64,7 @@ RESULTS_DIR = os.path.join(ROUTING_BASE, "results")
 sys.path.insert(0, ROUTING_BASE)
 
 from pipeline.tables import (main_results, per_generator, cheap_trigger, baselines, gate, transfer,
-                             confidence_routing, gate_holdout, e8_cascade)
+                             confidence_routing, gate_holdout, e8_cascade, e8_sizematched)
 
 
 def _git_commit():
@@ -165,7 +166,8 @@ def main():
     for label, fn in [("tab_e8_cascade", e8_cascade.compute_e8_cascade),
                       ("tab_cost_accuracy_tradeoff", e8_cascade.compute_cost_accuracy_tradeoff),
                       ("tab_real_image_sources", e8_cascade.compute_real_image_sources),
-                      ("tab_positive_cell_audit", e8_cascade.compute_positive_cell_audit)]:
+                      ("tab_positive_cell_audit", e8_cascade.compute_positive_cell_audit),
+                      ("tab_e8_cascade_sizematched", e8_sizematched.compute_e8_sizematched)]:
         try:
             _write(label, fn(), log)
         except Exception as e:

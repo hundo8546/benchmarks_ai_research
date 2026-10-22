@@ -20,7 +20,10 @@ Subcommands (each network step needs OPENAI_API_KEY; batch_gpt55 enforces it):
   submit --set smoke|full     upload + submit (auto-splits files > 195 MB);
                               batch ids appended to sizematched_<set>.batch_ids
   poll   --set smoke|full     print status of every submitted batch
-  parse  --set smoke|full     download + parse results; writes
+  mopup  --set smoke|full     Standard-tier synchronous retry (verifiers.call_gpt55) of every
+                              request without a valid batch answer (cancelled/expired/invalid);
+                              writes sizematched_<set>_mopup_standard.csv
+  parse  --set smoke|full     download + parse results (+ mop-up rows); writes
                               sizematched_<set>_results.csv and, for --set full,
                               CONSOLIDATED_full_sdxl_flux_sizematched.csv
   tokens --set smoke|full     input_tokens distribution by class (parity check)
@@ -48,7 +51,7 @@ def _paths(set_name):
     stem = os.path.join(BATCH_DIR, f"sizematched_{set_name}")
     return {"jsonl": stem + ".jsonl", "map": stem + ".custom_id_map.csv",
             "ids": stem + ".batch_ids", "raw_dir": stem + "_outputs",
-            "results": stem + "_results.csv"}
+            "mopup": stem + "_mopup_standard.csv", "results": stem + "_results.csv"}
 
 
 def source_rows(set_name):
@@ -105,27 +108,76 @@ def cmd_poll(set_name):
               f"failed={s['request_counts_failed']} total={s['request_counts_total']}")
 
 
-def cmd_parse(set_name):
+def _parse_batches(set_name):
+    """Valid-or-not answers from every batch part. A cancelled or expired part
+    still returns its completed requests; its unfinished ones are simply absent."""
     p = _paths(set_name)
     os.makedirs(p["raw_dir"], exist_ok=True)
     frames = []
     for bid in _batch_ids(set_name):
         out = os.path.join(p["raw_dir"], f"{bid}.jsonl")
         if not os.path.exists(out):
+            s = bg.poll_batch_status(bid)
+            if s["status"] not in ("completed", "cancelled", "expired"):
+                raise RuntimeError(f"{bid} is still {s['status']}; wait, or cancel it first")
             bg.download_batch_results(bid, out)
         frames.append(bg.parse_batch_results(out, custom_id_map_path=p["map"]))
     res = pd.concat(frames, ignore_index=True)
+    res["tier"], res["attempts_used"] = "batch", 1
+    return res
+
+
+def _stragglers(set_name, res):
+    """custom_id map rows with no valid batch answer: unfinished (cancelled/expired) or invalid."""
+    idmap = pd.read_csv(_paths(set_name)["map"], dtype={"custom_id": str})
+    ok = set(res.loc[res["y_verifier"].notna(), "custom_id"])
+    return idmap[~idmap["custom_id"].isin(ok)]
+
+
+def cmd_mopup(set_name):
+    """Standard-tier synchronous retry of the stragglers via verifiers.call_gpt55 (same model,
+    prompt and load_image_b64; escalating [2048, 4096] budget on empty/invalid answers), the
+    procedure batch_gpt55's module docstring prescribes. Rows already in the mop-up file are
+    skipped, so a rerun never re-bills them."""
+    from openai import OpenAI
+    from pipeline import verifiers as vf
+    p = _paths(set_name)
+    todo = _stragglers(set_name, _parse_batches(set_name))
+    done = pd.read_csv(p["mopup"], dtype={"custom_id": str}) if os.path.exists(p["mopup"]) else None
+    if done is not None:
+        todo = todo[~todo["custom_id"].isin(done["custom_id"])]
+    print(f"{len(todo)} stragglers to run synchronously")
+    client = OpenAI(api_key=bg._require_api_key())
+    rows = [] if done is None else done.to_dict("records")
+    for r in todo.itertuples(index=False):
+        g = vf.call_gpt55(client, bg.GPT55_MODEL_ID, vf.load_image_b64(r.image_path))
+        rows.append({"path": r.image_path, "y_true": r.y_true, "y_verifier": g.y, "raw": g.raw,
+                     "latency_ms": g.latency_ms, "input_tokens": g.input_tokens, "output_tokens": g.output_tokens,
+                     "custom_id": r.custom_id, "tier": "standard", "attempts_used": g.attempts_used})
+        pd.DataFrame(rows).to_csv(p["mopup"], index=False)
+        print(f"  {r.custom_id[:8]} y_true={r.y_true} -> {g.raw!r} (attempts={g.attempts_used}, "
+              f"in={g.input_tokens}, out={g.output_tokens})")
+
+
+def cmd_parse(set_name):
+    p = _paths(set_name)
+    res = _parse_batches(set_name)
+    if os.path.exists(p["mopup"]):
+        mop = pd.read_csv(p["mopup"], dtype={"custom_id": str})
+        res = pd.concat([res[~res["custom_id"].isin(mop["custom_id"])], mop], ignore_index=True)
     src = source_rows(set_name)[["orig_path", "sm_path"]]
     res = res.merge(src, left_on="path", right_on="sm_path", how="left").drop(columns="sm_path")
     res.to_csv(p["results"], index=False)
-    n_bad = int(res["y_verifier"].isna().sum())
-    print(f"parsed {len(res)} rows -> {p['results']}; {n_bad} without a valid REAL/FAKE answer")
-    if set_name == "full" and n_bad == 0:
+    missing = _stragglers(set_name, res)
+    print(f"parsed {len(res)} rows -> {p['results']}; {len(missing)} of "
+          f"{len(missing) + int(res['y_verifier'].notna().sum())} requests lack a valid REAL/FAKE answer; "
+          f"tiers: {res['tier'].value_counts().to_dict()}")
+    if set_name == "full" and len(missing) == 0:
         res[["path", "orig_path", "y_true", "y_verifier", "raw", "input_tokens", "output_tokens",
-             "custom_id"]].to_csv(OUT_CONSOLIDATED, index=False)
+             "custom_id", "tier"]].to_csv(OUT_CONSOLIDATED, index=False)
         print(f"wrote {OUT_CONSOLIDATED}")
-    elif n_bad:
-        print("stragglers (retry before writing CONSOLIDATED):", bg.collect_stragglers(res)[:10])
+    elif len(missing):
+        print("run `mopup` before writing CONSOLIDATED")
 
 
 def cmd_tokens(set_name):
@@ -137,8 +189,8 @@ def cmd_tokens(set_name):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build", "submit", "poll", "parse", "tokens"])
+    ap.add_argument("cmd", choices=["build", "submit", "poll", "mopup", "parse", "tokens"])
     ap.add_argument("--set", choices=["smoke", "full"], required=True)
     a = ap.parse_args()
-    {"build": cmd_build, "submit": cmd_submit, "poll": cmd_poll,
+    {"build": cmd_build, "submit": cmd_submit, "poll": cmd_poll, "mopup": cmd_mopup,
      "parse": cmd_parse, "tokens": cmd_tokens}[a.cmd](a.set)

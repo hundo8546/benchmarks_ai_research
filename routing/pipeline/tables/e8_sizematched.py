@@ -16,7 +16,10 @@ The SAME stale SD1.4-trained probes are applied (e8.E8_DATASETS paths); nothing 
 
 Columns: stale probe accuracy (semantic, FFT); disagreement rate; GPT-5.5 vs. best cheap
 detector on the disagreement subset with a paired-bootstrap 95% CI; cascade accuracy and its
-gain over the stale semantic probe with a paired-bootstrap 95% CI; uniform GPT-5.5 accuracy;
+gain over the stale semantic probe with a paired-bootstrap 95% CI; the cascade vs. random
+routing at the same escalation rate (expected accuracy r*uniform + (1-r)*stale, paired-bootstrap
+CI on the per-sample difference), i.e. whether disagreement picks better inputs to escalate than
+chance; uniform GPT-5.5 accuracy;
 cascade cost share (Batch-tier token cost of escalated images / all images); GPT-5.5 real and
 fake recall, uniform and on the disagreement subset; mean GPT-5.5 input tokens by class.
 
@@ -87,6 +90,14 @@ def _recall(pred, y, cls):
     return float(np.mean(np.asarray(pred)[m] == cls)) if m.any() else float("nan")
 
 
+def _mean_ci(d, n_boot=N_BOOT, seed=SEED):
+    """Paired-bootstrap 95% CI on the mean of per-sample differences d (same resampling
+    convention as baseline_utils.paired_bootstrap_diff_ci)."""
+    rng = np.random.default_rng(seed)
+    boots = np.array([d[rng.integers(0, len(d), size=len(d))].mean() for _ in range(n_boot)])
+    return float(d.mean()), float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))
+
+
 def compute_e8_sizematched():
     e8, bu, ec = _modules()
     rows = []
@@ -103,6 +114,12 @@ def compute_e8_sizematched():
             dis_gap, dis_lo, dis_hi = bu.paired_bootstrap_diff_ci(
                 d["y_true"].values, d["y_gpt55"].values, cheap[best], n_boot=N_BOOT, seed=SEED)
             gain, gain_lo, gain_hi = bu.paired_bootstrap_diff_ci(y, y_casc, y_sem, n_boot=N_BOOT, seed=SEED)
+            # Random routing at the same escalation rate r: escalating a uniformly random
+            # r-fraction has expected per-sample correctness r*gpt + (1-r)*sem.
+            r = dis.mean()
+            c_gpt, c_sem = (y_gpt == y).astype(float), (y_sem == y).astype(float)
+            c_rand = r * c_gpt + (1 - r) * c_sem
+            vs_rand, vs_rand_lo, vs_rand_hi = _mean_ci(np.where(dis, c_gpt, c_sem) - c_rand)
 
             cost_all = ec._token_cost(df)
             cost_esc = ec._token_cost(d)
@@ -117,6 +134,9 @@ def compute_e8_sizematched():
                 "dis_gap": dis_gap, "dis_gap_ci_lo": dis_lo, "dis_gap_ci_hi": dis_hi,
                 "cascade_acc": _acc(y_casc, y),
                 "gain_over_stale": gain, "gain_ci_lo": gain_lo, "gain_ci_hi": gain_hi,
+                "random_routing_acc": float(c_rand.mean()),
+                "cascade_minus_random_routing": vs_rand,
+                "cascade_minus_random_ci_lo": vs_rand_lo, "cascade_minus_random_ci_hi": vs_rand_hi,
                 "uniform_gpt55_acc": _acc(y_gpt, y),
                 "cascade_cost_share": cost_esc / cost_all,
                 "gpt55_real_recall_uniform": _recall(y_gpt, y, 0),

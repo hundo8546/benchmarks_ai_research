@@ -111,6 +111,16 @@ def t_positive_cells():
     return d, rows, "tab_positive_cell_audit"
 
 
+def t_e8_sizematched():
+    """original vs. size-matched (512x512 PNG) SDXL/FLUX cascade; not printed in the paper yet."""
+    return csv("tab_e8_cascade_sizematched"), [], "tab_e8_cascade_sizematched"
+
+
+def t_resolution_only_sdxl_flux():
+    """width/height/aspect-only classifier on SDXL/FLUX x {ImageNet, COCO, VOC} reals."""
+    return csv("resolution_only_control_sdxl_flux"), [], "resolution_only_control_sdxl_flux"
+
+
 def t_real_image_sources():
     d = csv("tab_real_image_sources")
     name = {"original": "PASCAL VOC (original)", "coco": "COCO (independent)"}
@@ -348,7 +358,8 @@ SUPPLEMENTARY = [  # not printed as tables (released as sheets; key numbers quot
     ("supp_baselines", t_baselines), ("supp_threeway", t_threeway), ("supp_escalation", t_escalation),
     ("supp_cheap_path", t_cheap_path), ("supp_per_generator", t_per_generator), ("supp_robustness", t_robustness),
     ("supp_positive_cells", t_positive_cells), ("supp_biggan_resolution", t_biggan_resolution),
-    ("supp_cost_accuracy", t_cost),
+    ("supp_cost_accuracy", t_cost), ("supp_e8_sizematched", t_e8_sizematched),
+    ("supp_resolution_only_sdxl_flux", t_resolution_only_sdxl_flux),
 ]
 
 
@@ -453,6 +464,8 @@ PROVENANCE = {
     "sensitivity": "pipeline/tables/gate.py", "gate_holdout": "pipeline/tables/gate_holdout.py",
     "threeway": "pipeline/tables/gate.py", "case_mapping": "pipeline/tables/case_mapping.py",
     "cost_accuracy_tradeoff": "pipeline/tables/e8_cascade.py",
+    "e8_sizematched": "pipeline/tables/e8_sizematched.py (size-matched images: pipeline/robustness/build_sizematched_sdxl_flux.py; features: pipeline/sizematched_features.py; GPT-5.5: pipeline/gpt55_sizematched.py)",
+    "resolution_only_sdxl_flux": "pipeline/robustness/resolution_only_control.py (run_sdxl_flux)",
 }
 
 
