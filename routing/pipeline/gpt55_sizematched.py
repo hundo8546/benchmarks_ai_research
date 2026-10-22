@@ -23,6 +23,8 @@ Subcommands (each network step needs OPENAI_API_KEY; batch_gpt55 enforces it):
   submit --set smoke|full     upload + submit (auto-splits files > 195 MB);
                               batch ids appended to sizematched_<set>.batch_ids
   poll   --set smoke|full     print status of every submitted batch
+  resubmit --set smoke|full   Batch-tier resubmission of every request without a valid answer
+                              (e.g. 429 credit_balance_exhausted); new ids appended to .batch_ids
   mopup  --set smoke|full     Standard-tier synchronous retry (verifiers.call_gpt55) of every
                               request without a valid batch answer (cancelled/expired/invalid);
                               writes sizematched_<set>_mopup_standard.csv
@@ -141,6 +143,33 @@ def _stragglers(set_name, res):
     return idmap[~idmap["custom_id"].isin(ok)]
 
 
+def cmd_resubmit(set_name):
+    """Batch-tier resubmission of every request without a valid answer (e.g. requests
+    that failed with 429 credit_balance_exhausted). Builds a new request file from
+    just those rows with the same build_batch_request_file settings and APPENDS the new
+    batch ids to the ids file, so parse/mopup treat old and new parts as one run."""
+    p = _paths(set_name)
+    todo = _stragglers(set_name, _parse_batches(set_name))
+    if todo.empty:
+        print("nothing to resubmit")
+        return
+    with open(p["ids"]) as f:
+        n_prev = sum(1 for l in f if l.strip())
+    stem = p["jsonl"][: -len(".jsonl")] + f"_retry{n_prev}"
+    rows = [{"custom_id": r.custom_id, "image_path": r.image_path, "y_true": r.y_true}
+            for r in todo.itertuples(index=False)]
+    summary = bg.build_batch_request_file(rows, stem + ".jsonl")
+    if summary["n_rows_skipped"]:
+        raise RuntimeError(f"{summary['n_rows_skipped']} rows skipped: {summary['skipped'][:3]}")
+    ids = []
+    for i, part in enumerate(bg.split_batch_request_file(stem + ".jsonl"), start=1):
+        ids.append(bg.submit_batch(part, description=f"{tag(SIZE)}_{set_name} resubmit of {len(todo)} "
+                                                     f"requests without a valid answer (part {i})"))
+    with open(p["ids"], "a") as f:
+        f.write("\n".join(ids) + "\n")
+    print(f"resubmitted {len(todo)} requests as {len(ids)} batch(es); ids appended to {p['ids']}")
+
+
 def cmd_mopup(set_name):
     """Standard-tier synchronous retry of the stragglers via verifiers.call_gpt55 (same model,
     prompt and load_image_b64; escalating [2048, 4096] budget on empty/invalid answers), the
@@ -196,10 +225,10 @@ def cmd_tokens(set_name):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build", "submit", "poll", "mopup", "parse", "tokens"])
+    ap.add_argument("cmd", choices=["build", "submit", "poll", "resubmit", "mopup", "parse", "tokens"])
     ap.add_argument("--set", choices=["smoke", "full"], required=True)
     ap.add_argument("--size", type=int, default=512)
     a = ap.parse_args()
     SIZE = a.size
-    {"build": cmd_build, "submit": cmd_submit, "poll": cmd_poll, "mopup": cmd_mopup,
+    {"build": cmd_build, "submit": cmd_submit, "poll": cmd_poll, "resubmit": cmd_resubmit, "mopup": cmd_mopup,
      "parse": cmd_parse, "tokens": cmd_tokens}[a.cmd](a.set)
