@@ -353,6 +353,13 @@ SUPPLEMENTARY = [  # not printed as tables (released as sheets; key numbers quot
 
 
 # ── headline inline numbers: (location, text quoted in the .tex, source, recompute) ──
+def _conf_gain_range():
+    c, e = csv("tab_confidence_routing"), csv("tab_e8_cascade").set_index(["dataset", "semantic"])
+    p = c[(c.regime != "indomain") & (c.rate_matching == "val_tau") & (c.fallback == "semantic")]
+    g = [r.confidence_rule_acc - e.loc[(r.dataset, r.semantic)].stale_sem_acc for r in p.itertuples()]
+    return f"by {q(100 * min(g), 1)}--{q(100 * max(g), 1)}"
+
+
 def inline_checks():
     e8, cost = csv("tab_e8_cascade"), csv("tab_cost_accuracy_tradeoff")
     gh = csv("tab_gate_holdout")
@@ -386,6 +393,8 @@ def inline_checks():
          f"detector in only {int(base.clears_best_cheap.sum())}"),
         ("VI.I.2 (was Table threeway)", "it selects the semantic probe in 17 of the 35 configurations",
          "tab_threeway", f"it selects the semantic probe in {tw['cheap2']} of the {int(tw.sum())} configurations"),
+        ("V.C confidence routing", "by 3.6--7.7 points across the", "tab_confidence_routing (val_tau, semantic) - stale",
+         _conf_gain_range() + " points across the"),
         ("Abstract, C3", "up to 7.9 percentage points", "tab_e8_cascade.gain_gpt55 (max)",
          f"up to {q(100 * e8.gain_gpt55.max(), 1)} percentage points"),
         ("Abstract, VI.J, Fig. D", r"42--51\% of", "tab_cost_accuracy_tradeoff.cascade_cost_frac_of_uniform",

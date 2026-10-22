@@ -308,10 +308,19 @@ rule is significantly better on SDXL/SigLIP2 (+1.4 points, 95% CI [+0.6, +2.2]) 
 on the other three, and on FLUX it matches the disagreement rule while escalating about
 10 points fewer inputs. With escalation counts matched exactly on the evaluation set,
 the joint rule is significantly better in three of the four shifted configurations
-(+0.9 to +1.7 points). We have revised C4 and the RQ2 conclusion accordingly.
-Disagreement is a calibration-free routing signal that stays close to a calibrated
-confidence rule (never more than 1.7 points behind). It is not a more accurate signal
-in general.
+(+0.9 to +1.7 points).
+
+This comparison broadened the paper's claim rather than only narrowing it. The
+cascade's gain under deployment shift does not depend on the routing signal: with
+GPT-5.5 as verifier, confidence routing improves on the stale semantic probe by 3.6–7.7
+points across the four SDXL/FLUX configurations, against 3.4–7.9 for disagreement. The
+contribution is therefore the gated cascade under deployment shift, and it applies with
+either signal. We no longer claim disagreement is a more accurate signal than calibrated
+confidence. We present it as the default because it needs no threshold, no probability
+outputs and no tuning, stays within 1.7 points of the calibrated rule, and is the only
+one of the two that shows which cheap detector is failing, which the paper's Case 1/2/3
+analysis relies on. C4, the confidence-routing discussion and the RQ2 conclusion are
+revised accordingly.
 
 On Table 11: the previously reported
 0.917 figure is not reproducible from any current per-sample data (the underlying
