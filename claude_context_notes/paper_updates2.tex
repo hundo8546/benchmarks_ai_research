@@ -52,7 +52,7 @@
 
 
 \begin{abstract}
-With the rapid proliferation of AI-generated multimedia content, the growing need for reliable detection of AI-generated media, including deepfakes and misinformation, has been largely unmet. Uniformly applying large vision-language models (VLMs) to all content can be prohibitively expensive. In this work, we formulate frame-level detection as a model selection problem over a set of complementary detectors. We show that disagreement between an artifact-based and a semantic detector flags inputs on which a cheap detector is unreliable, including when the semantic probe faces deployment shift to unseen generator families, although errors on which both detectors agree become more frequent under shift. We construct a selective-computation cascade in which lightweight detectors process all inputs and a stronger verifier is invoked only for disagreement cases. On in-domain benchmarks, a well-trained semantic detector achieves the best cost-accuracy tradeoff without VLM escalation. The cascade's utility emerges under generator evolution, but only when the verifier remains stronger than the stale semantic detector on the routed disagreement subset. On SDXL and FLUX, escalating to GPT-5.5 only on disagreement cases recovers up to 7.9 percentage points of accuracy over a stale semantic probe at 42--51\% of the cost of escalating on every input, closing most but not all of the gap to a uniform always-escalate policy (which reaches 97--100\% accuracy at full cost). In contrast, under a more distant BigGAN shift, escalation provides no benefit, showing that routing effectiveness depends on verifier strength and distributional distance rather than disagreement alone. We additionally show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially attributable to a native-resolution shortcut in the benchmark rather than generative-artifact detection, identified via a resolution-only control classifier and a resolution-matching ablation. We further introduce a verifier validation gate with a prespecified, uncertainty-aware decision rule. Evaluated on a genuinely held-out calibration/test split (not the full-subset oracle used in earlier validation), the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$, and reduces harmful escalations by an order of magnitude relative to a point-estimate decision rule, at the cost of missing more beneficial escalations; a three-way detector selector is shown to be equivalent to the binary gate as a decision procedure.
+With the rapid proliferation of AI-generated multimedia content, the growing need for reliable detection of AI-generated media, including deepfakes and misinformation, has been largely unmet. Uniformly applying large vision-language models (VLMs) to all content can be prohibitively expensive. In this work, we formulate frame-level detection as a model selection problem over a set of complementary detectors. We show that disagreement between an artifact-based and a semantic detector flags inputs on which a cheap detector is unreliable, including when the semantic probe faces deployment shift to unseen generator families, although errors on which both detectors agree become more frequent under shift. We construct a selective-computation cascade in which lightweight detectors process all inputs and a stronger verifier is invoked only for disagreement cases. On in-domain benchmarks, a well-trained semantic detector achieves the best cost-accuracy tradeoff without VLM escalation. The cascade's utility emerges under generator evolution, but only when the verifier remains stronger than the stale semantic detector on the routed disagreement subset. On SDXL and FLUX, escalating to GPT-5.5 only on disagreement cases recovers up to 7.9 percentage points of accuracy over a stale semantic probe at 42--51\% of the cost of escalating on every input, closing most but not all of the gap to a uniform always-escalate policy (which reaches 97--100\% accuracy at full cost). The gain persists, at 3.9--7.1 points, when real and fake images are size-matched to remove a resolution shortcut in the benchmark. In contrast, under a more distant BigGAN shift, escalation provides no benefit, showing that routing effectiveness depends on verifier strength and distributional distance rather than disagreement alone. We additionally show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially attributable to a native-resolution shortcut in the benchmark rather than generative-artifact detection, identified via a resolution-only control classifier and a resolution-matching ablation. We further introduce a verifier validation gate with a prespecified, uncertainty-aware decision rule. Evaluated on a genuinely held-out calibration/test split (not the full-subset oracle used in earlier validation), the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$, and reduces harmful escalations by an order of magnitude relative to a point-estimate decision rule, at the cost of missing more beneficial escalations; a three-way detector selector is shown to be equivalent to the binary gate as a decision procedure.
 
 \end{abstract}
 
@@ -104,13 +104,13 @@ This work makes the following contributions:
 
     \item \textbf{C2:} We propose a routing rule that uses disagreement to select inputs for verifier invocation without a confidence threshold or a trained policy. Whether escalation should be enabled at all is a separate decision, made by the validation gate (C5) from a small labeled sample.
     
-    \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%. A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
+    \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%, and the gain remains significant when real and fake images are size-matched (Section~\ref{sec:sizematched}). A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
 
     \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, showing that disagreement is the dominant signal among the detector outputs it learns from, and provides no measurable improvement over the parameter-free rule. We further show that the cascade's gain under deployment shift does not depend on the routing signal: routing by a calibrated joint artifact-and-semantic confidence rule yields a similar gain. Disagreement, which needs no threshold, no probability outputs and no tuning, stays within 1.7 points of that rule in every configuration. Disagreement cannot say which detector is wrong on a single input, but with a labeled calibration sample the disagreement subset shows which cheap detector is failing there, which is what the gate's three-way selection uses.
 
     \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule at the cost of more missed beneficial escalations. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
 
-    \item \textbf{C6:} We show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially explained by a native-resolution shortcut rather than genuine generative-artifact detection: a classifier using only image width and height matches the trained detector's accuracy, and resolution-matching the two classes collapses the trained detector's accuracy to chance.
+    \item \textbf{C6:} We show that BigGAN's near-ceiling in-domain artifact-detector accuracy is substantially explained by a native-resolution shortcut rather than genuine generative-artifact detection: a classifier using only image width and height matches the trained detector's accuracy, and resolution-matching the two classes collapses the trained detector's accuracy to chance. The SDXL/FLUX benchmark carries the same kind of shortcut (a size-only classifier reaches 98.9--100.0\%), so we also report its results with real and fake images size-matched.
 \end{itemize}
 
 
@@ -133,15 +133,17 @@ Existing forensic detection and cost-aware inference literature leaves several g
 This work addresses these gaps in four ways. First, we combine heterogeneous artifact-based and semantic signals through a disagreement rule with no threshold or trained parameters. Second, we compare disagreement with a calibrated joint-confidence rule at matched operating points across multiple generator families, and find that it performs close to that rule, ahead in-domain and tied or behind under shift, while needing no threshold or probability outputs. Third, we account for both latency and token cost when evaluating VLM-based escalation strategies. Fourth, we reinterpret disagreement as a diagnostic for selective invocation of more expensive models, not as a voting mechanism.
 
 \textbf{Dataset shortcuts.} Published analysis has shown that detectors trained on
-GenImage-family benchmarks can exploit JPEG compression and image-resolution biases
+GenImage-family benchmarks~\cite{grommelt2024fake} can exploit JPEG compression and image-resolution biases
 rather than genuine generative artifacts, since real and synthetic images in these
 benchmarks are frequently acquired or post-processed differently. We directly measure
 this concern for our own artifact detector rather than treat it as an external
 literature point: the Limitations discussion (Section~\ref{sec:limitations}) reports a
-native-resolution shortcut specific to the BigGAN subset (every sampled fake image is
+native-resolution shortcut in the BigGAN subset (every sampled fake image is
 natively $128{\times}128$ pixels, unlike the variable-resolution real class), using a
 resolution-only control classifier and a resolution-matching ablation to isolate how
-much of the detector's reported accuracy the shortcut explains.
+much of the detector's reported accuracy the shortcut explains, and
+Section~\ref{sec:sizematched} repeats the SDXL/FLUX deployment-shift evaluation with
+real and fake images size-matched.
 
 \subsection{Detection under Distribution Shift}
 
@@ -493,7 +495,10 @@ therefore changes absolute accuracy, not the direction of the result. Absolute
 accuracy does fall sharply under PASCAL VOC (cascade 72.9--77.9\%), driven by an
 agreement-path accuracy of only 43--53\%. The local FFT detector alone labels 83--85\%
 of these photographs fake, close to GPT-5.5's 82--97\%, so the PASCAL VOC images
-degrade the entire cascade, not only the verifier. Because the FFT probe was trained on
+degrade the entire cascade, not only the verifier. A more direct explanation is image
+size: the bundled PASCAL VOC images are uniformly $256{\times}256$ while every fake is
+$1{,}024{\times}1{,}024$, so image size alone separates the two classes perfectly, as it
+also does for the COCO source (Section~\ref{sec:sizematched}). Because the FFT probe was trained on
 ImageNet real images, part of this failure also reflects the artifact detector's
 sensitivity to the real-image source. Under the independently chosen COCO source,
 cascade accuracy is 89.6--94.1\%, closely tracking the ImageNet-sourced benchmark used
@@ -580,6 +585,11 @@ timestamps for GPT-5.5/Qwen predictions made before this correction (file modifi
 times are the only available proxy, clustering within a roughly 9-hour window); all
 calls made as part of this correction carry explicit UTC ISO-8601 timestamps, retry
 counts, and full raw response text, released alongside the per-sample prediction files.
+The size-matched control (Section~\ref{sec:sizematched}) adds two further uniform runs
+over the same 7{,}315 images, at 512 and 256 pixels, through the same Batch pipeline and
+settings on 2026-10-22: 14{,}630 calls, every one returning a valid answer. Batch
+requests that failed for lack of account credit were resubmitted unchanged, and 4
+requests that stalled in the batch queue were completed through the synchronous path.
 
 \section{Results}
 \label{sec:results}
@@ -834,6 +844,65 @@ this positive result on their full disagreement subsets, all of which GPT-5.5 la
 About two thirds of each subset is fake. GPT-5.5 exceeds the best cheap detector on the
 subset by 8.1 to 20.4 points, with every paired-bootstrap interval well above zero. The
 smallest margin is FLUX/SigLIP2, where the stale probe remains comparatively strong.
+
+\subsubsection{Size-Matched Control}
+\label{sec:sizematched}
+
+Every SDXL and FLUX fake is a $1{,}024{\times}1{,}024$ PNG, while the ImageNet real
+images are smaller JPEGs of varying shape. A classifier given only image width and height
+separates real from fake with 98.9--100.0\% accuracy on this benchmark, under each of its
+three real-image sources, which is the same kind of shortcut found for BigGAN
+(Section~\ref{sec:limitations}). GPT-5.5 also receives several times more input tokens
+for a fake than for a real image. To test whether the deployment-shift result depends on
+this, we center-cropped every real and fake image to a square, resized it to
+$256{\times}256$ (bicubic) and saved it as PNG, so both classes are downscaled and share
+dimensions and format. We then repeated the evaluation unchanged: the same stale SD~1.4
+probes, with nothing retrained, and a new uniform GPT-5.5 run with the same prompt,
+parser and settings, in which every image costs the same 119 input tokens.
+Table~\ref{tab:sizematched} reports the result.
+
+The cascade's gain over the stale probe remains significant in all four cells, and
+GPT-5.5 still beats the best cheap detector on every disagreement subset, so the Case~3
+assignment is unchanged. To check that disagreement selects useful inputs rather than
+merely escalating many, we also compare the cascade with sending a random subset of the
+same size to GPT-5.5. Disagreement routing is better in three of the four size-matched
+cells (FLUX/DINOv2 is not significant), as in all four cells on the native images.
+GPT-5.5 itself used the size cue to some extent: always-GPT-5.5 accuracy falls by
+2.6--3.3 points, mostly on real photographs. Because escalated images no longer use more
+tokens than the rest, the cascade costs 39--47\% of always-GPT-5.5.
+
+A 512-pixel version of the same control behaves differently, because it upscales almost
+all of the real images while downscaling every fake. The upscaling drives the stale FFT
+probe below chance on both datasets, mostly by labeling real images fake, and
+disagreement then no longer beats random routing in any cell. We therefore treat
+256 pixels, where neither class is upscaled, as the appropriate control; the 512-pixel
+results are in the released results file. No resizing removes the real images' original
+JPEG compression history.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Size-matched control on SDXL and FLUX (stale SD~1.4 probes, GPT-5.5 verifier, $n{=}4{,}000$ each). Native: the images of Table~\ref{tab:e8_results}. 256~px: every real and fake image center-cropped and resized to $256{\times}256$ PNG. Disagree: escalation rate. Gain: cascade minus stale probe. vs.\ random: cascade minus sending a random subset of the same size to GPT-5.5. Brackets: paired-bootstrap 95\% CIs. Cost share: cascade cost as a share of always-GPT-5.5 cost.}
+\label{tab:sizematched}
+\begin{tabular}{lllccccccc}
+\toprule
+Dataset & Sem. & Images & Stale probe & Disagree & GPT-5.5 cascade & Gain & vs.\ random & Always GPT-5.5 & Cost share \\
+\midrule
+SDXL & SigLIP2 & Native & 0.864 & 36\% & 0.925 & $+$0.061 [0.054, 0.069] & $+$0.013 [0.007, 0.019] & 0.996 & 42\% \\
+SDXL & SigLIP2 & 256~px & 0.840 & 41\% & 0.911 & $+$0.071 [0.062, 0.081] & $+$0.018 [0.012, 0.025] & 0.970 & 40\% \\
+\midrule
+SDXL & DINOv2 & Native & 0.851 & 38\% & 0.930 & $+$0.079 [0.070, 0.087] & $+$0.023 [0.017, 0.029] & 0.996 & 44\% \\
+SDXL & DINOv2 & 256~px & 0.851 & 41\% & 0.915 & $+$0.065 [0.056, 0.073] & $+$0.016 [0.010, 0.023] & 0.970 & 39\% \\
+\midrule
+FLUX & SigLIP2 & Native & 0.906 & 42\% & 0.940 & $+$0.034 [0.027, 0.041] & $+$0.007 [0.002, 0.012] & 0.971 & 51\% \\
+FLUX & SigLIP2 & 256~px & 0.872 & 47\% & 0.910 & $+$0.039 [0.030, 0.048] & $+$0.008 [0.002, 0.014] & 0.938 & 47\% \\
+\midrule
+FLUX & DINOv2 & Native & 0.818 & 41\% & 0.893 & $+$0.075 [0.066, 0.084] & $+$0.011 [0.005, 0.018] & 0.971 & 50\% \\
+FLUX & DINOv2 & 256~px & 0.817 & 44\% & 0.874 & $+$0.057 [0.048, 0.067] & $+$0.004 [$-$0.003, 0.011] & 0.938 & 45\% \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 
 \subsection{Routing Analysis}
@@ -1490,6 +1559,12 @@ JPEG compression costs SigLIP2 at most 0.8 points and DINOv2 up to 4 points, and
 FFT hardest on SD~1.4 (77.5\%$\to$67.1\% at quality 50). Because disagreement routing depends on the artifact detector, these
 perturbations would raise the disagreement rate and move more inputs to the verifier.
 
+The SDXL/FLUX benchmark carries a comparable size shortcut. Its deployment-shift result
+survives a size-matched control (Section~\ref{sec:sizematched}), but that control cannot
+remove the real images' original JPEG compression history, and always-GPT-5.5 accuracy
+falls by 2.6--3.3 points under it, so part of the verifier's apparent strength on the
+native images also comes from image size.
+
 \subsection{Practical Implications}
 
 Deployment should begin with the strongest cheap detector and treat disagreement as a
@@ -1819,11 +1894,11 @@ there, which is what the gate's three-way selection uses.
 
 For RQ3, disagreement-based escalation reduces verifier cost, but its accuracy benefit is
 conditional. It recovers accuracy under the SDXL and FLUX shifts when paired with a
-strong verifier, yet fails in five of the six cross-family pairings and under the distant BigGAN shift.
+strong verifier, including when real and fake images are size-matched, yet fails in five of the six cross-family pairings and under the distant BigGAN shift.
 Escalation should be enabled only when calibration confirms that the verifier exceeds
 both cheap detectors on the routed subset.
 
-The effective deployment of heterogeneous detection pipelines depends on the use of cheap detectors to identify when expensive verification is needed rather than increasing the complexity of the individual detector. Future work will explore temporal modeling for video detection, fine-tuned VLM verifiers for domain-specific forensic cues, and cross-family semantic probe training to remove the per-family retraining requirement.
+The effective deployment of heterogeneous detection pipelines depends on the use of cheap detectors to identify when expensive verification is needed rather than increasing the complexity of the individual detector. All experiments evaluate isolated frames, so the results concern frame-level detection rather than temporal video forensics. Future work will explore temporal modeling for video detection, fine-tuned VLM verifiers for domain-specific forensic cues, and cross-family semantic probe training to remove the per-family retraining requirement.
 
 
 \bibliographystyle{IEEEtran}

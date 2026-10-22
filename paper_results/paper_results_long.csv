@@ -1359,17 +1359,17 @@ cross_family_deployment,5:cross_family_deployment|BigGAN|SD14,delta_fft_ci_hi,-0
 case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",dataset,GenBuster,tab_case_mapping.csv,dataset
 case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",configuration,"GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.703 vs acc_best_cheap|D=0.961 (SigLIP2), 95% CI on diff=[-0.320, -0.197] (95% CI on (verifier - best_cheap) includes 0 (not significant)) [p_D=0.259]",tab_case_mapping.csv,evidence
+case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.703 vs acc_best_cheap|D=0.961 (SigLIP2), 95% CI on diff=[-0.320, -0.197] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse)) [p_D=0.259]",tab_case_mapping.csv,evidence
 case_mapping,"0:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.B / Table verifier_comparison; Sec. VI.B (""describes the in-domain GenBuster and SD~1.4 results"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",dataset,GenBuster,tab_case_mapping.csv,dataset
 case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",configuration,"GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)",tab_case_mapping.csv,configuration
 case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",evidence,"acc_verifier|D=0.907 vs acc_best_cheap|D=0.961 (SigLIP2), 95% CI on diff=[-0.097, -0.015] (95% CI on (verifier - best_cheap) includes 0 (not significant)) [p_D=0.259]",tab_case_mapping.csv,evidence
+case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",evidence,"acc_verifier|D=0.907 vs acc_best_cheap|D=0.961 (SigLIP2), 95% CI on diff=[-0.097, -0.015] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse)) [p_D=0.259]",tab_case_mapping.csv,evidence
 case_mapping,"1:GenBuster|GenBuster in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",paper_section_reference,"Sec. V.B / Table verifier_comparison; Sec. VI.B (""describes the in-domain GenBuster and SD~1.4 results"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.586 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.250, -0.145] (95% CI on (verifier - best_cheap) includes 0 (not significant)) [p_D=0.266]",tab_case_mapping.csv,evidence
+case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.586 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.250, -0.145] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse)) [p_D=0.266]",tab_case_mapping.csv,evidence
 case_mapping,"2:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.B / Table verifier_comparison; Sec. VI.B (""describes the in-domain GenBuster and SD~1.4 results"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"3:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"3:SD14|SD14 in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)|2",configuration,"SD14 in-domain (FFT+SigLIP2 disagreement, verifier=GPT-5.5)",tab_case_mapping.csv,configuration
@@ -1389,42 +1389,42 @@ case_mapping,"5:BigGAN|BigGAN in-domain (FFT+SigLIP2 disagreement, verifier=GPT-
 case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",dataset,SDXL,tab_case_mapping.csv,dataset
 case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",configuration,"SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B",tab_case_mapping.csv,configuration
 case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",case,2,tab_case_mapping.csv,case
-case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.719 vs acc_best_cheap|D=0.828 (StaleSigLIP2), 95% CI on diff=[-0.139, -0.079] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.719 vs acc_best_cheap|D=0.828 (StaleSigLIP2), 95% CI on diff=[-0.139, -0.079] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"6:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",dataset,SDXL,tab_case_mapping.csv,dataset
 case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",configuration,"SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5",tab_case_mapping.csv,configuration
 case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",case,3,tab_case_mapping.csv,case
-case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.996 vs acc_best_cheap|D=0.828 (StaleSigLIP2), 95% CI on diff=[0.148, 0.187] (95% CI on (verifier - best_cheap) excludes 0)",tab_case_mapping.csv,evidence
+case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.996 vs acc_best_cheap|D=0.828 (StaleSigLIP2), 95% CI on diff=[0.148, 0.187] (95% CI on (verifier - best_cheap) lies above 0)",tab_case_mapping.csv,evidence
 case_mapping,"7:SDXL|SDXL deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",dataset,SDXL,tab_case_mapping.csv,dataset
 case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",configuration,"SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B",tab_case_mapping.csv,configuration
 case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",case,2,tab_case_mapping.csv,case
-case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.722 vs acc_best_cheap|D=0.793 (StaleDINOv2), 95% CI on diff=[-0.101, -0.040] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.722 vs acc_best_cheap|D=0.793 (StaleDINOv2), 95% CI on diff=[-0.101, -0.040] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"8:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",dataset,SDXL,tab_case_mapping.csv,dataset
 case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",configuration,"SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5",tab_case_mapping.csv,configuration
 case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",case,3,tab_case_mapping.csv,case
-case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.997 vs acc_best_cheap|D=0.793 (StaleDINOv2), 95% CI on diff=[0.184, 0.225] (95% CI on (verifier - best_cheap) excludes 0)",tab_case_mapping.csv,evidence
+case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.997 vs acc_best_cheap|D=0.793 (StaleDINOv2), 95% CI on diff=[0.184, 0.225] (95% CI on (verifier - best_cheap) lies above 0)",tab_case_mapping.csv,evidence
 case_mapping,"9:SDXL|SDXL deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",dataset,FLUX,tab_case_mapping.csv,dataset
 case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",configuration,"FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B",tab_case_mapping.csv,configuration
 case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",case,2,tab_case_mapping.csv,case
-case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.583 vs acc_best_cheap|D=0.890 (StaleSigLIP2), 95% CI on diff=[-0.336, -0.279] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.583 vs acc_best_cheap|D=0.890 (StaleSigLIP2), 95% CI on diff=[-0.336, -0.279] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"10:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=Qwen2.5-VL-7B|2",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",dataset,FLUX,tab_case_mapping.csv,dataset
 case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",configuration,"FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5",tab_case_mapping.csv,configuration
 case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",case,3,tab_case_mapping.csv,case
-case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.971 vs acc_best_cheap|D=0.890 (StaleSigLIP2), 95% CI on diff=[0.065, 0.098] (95% CI on (verifier - best_cheap) excludes 0)",tab_case_mapping.csv,evidence
+case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.971 vs acc_best_cheap|D=0.890 (StaleSigLIP2), 95% CI on diff=[0.065, 0.098] (95% CI on (verifier - best_cheap) lies above 0)",tab_case_mapping.csv,evidence
 case_mapping,"11:FLUX|FLUX deployment shift, stale SigLIP2 probe, verifier=GPT-5.5|3",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",dataset,FLUX,tab_case_mapping.csv,dataset
 case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",configuration,"FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B",tab_case_mapping.csv,configuration
 case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",case,2,tab_case_mapping.csv,case
-case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.588 vs acc_best_cheap|D=0.787 (StaleDINOv2), 95% CI on diff=[-0.229, -0.169] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",evidence,"acc_verifier|D=0.588 vs acc_best_cheap|D=0.787 (StaleDINOv2), 95% CI on diff=[-0.229, -0.169] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"12:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=Qwen2.5-VL-7B|2",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",dataset,FLUX,tab_case_mapping.csv,dataset
 case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",configuration,"FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5",tab_case_mapping.csv,configuration
 case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",case,3,tab_case_mapping.csv,case
-case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.967 vs acc_best_cheap|D=0.787 (StaleDINOv2), 95% CI on diff=[0.159, 0.202] (95% CI on (verifier - best_cheap) excludes 0)",tab_case_mapping.csv,evidence
+case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",evidence,"acc_verifier|D=0.967 vs acc_best_cheap|D=0.787 (StaleDINOv2), 95% CI on diff=[0.159, 0.202] (95% CI on (verifier - best_cheap) lies above 0)",tab_case_mapping.csv,evidence
 case_mapping,"13:FLUX|FLUX deployment shift, stale DINOv2 probe, verifier=GPT-5.5|3",paper_section_reference,"Sec. V.B.1 / Table e8_results; Sec. VI.B (""Case 3 occurs on the SD~1.4-to-SDXL/FLUX shift with GPT-5.5 as verifier... Replacing it with Qwen makes every gain negative"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"14:SD14|cross-family GenBuster->SD14 (stale SigLIP2 + in-domain FFT, verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"14:SD14|cross-family GenBuster->SD14 (stale SigLIP2 + in-domain FFT, verifier=Qwen2.5-VL-7B)|2",configuration,"cross-family GenBuster->SD14 (stale SigLIP2 + in-domain FFT, verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
@@ -1459,22 +1459,22 @@ case_mapping,"19:SD14|cross-family BigGAN->SD14 (stale SigLIP2 + in-domain FFT, 
 case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",dataset,BigGAN,tab_case_mapping.csv,dataset
 case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",configuration,"BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)",tab_case_mapping.csv,configuration
 case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",evidence,"acc_verifier|D=0.582 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.357, -0.292] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",evidence,"acc_verifier|D=0.582 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.357, -0.292] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"20:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=GPT-5.5)|2",paper_section_reference,"Sec. V.D.7 / Table biggan_shift; Sec. VI.B (""the BigGAN distant shift is another Case 2 instance because the semantic probe remains stronger than every tested verifier on the routed subset"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",dataset,BigGAN,tab_case_mapping.csv,dataset
 case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",configuration,"BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.515 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.425, -0.359] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.515 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.425, -0.359] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"21:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.7 / Table biggan_shift; Sec. VI.B (""the BigGAN distant shift is another Case 2 instance because the semantic probe remains stronger than every tested verifier on the routed subset"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",dataset,BigGAN,tab_case_mapping.csv,dataset
 case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",configuration,"BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)",tab_case_mapping.csv,configuration
 case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",evidence,"acc_verifier|D=0.623 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.315, -0.252] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",evidence,"acc_verifier|D=0.623 vs acc_best_cheap|D=0.907 (StaleSigLIP2), 95% CI on diff=[-0.315, -0.252] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"22:BigGAN|BigGAN distant shift (stale FFT+SigLIP2, verifier=Qwen2.5-VL-72B)|2",paper_section_reference,"Sec. V.D.7 / Table biggan_shift; Sec. VI.B (""the BigGAN distant shift is another Case 2 instance because the semantic probe remains stronger than every tested verifier on the routed subset"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",case,3,tab_case_mapping.csv,case
-case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",evidence,"acc_verifier|D=0.626 vs acc_best_cheap|D=0.544 (FFT), 95% CI on diff=[0.030, 0.134] (95% CI on (verifier - best_cheap) excludes 0). NOTE: best_cheap_source=FFT (the FIXED FFT artifact detector), not the SigLIP2 semantic probe being swept here -- at this training fraction FFT happens to be the stronger of the two cheap detectors on the disagreement subset, so this is not the textbook 'semantic probe beats verifier' Case-2 shape even though the case label (verifier does not clear best-cheap) is the same.",tab_case_mapping.csv,evidence
+case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",evidence,"acc_verifier|D=0.626 vs acc_best_cheap|D=0.544 (FFT), 95% CI on diff=[0.030, 0.134] (95% CI on (verifier - best_cheap) lies above 0). NOTE: best_cheap_source=FFT (the FIXED FFT artifact detector), not the SigLIP2 semantic probe being swept here -- at this training fraction FFT happens to be the stronger of the two cheap detectors on the disagreement subset, so this is not the textbook 'semantic probe beats verifier' Case-2 shape even though the case label (verifier does not clear best-cheap) is the same.",tab_case_mapping.csv,evidence
 case_mapping,"23:SD14|SD14 probe-degradation sweep, SigLIP2, frac=1% (verifier=Qwen2.5-VL-7B)|3",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"24:SD14|SD14 probe-degradation sweep, SigLIP2, frac=5% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"24:SD14|SD14 probe-degradation sweep, SigLIP2, frac=5% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=5% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
@@ -1484,22 +1484,22 @@ case_mapping,"24:SD14|SD14 probe-degradation sweep, SigLIP2, frac=5% (verifier=Q
 case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.615 vs acc_best_cheap|D=0.685 (SigLIP2), 95% CI on diff=[-0.127, -0.016] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.615 vs acc_best_cheap|D=0.685 (SigLIP2), 95% CI on diff=[-0.127, -0.016] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"25:SD14|SD14 probe-degradation sweep, SigLIP2, frac=10% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.592 vs acc_best_cheap|D=0.701 (SigLIP2), 95% CI on diff=[-0.161, -0.056] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.592 vs acc_best_cheap|D=0.701 (SigLIP2), 95% CI on diff=[-0.161, -0.056] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"26:SD14|SD14 probe-degradation sweep, SigLIP2, frac=25% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.595 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.242, -0.135] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.595 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.242, -0.135] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"27:SD14|SD14 probe-degradation sweep, SigLIP2, frac=50% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.586 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.250, -0.145] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.586 vs acc_best_cheap|D=0.784 (SigLIP2), 95% CI on diff=[-0.250, -0.145] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"28:SD14|SD14 probe-degradation sweep, SigLIP2, frac=100% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"29:SD14|SD14 probe-degradation sweep, DINOv2, frac=1% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"29:SD14|SD14 probe-degradation sweep, DINOv2, frac=1% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, DINOv2, frac=1% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
@@ -1524,12 +1524,12 @@ case_mapping,"32:SD14|SD14 probe-degradation sweep, DINOv2, frac=25% (verifier=Q
 case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.578 vs acc_best_cheap|D=0.646 (DINOv2), 95% CI on diff=[-0.121, -0.014] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.578 vs acc_best_cheap|D=0.646 (DINOv2), 95% CI on diff=[-0.121, -0.014] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"33:SD14|SD14 probe-degradation sweep, DINOv2, frac=50% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",dataset,SD14,tab_case_mapping.csv,dataset
 case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",configuration,"SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)",tab_case_mapping.csv,configuration
 case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",case,2,tab_case_mapping.csv,case
-case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.587 vs acc_best_cheap|D=0.675 (DINOv2), 95% CI on diff=[-0.140, -0.036] (95% CI on (verifier - best_cheap) includes 0 (not significant))",tab_case_mapping.csv,evidence
+case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",evidence,"acc_verifier|D=0.587 vs acc_best_cheap|D=0.675 (DINOv2), 95% CI on diff=[-0.140, -0.036] (95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse))",tab_case_mapping.csv,evidence
 case_mapping,"34:SD14|SD14 probe-degradation sweep, DINOv2, frac=100% (verifier=Qwen2.5-VL-7B)|2",paper_section_reference,"Sec. V.D.3 / Table limited_data; Sec. VI.B (""demonstrates the Case 2-to-Case 3 transition within a controlled experiment"")",tab_case_mapping.csv,paper_section_reference
 case_mapping,35:GenBuster|FFT+SigLIP2 agreement-path correlated errors (never routed to any verifier)|Breakdown,dataset,GenBuster,tab_case_mapping.csv,dataset
 case_mapping,35:GenBuster|FFT+SigLIP2 agreement-path correlated errors (never routed to any verifier)|Breakdown,configuration,FFT+SigLIP2 agreement-path correlated errors (never routed to any verifier),tab_case_mapping.csv,configuration
@@ -4756,6 +4756,414 @@ gate,139:biggan_shift|BigGAN-distant-shift|Qwen2.5-VL-72B,sig_missed_beneficial_
 gate,139:biggan_shift|BigGAN-distant-shift|Qwen2.5-VL-72B,sig_escalation_rate,0.0,tab_sensitivity.csv,sig_escalation_rate
 gate,139:biggan_shift|BigGAN-distant-shift|Qwen2.5-VL-72B,sig_test_oracle_match_rate,1.0,tab_sensitivity.csv,sig_test_oracle_match_rate
 gate,139:biggan_shift|BigGAN-distant-shift|Qwen2.5-VL-72B,rule_disagreement_rate,0.0,tab_sensitivity.csv,rule_disagreement_rate
+sizematched,0:original|SDXL|SigLIP2,variant,original,tab_e8_cascade_sizematched.csv,variant
+sizematched,0:original|SDXL|SigLIP2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,0:original|SDXL|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,0:original|SDXL|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,0:original|SDXL|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,0:original|SDXL|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,0:original|SDXL|SigLIP2,stale_sem_acc,0.86375,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,0:original|SDXL|SigLIP2,stale_fft_acc,0.62575,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,0:original|SDXL|SigLIP2,n_disagree,1452,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,0:original|SDXL|SigLIP2,disagree_rate,0.363,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,0:original|SDXL|SigLIP2,dis_n_real,458,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,0:original|SDXL|SigLIP2,dis_n_fake,994,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,0:original|SDXL|SigLIP2,dis_gpt55_acc,0.9958677685950413,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,0:original|SDXL|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,0:original|SDXL|SigLIP2,dis_best_cheap_acc,0.8278236914600551,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,0:original|SDXL|SigLIP2,dis_gap,0.16804407713498626,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,0:original|SDXL|SigLIP2,dis_gap_ci_lo,0.1480716253443527,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,0:original|SDXL|SigLIP2,dis_gap_ci_hi,0.18732782369146006,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,0:original|SDXL|SigLIP2,cascade_acc,0.92475,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,0:original|SDXL|SigLIP2,gain_over_stale,0.06099999999999994,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,0:original|SDXL|SigLIP2,gain_ci_lo,0.05374374999999997,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,0:original|SDXL|SigLIP2,gain_ci_hi,0.06850624999999991,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,0:original|SDXL|SigLIP2,random_routing_acc,0.91175675,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,0:original|SDXL|SigLIP2,cascade_minus_random_routing,0.012993250000000001,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,0:original|SDXL|SigLIP2,cascade_minus_random_ci_lo,0.007135368750000002,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,0:original|SDXL|SigLIP2,cascade_minus_random_ci_hi,0.018950968749999995,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,0:original|SDXL|SigLIP2,uniform_gpt55_acc,0.996,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,0:original|SDXL|SigLIP2,cascade_cost_share,0.42022553228226983,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,0:original|SDXL|SigLIP2,gpt55_real_recall_uniform,0.9945,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,0:original|SDXL|SigLIP2,gpt55_fake_recall_uniform,0.9975,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,0:original|SDXL|SigLIP2,gpt55_real_recall_dis,0.9956331877729258,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,0:original|SDXL|SigLIP2,gpt55_fake_recall_dis,0.9959758551307847,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,0:original|SDXL|SigLIP2,mean_input_tokens_real,294.043,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,0:original|SDXL|SigLIP2,mean_input_tokens_fake,1271.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,1:original|SDXL|DINOv2,variant,original,tab_e8_cascade_sizematched.csv,variant
+sizematched,1:original|SDXL|DINOv2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,1:original|SDXL|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,1:original|SDXL|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,1:original|SDXL|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,1:original|SDXL|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,1:original|SDXL|DINOv2,stale_sem_acc,0.851,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,1:original|SDXL|DINOv2,stale_fft_acc,0.62575,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,1:original|SDXL|DINOv2,n_disagree,1539,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,1:original|SDXL|DINOv2,disagree_rate,0.38475,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,1:original|SDXL|DINOv2,dis_n_real,507,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,1:original|SDXL|DINOv2,dis_n_fake,1032,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,1:original|SDXL|DINOv2,dis_gpt55_acc,0.9967511371020142,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,1:original|SDXL|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,1:original|SDXL|DINOv2,dis_best_cheap_acc,0.792722547108512,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,1:original|SDXL|DINOv2,dis_gap,0.20402858999350226,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,1:original|SDXL|DINOv2,dis_gap_ci_lo,0.18388564002599095,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,1:original|SDXL|DINOv2,dis_gap_ci_hi,0.22482131254061077,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,1:original|SDXL|DINOv2,cascade_acc,0.9295,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,1:original|SDXL|DINOv2,gain_over_stale,0.07850000000000001,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,1:original|SDXL|DINOv2,gain_ci_lo,0.07025000000000003,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,1:original|SDXL|DINOv2,gain_ci_hi,0.08699999999999997,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,1:original|SDXL|DINOv2,random_routing_acc,0.9067887500000001,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,1:original|SDXL|DINOv2,cascade_minus_random_routing,0.02271125000000001,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,1:original|SDXL|DINOv2,cascade_minus_random_ci_lo,0.01651886406250001,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,1:original|SDXL|DINOv2,cascade_minus_random_ci_hi,0.02890275000000001,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,1:original|SDXL|DINOv2,uniform_gpt55_acc,0.996,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,1:original|SDXL|DINOv2,cascade_cost_share,0.4413733626499584,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,1:original|SDXL|DINOv2,gpt55_real_recall_uniform,0.9945,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,1:original|SDXL|DINOv2,gpt55_fake_recall_uniform,0.9975,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,1:original|SDXL|DINOv2,gpt55_real_recall_dis,0.9901380670611439,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,1:original|SDXL|DINOv2,gpt55_fake_recall_dis,1.0,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,1:original|SDXL|DINOv2,mean_input_tokens_real,294.043,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,1:original|SDXL|DINOv2,mean_input_tokens_fake,1271.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,2:original|FLUX|SigLIP2,variant,original,tab_e8_cascade_sizematched.csv,variant
+sizematched,2:original|FLUX|SigLIP2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,2:original|FLUX|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,2:original|FLUX|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,2:original|FLUX|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,2:original|FLUX|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,2:original|FLUX|SigLIP2,stale_sem_acc,0.90625,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,2:original|FLUX|SigLIP2,stale_fft_acc,0.5795,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,2:original|FLUX|SigLIP2,n_disagree,1675,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,2:original|FLUX|SigLIP2,disagree_rate,0.41875,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,2:original|FLUX|SigLIP2,dis_n_real,490,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,2:original|FLUX|SigLIP2,dis_n_fake,1185,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,2:original|FLUX|SigLIP2,dis_gpt55_acc,0.9713432835820895,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,2:original|FLUX|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,2:original|FLUX|SigLIP2,dis_best_cheap_acc,0.8901492537313432,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,2:original|FLUX|SigLIP2,dis_gap,0.08119402985074631,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,2:original|FLUX|SigLIP2,dis_gap_ci_lo,0.06507462686567167,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,2:original|FLUX|SigLIP2,dis_gap_ci_hi,0.09791044776119406,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,2:original|FLUX|SigLIP2,cascade_acc,0.94025,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,2:original|FLUX|SigLIP2,gain_over_stale,0.03400000000000003,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,2:original|FLUX|SigLIP2,gain_ci_lo,0.027249999999999996,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,2:original|FLUX|SigLIP2,gain_ci_hi,0.041000000000000036,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,2:original|FLUX|SigLIP2,random_routing_acc,0.9331546874999999,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,2:original|FLUX|SigLIP2,cascade_minus_random_routing,0.007095312500000001,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,2:original|FLUX|SigLIP2,cascade_minus_random_ci_lo,0.0020247265625000016,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,2:original|FLUX|SigLIP2,cascade_minus_random_ci_hi,0.012236640624999991,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,2:original|FLUX|SigLIP2,uniform_gpt55_acc,0.9705,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,2:original|FLUX|SigLIP2,cascade_cost_share,0.5086171136671871,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,2:original|FLUX|SigLIP2,gpt55_real_recall_uniform,0.993,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,2:original|FLUX|SigLIP2,gpt55_fake_recall_uniform,0.948,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,2:original|FLUX|SigLIP2,gpt55_real_recall_dis,0.9897959183673469,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,2:original|FLUX|SigLIP2,gpt55_fake_recall_dis,0.9637130801687763,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,2:original|FLUX|SigLIP2,mean_input_tokens_real,294.1625,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,2:original|FLUX|SigLIP2,mean_input_tokens_fake,1271.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,3:original|FLUX|DINOv2,variant,original,tab_e8_cascade_sizematched.csv,variant
+sizematched,3:original|FLUX|DINOv2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,3:original|FLUX|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,3:original|FLUX|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,3:original|FLUX|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,3:original|FLUX|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,3:original|FLUX|DINOv2,stale_sem_acc,0.81775,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,3:original|FLUX|DINOv2,stale_fft_acc,0.5795,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,3:original|FLUX|DINOv2,n_disagree,1659,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,3:original|FLUX|DINOv2,disagree_rate,0.41475,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,3:original|FLUX|DINOv2,dis_n_real,522,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,3:original|FLUX|DINOv2,dis_n_fake,1137,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,3:original|FLUX|DINOv2,dis_gpt55_acc,0.9674502712477396,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,3:original|FLUX|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,3:original|FLUX|DINOv2,dis_best_cheap_acc,0.7872212176009644,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,3:original|FLUX|DINOv2,dis_gap,0.18022905364677522,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,3:original|FLUX|DINOv2,dis_gap_ci_lo,0.15913200723327314,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,3:original|FLUX|DINOv2,dis_gap_ci_hi,0.20192887281494876,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,3:original|FLUX|DINOv2,cascade_acc,0.8925,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,3:original|FLUX|DINOv2,gain_over_stale,0.07474999999999998,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,3:original|FLUX|DINOv2,gain_ci_lo,0.0655,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,3:original|FLUX|DINOv2,gain_ci_hi,0.08399999999999996,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,3:original|FLUX|DINOv2,random_routing_acc,0.8811030624999999,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,3:original|FLUX|DINOv2,cascade_minus_random_routing,0.011396937500000004,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,3:original|FLUX|DINOv2,cascade_minus_random_ci_lo,0.004647837500000004,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,3:original|FLUX|DINOv2,cascade_minus_random_ci_hi,0.0181829421875,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,3:original|FLUX|DINOv2,uniform_gpt55_acc,0.9705,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,3:original|FLUX|DINOv2,cascade_cost_share,0.5007540422769844,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,3:original|FLUX|DINOv2,gpt55_real_recall_uniform,0.993,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,3:original|FLUX|DINOv2,gpt55_fake_recall_uniform,0.948,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,3:original|FLUX|DINOv2,gpt55_real_recall_dis,0.9885057471264368,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,3:original|FLUX|DINOv2,gpt55_fake_recall_dis,0.9577836411609498,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,3:original|FLUX|DINOv2,mean_input_tokens_real,294.1625,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,3:original|FLUX|DINOv2,mean_input_tokens_fake,1271.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,4:sizematched|SDXL|SigLIP2,variant,sizematched,tab_e8_cascade_sizematched.csv,variant
+sizematched,4:sizematched|SDXL|SigLIP2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,4:sizematched|SDXL|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,4:sizematched|SDXL|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,4:sizematched|SDXL|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,4:sizematched|SDXL|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,4:sizematched|SDXL|SigLIP2,stale_sem_acc,0.833,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,4:sizematched|SDXL|SigLIP2,stale_fft_acc,0.49325,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,4:sizematched|SDXL|SigLIP2,n_disagree,2069,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,4:sizematched|SDXL|SigLIP2,disagree_rate,0.51725,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,4:sizematched|SDXL|SigLIP2,dis_n_real,1239,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,4:sizematched|SDXL|SigLIP2,dis_n_fake,830,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,4:sizematched|SDXL|SigLIP2,dis_gpt55_acc,0.9724504591590141,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,4:sizematched|SDXL|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,4:sizematched|SDXL|SigLIP2,dis_best_cheap_acc,0.8284195263412276,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,4:sizematched|SDXL|SigLIP2,dis_gap,0.14403093281778645,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,4:sizematched|SDXL|SigLIP2,dis_gap_ci_lo,0.12663122281295314,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,4:sizematched|SDXL|SigLIP2,dis_gap_ci_hi,0.16143064282261965,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,4:sizematched|SDXL|SigLIP2,cascade_acc,0.9075,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,4:sizematched|SDXL|SigLIP2,gain_over_stale,0.07450000000000001,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,4:sizematched|SDXL|SigLIP2,gain_ci_lo,0.06500000000000006,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,4:sizematched|SDXL|SigLIP2,gain_ci_hi,0.08374999999999999,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,4:sizematched|SDXL|SigLIP2,random_routing_acc,0.9076133125,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,4:sizematched|SDXL|SigLIP2,cascade_minus_random_routing,-0.00011331249999999837,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,4:sizematched|SDXL|SigLIP2,cascade_minus_random_ci_lo,-0.006690878124999998,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,4:sizematched|SDXL|SigLIP2,cascade_minus_random_ci_hi,0.006404151562499999,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,4:sizematched|SDXL|SigLIP2,uniform_gpt55_acc,0.97725,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,4:sizematched|SDXL|SigLIP2,cascade_cost_share,0.5519554516005911,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,4:sizematched|SDXL|SigLIP2,gpt55_real_recall_uniform,0.956,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,4:sizematched|SDXL|SigLIP2,gpt55_fake_recall_uniform,0.9985,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,4:sizematched|SDXL|SigLIP2,gpt55_real_recall_dis,0.9548022598870056,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,4:sizematched|SDXL|SigLIP2,gpt55_fake_recall_dis,0.9987951807228915,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,4:sizematched|SDXL|SigLIP2,mean_input_tokens_real,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,4:sizematched|SDXL|SigLIP2,mean_input_tokens_fake,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,5:sizematched|SDXL|DINOv2,variant,sizematched,tab_e8_cascade_sizematched.csv,variant
+sizematched,5:sizematched|SDXL|DINOv2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,5:sizematched|SDXL|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,5:sizematched|SDXL|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,5:sizematched|SDXL|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,5:sizematched|SDXL|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,5:sizematched|SDXL|DINOv2,stale_sem_acc,0.84075,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,5:sizematched|SDXL|DINOv2,stale_fft_acc,0.49325,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,5:sizematched|SDXL|DINOv2,n_disagree,2114,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,5:sizematched|SDXL|DINOv2,disagree_rate,0.5285,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,5:sizematched|SDXL|DINOv2,dis_n_real,1269,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,5:sizematched|SDXL|DINOv2,dis_n_fake,845,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,5:sizematched|SDXL|DINOv2,dis_gpt55_acc,0.9716177861873226,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,5:sizematched|SDXL|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,5:sizematched|SDXL|DINOv2,dis_best_cheap_acc,0.8287606433301797,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,5:sizematched|SDXL|DINOv2,dis_gap,0.1428571428571429,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,5:sizematched|SDXL|DINOv2,dis_gap_ci_lo,0.12535477767265846,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,5:sizematched|SDXL|DINOv2,dis_gap_ci_hi,0.16035950804162724,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,5:sizematched|SDXL|DINOv2,cascade_acc,0.91625,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,5:sizematched|SDXL|DINOv2,gain_over_stale,0.07550000000000001,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,5:sizematched|SDXL|DINOv2,gain_ci_lo,0.06624999999999992,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,5:sizematched|SDXL|DINOv2,gain_ci_hi,0.08499999999999996,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,5:sizematched|SDXL|DINOv2,random_routing_acc,0.91289025,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,5:sizematched|SDXL|DINOv2,cascade_minus_random_routing,0.0033597500000000042,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,5:sizematched|SDXL|DINOv2,cascade_minus_random_ci_lo,-0.0031325968749999953,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,5:sizematched|SDXL|DINOv2,cascade_minus_random_ci_hi,0.009670721875000003,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,5:sizematched|SDXL|DINOv2,uniform_gpt55_acc,0.97725,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,5:sizematched|SDXL|DINOv2,cascade_cost_share,0.5673058592106165,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,5:sizematched|SDXL|DINOv2,gpt55_real_recall_uniform,0.956,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,5:sizematched|SDXL|DINOv2,gpt55_fake_recall_uniform,0.9985,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,5:sizematched|SDXL|DINOv2,gpt55_real_recall_dis,0.9535066981875493,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,5:sizematched|SDXL|DINOv2,gpt55_fake_recall_dis,0.9988165680473373,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,5:sizematched|SDXL|DINOv2,mean_input_tokens_real,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,5:sizematched|SDXL|DINOv2,mean_input_tokens_fake,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,6:sizematched|FLUX|SigLIP2,variant,sizematched,tab_e8_cascade_sizematched.csv,variant
+sizematched,6:sizematched|FLUX|SigLIP2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,6:sizematched|FLUX|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,6:sizematched|FLUX|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,6:sizematched|FLUX|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,6:sizematched|FLUX|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,6:sizematched|FLUX|SigLIP2,stale_sem_acc,0.87525,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,6:sizematched|FLUX|SigLIP2,stale_fft_acc,0.45225,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,6:sizematched|FLUX|SigLIP2,n_disagree,2136,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,6:sizematched|FLUX|SigLIP2,disagree_rate,0.534,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,6:sizematched|FLUX|SigLIP2,dis_n_real,1259,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,6:sizematched|FLUX|SigLIP2,dis_n_fake,877,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,6:sizematched|FLUX|SigLIP2,dis_gpt55_acc,0.9588014981273408,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,6:sizematched|FLUX|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,6:sizematched|FLUX|SigLIP2,dis_best_cheap_acc,0.8960674157303371,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,6:sizematched|FLUX|SigLIP2,dis_gap,0.06273408239700373,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,6:sizematched|FLUX|SigLIP2,dis_gap_ci_lo,0.047752808988764106,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,6:sizematched|FLUX|SigLIP2,dis_gap_ci_hi,0.07818352059925093,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,6:sizematched|FLUX|SigLIP2,cascade_acc,0.90875,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,6:sizematched|FLUX|SigLIP2,gain_over_stale,0.033499999999999974,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,6:sizematched|FLUX|SigLIP2,gain_ci_lo,0.025499999999999967,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,6:sizematched|FLUX|SigLIP2,gain_ci_hi,0.04149999999999998,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,6:sizematched|FLUX|SigLIP2,random_routing_acc,0.9191715,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,6:sizematched|FLUX|SigLIP2,cascade_minus_random_routing,-0.010421500000000004,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,6:sizematched|FLUX|SigLIP2,cascade_minus_random_ci_lo,-0.016271,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,6:sizematched|FLUX|SigLIP2,cascade_minus_random_ci_hi,-0.004688137500000007,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,6:sizematched|FLUX|SigLIP2,uniform_gpt55_acc,0.9575,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,6:sizematched|FLUX|SigLIP2,cascade_cost_share,0.5295822217667042,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,6:sizematched|FLUX|SigLIP2,gpt55_real_recall_uniform,0.96,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,6:sizematched|FLUX|SigLIP2,gpt55_fake_recall_uniform,0.955,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,6:sizematched|FLUX|SigLIP2,gpt55_real_recall_dis,0.9555202541699762,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,6:sizematched|FLUX|SigLIP2,gpt55_fake_recall_dis,0.9635119726339795,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,6:sizematched|FLUX|SigLIP2,mean_input_tokens_real,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,6:sizematched|FLUX|SigLIP2,mean_input_tokens_fake,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,7:sizematched|FLUX|DINOv2,variant,sizematched,tab_e8_cascade_sizematched.csv,variant
+sizematched,7:sizematched|FLUX|DINOv2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,7:sizematched|FLUX|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,7:sizematched|FLUX|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,7:sizematched|FLUX|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,7:sizematched|FLUX|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,7:sizematched|FLUX|DINOv2,stale_sem_acc,0.81125,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,7:sizematched|FLUX|DINOv2,stale_fft_acc,0.45225,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,7:sizematched|FLUX|DINOv2,n_disagree,2246,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,7:sizematched|FLUX|DINOv2,disagree_rate,0.5615,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,7:sizematched|FLUX|DINOv2,dis_n_real,1288,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,7:sizematched|FLUX|DINOv2,dis_n_fake,958,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,7:sizematched|FLUX|DINOv2,dis_gpt55_acc,0.9541406945681211,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,7:sizematched|FLUX|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,7:sizematched|FLUX|DINOv2,dis_best_cheap_acc,0.819679430097952,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,7:sizematched|FLUX|DINOv2,dis_gap,0.13446126447016915,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,7:sizematched|FLUX|DINOv2,dis_gap_ci_lo,0.1170970614425646,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,7:sizematched|FLUX|DINOv2,dis_gap_ci_hi,0.15227070347284066,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,7:sizematched|FLUX|DINOv2,cascade_acc,0.88675,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,7:sizematched|FLUX|DINOv2,gain_over_stale,0.07550000000000001,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,7:sizematched|FLUX|DINOv2,gain_ci_lo,0.0655,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,7:sizematched|FLUX|DINOv2,gain_ci_hi,0.08574999999999999,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,7:sizematched|FLUX|DINOv2,random_routing_acc,0.893369375,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,7:sizematched|FLUX|DINOv2,cascade_minus_random_routing,-0.0066193749999999985,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,7:sizematched|FLUX|DINOv2,cascade_minus_random_ci_lo,-0.013465859374999998,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,7:sizematched|FLUX|DINOv2,cascade_minus_random_ci_hi,0.00026699999999999944,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,7:sizematched|FLUX|DINOv2,uniform_gpt55_acc,0.9575,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,7:sizematched|FLUX|DINOv2,cascade_cost_share,0.5663457052164032,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,7:sizematched|FLUX|DINOv2,gpt55_real_recall_uniform,0.96,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,7:sizematched|FLUX|DINOv2,gpt55_fake_recall_uniform,0.955,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,7:sizematched|FLUX|DINOv2,gpt55_real_recall_dis,0.9541925465838509,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,7:sizematched|FLUX|DINOv2,gpt55_fake_recall_dis,0.954070981210856,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,7:sizematched|FLUX|DINOv2,mean_input_tokens_real,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,7:sizematched|FLUX|DINOv2,mean_input_tokens_fake,350.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,8:sizematched256|SDXL|SigLIP2,variant,sizematched256,tab_e8_cascade_sizematched.csv,variant
+sizematched,8:sizematched256|SDXL|SigLIP2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,8:sizematched256|SDXL|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,8:sizematched256|SDXL|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,8:sizematched256|SDXL|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,8:sizematched256|SDXL|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,8:sizematched256|SDXL|SigLIP2,stale_sem_acc,0.83975,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,stale_fft_acc,0.60025,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,n_disagree,1636,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,8:sizematched256|SDXL|SigLIP2,disagree_rate,0.409,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_n_real,636,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_n_fake,1000,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_gpt55_acc,0.9669926650366748,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_best_cheap_acc,0.7927872860635696,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_gap,0.17420537897310517,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_gap_ci_lo,0.15281173594132036,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,8:sizematched256|SDXL|SigLIP2,dis_gap_ci_hi,0.19559902200488988,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,8:sizematched256|SDXL|SigLIP2,cascade_acc,0.911,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,gain_over_stale,0.07125000000000004,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,8:sizematched256|SDXL|SigLIP2,gain_ci_lo,0.06225000000000003,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,8:sizematched256|SDXL|SigLIP2,gain_ci_hi,0.08050000000000002,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,8:sizematched256|SDXL|SigLIP2,random_routing_acc,0.89292,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,cascade_minus_random_routing,0.01808,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,8:sizematched256|SDXL|SigLIP2,cascade_minus_random_ci_lo,0.011624487499999999,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,8:sizematched256|SDXL|SigLIP2,cascade_minus_random_ci_hi,0.024737524999999996,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,8:sizematched256|SDXL|SigLIP2,uniform_gpt55_acc,0.96975,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,8:sizematched256|SDXL|SigLIP2,cascade_cost_share,0.40213910990430257,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,8:sizematched256|SDXL|SigLIP2,gpt55_real_recall_uniform,0.9495,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,8:sizematched256|SDXL|SigLIP2,gpt55_fake_recall_uniform,0.99,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,8:sizematched256|SDXL|SigLIP2,gpt55_real_recall_dis,0.9339622641509434,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,8:sizematched256|SDXL|SigLIP2,gpt55_fake_recall_dis,0.988,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,8:sizematched256|SDXL|SigLIP2,mean_input_tokens_real,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,8:sizematched256|SDXL|SigLIP2,mean_input_tokens_fake,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,9:sizematched256|SDXL|DINOv2,variant,sizematched256,tab_e8_cascade_sizematched.csv,variant
+sizematched,9:sizematched256|SDXL|DINOv2,dataset,SDXL,tab_e8_cascade_sizematched.csv,dataset
+sizematched,9:sizematched256|SDXL|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,9:sizematched256|SDXL|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,9:sizematched256|SDXL|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,9:sizematched256|SDXL|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,9:sizematched256|SDXL|DINOv2,stale_sem_acc,0.8505,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,9:sizematched256|SDXL|DINOv2,stale_fft_acc,0.60025,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,9:sizematched256|SDXL|DINOv2,n_disagree,1623,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,9:sizematched256|SDXL|DINOv2,disagree_rate,0.40575,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,9:sizematched256|SDXL|DINOv2,dis_n_real,591,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,9:sizematched256|SDXL|DINOv2,dis_n_fake,1032,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,9:sizematched256|SDXL|DINOv2,dis_gpt55_acc,0.9673444239063462,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,9:sizematched256|SDXL|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,9:sizematched256|SDXL|DINOv2,dis_best_cheap_acc,0.8083795440542206,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,9:sizematched256|SDXL|DINOv2,dis_gap,0.1589648798521256,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,9:sizematched256|SDXL|DINOv2,dis_gap_ci_lo,0.1380160197165743,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,9:sizematched256|SDXL|DINOv2,dis_gap_ci_hi,0.17991373998767712,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,9:sizematched256|SDXL|DINOv2,cascade_acc,0.915,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,9:sizematched256|SDXL|DINOv2,gain_over_stale,0.0645,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,9:sizematched256|SDXL|DINOv2,gain_ci_lo,0.055749999999999966,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,9:sizematched256|SDXL|DINOv2,gain_ci_hi,0.07324999999999993,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,9:sizematched256|SDXL|DINOv2,random_routing_acc,0.8988856874999999,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,9:sizematched256|SDXL|DINOv2,cascade_minus_random_routing,0.0161143125,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,9:sizematched256|SDXL|DINOv2,cascade_minus_random_ci_lo,0.009642803124999995,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,9:sizematched256|SDXL|DINOv2,cascade_minus_random_ci_hi,0.022585562499999996,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,9:sizematched256|SDXL|DINOv2,uniform_gpt55_acc,0.96975,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,9:sizematched256|SDXL|DINOv2,cascade_cost_share,0.39210749104826353,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,9:sizematched256|SDXL|DINOv2,gpt55_real_recall_uniform,0.9495,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,9:sizematched256|SDXL|DINOv2,gpt55_fake_recall_uniform,0.99,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,9:sizematched256|SDXL|DINOv2,gpt55_real_recall_dis,0.9306260575296108,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,9:sizematched256|SDXL|DINOv2,gpt55_fake_recall_dis,0.9883720930232558,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,9:sizematched256|SDXL|DINOv2,mean_input_tokens_real,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,9:sizematched256|SDXL|DINOv2,mean_input_tokens_fake,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,10:sizematched256|FLUX|SigLIP2,variant,sizematched256,tab_e8_cascade_sizematched.csv,variant
+sizematched,10:sizematched256|FLUX|SigLIP2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,10:sizematched256|FLUX|SigLIP2,semantic,SigLIP2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,10:sizematched256|FLUX|SigLIP2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,10:sizematched256|FLUX|SigLIP2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,10:sizematched256|FLUX|SigLIP2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,10:sizematched256|FLUX|SigLIP2,stale_sem_acc,0.8715,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,stale_fft_acc,0.547,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,n_disagree,1874,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,10:sizematched256|FLUX|SigLIP2,disagree_rate,0.4685,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_n_real,681,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_n_fake,1193,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_gpt55_acc,0.9290288153681964,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_best_cheap,StaleSigLIP2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_best_cheap_acc,0.8463180362860192,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_gap,0.08271077908217717,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_gap_ci_lo,0.06350053361792962,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,10:sizematched256|FLUX|SigLIP2,dis_gap_ci_hi,0.10192102454642482,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,10:sizematched256|FLUX|SigLIP2,cascade_acc,0.91025,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,gain_over_stale,0.03874999999999995,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,10:sizematched256|FLUX|SigLIP2,gain_ci_lo,0.029750000000000054,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,10:sizematched256|FLUX|SigLIP2,gain_ci_hi,0.04774999999999996,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,10:sizematched256|FLUX|SigLIP2,random_routing_acc,0.902421,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,cascade_minus_random_routing,0.007829,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,10:sizematched256|FLUX|SigLIP2,cascade_minus_random_ci_lo,0.0017362781249999988,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,10:sizematched256|FLUX|SigLIP2,cascade_minus_random_ci_hi,0.014031749999999997,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,10:sizematched256|FLUX|SigLIP2,uniform_gpt55_acc,0.9375,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,10:sizematched256|FLUX|SigLIP2,cascade_cost_share,0.4694211917395132,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,10:sizematched256|FLUX|SigLIP2,gpt55_real_recall_uniform,0.9505,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,10:sizematched256|FLUX|SigLIP2,gpt55_fake_recall_uniform,0.9245,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,10:sizematched256|FLUX|SigLIP2,gpt55_real_recall_dis,0.9295154185022027,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,10:sizematched256|FLUX|SigLIP2,gpt55_fake_recall_dis,0.9287510477787091,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,10:sizematched256|FLUX|SigLIP2,mean_input_tokens_real,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,10:sizematched256|FLUX|SigLIP2,mean_input_tokens_fake,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
+sizematched,11:sizematched256|FLUX|DINOv2,variant,sizematched256,tab_e8_cascade_sizematched.csv,variant
+sizematched,11:sizematched256|FLUX|DINOv2,dataset,FLUX,tab_e8_cascade_sizematched.csv,dataset
+sizematched,11:sizematched256|FLUX|DINOv2,semantic,DINOv2,tab_e8_cascade_sizematched.csv,semantic
+sizematched,11:sizematched256|FLUX|DINOv2,n_total,4000,tab_e8_cascade_sizematched.csv,n_total
+sizematched,11:sizematched256|FLUX|DINOv2,n_real,2000,tab_e8_cascade_sizematched.csv,n_real
+sizematched,11:sizematched256|FLUX|DINOv2,n_fake,2000,tab_e8_cascade_sizematched.csv,n_fake
+sizematched,11:sizematched256|FLUX|DINOv2,stale_sem_acc,0.81725,tab_e8_cascade_sizematched.csv,stale_sem_acc
+sizematched,11:sizematched256|FLUX|DINOv2,stale_fft_acc,0.547,tab_e8_cascade_sizematched.csv,stale_fft_acc
+sizematched,11:sizematched256|FLUX|DINOv2,n_disagree,1767,tab_e8_cascade_sizematched.csv,n_disagree
+sizematched,11:sizematched256|FLUX|DINOv2,disagree_rate,0.44175,tab_e8_cascade_sizematched.csv,disagree_rate
+sizematched,11:sizematched256|FLUX|DINOv2,dis_n_real,630,tab_e8_cascade_sizematched.csv,dis_n_real
+sizematched,11:sizematched256|FLUX|DINOv2,dis_n_fake,1137,tab_e8_cascade_sizematched.csv,dis_n_fake
+sizematched,11:sizematched256|FLUX|DINOv2,dis_gpt55_acc,0.9349179400113187,tab_e8_cascade_sizematched.csv,dis_gpt55_acc
+sizematched,11:sizematched256|FLUX|DINOv2,dis_best_cheap,StaleDINOv2,tab_e8_cascade_sizematched.csv,dis_best_cheap
+sizematched,11:sizematched256|FLUX|DINOv2,dis_best_cheap_acc,0.8058856819468024,tab_e8_cascade_sizematched.csv,dis_best_cheap_acc
+sizematched,11:sizematched256|FLUX|DINOv2,dis_gap,0.12903225806451624,tab_e8_cascade_sizematched.csv,dis_gap
+sizematched,11:sizematched256|FLUX|DINOv2,dis_gap_ci_lo,0.10809281267685333,tab_e8_cascade_sizematched.csv,dis_gap_ci_lo
+sizematched,11:sizematched256|FLUX|DINOv2,dis_gap_ci_hi,0.1499717034521788,tab_e8_cascade_sizematched.csv,dis_gap_ci_hi
+sizematched,11:sizematched256|FLUX|DINOv2,cascade_acc,0.87425,tab_e8_cascade_sizematched.csv,cascade_acc
+sizematched,11:sizematched256|FLUX|DINOv2,gain_over_stale,0.05699999999999994,tab_e8_cascade_sizematched.csv,gain_over_stale
+sizematched,11:sizematched256|FLUX|DINOv2,gain_ci_lo,0.04749999999999999,tab_e8_cascade_sizematched.csv,gain_ci_lo
+sizematched,11:sizematched256|FLUX|DINOv2,gain_ci_hi,0.06674999999999998,tab_e8_cascade_sizematched.csv,gain_ci_hi
+sizematched,11:sizematched256|FLUX|DINOv2,random_routing_acc,0.8703704375000001,tab_e8_cascade_sizematched.csv,random_routing_acc
+sizematched,11:sizematched256|FLUX|DINOv2,cascade_minus_random_routing,0.0038795625000000024,tab_e8_cascade_sizematched.csv,cascade_minus_random_routing
+sizematched,11:sizematched256|FLUX|DINOv2,cascade_minus_random_ci_lo,-0.003051279687499998,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_lo
+sizematched,11:sizematched256|FLUX|DINOv2,cascade_minus_random_ci_hi,0.011014250000000001,tab_e8_cascade_sizematched.csv,cascade_minus_random_ci_hi
+sizematched,11:sizematched256|FLUX|DINOv2,uniform_gpt55_acc,0.9375,tab_e8_cascade_sizematched.csv,uniform_gpt55_acc
+sizematched,11:sizematched256|FLUX|DINOv2,cascade_cost_share,0.44551256496935143,tab_e8_cascade_sizematched.csv,cascade_cost_share
+sizematched,11:sizematched256|FLUX|DINOv2,gpt55_real_recall_uniform,0.9505,tab_e8_cascade_sizematched.csv,gpt55_real_recall_uniform
+sizematched,11:sizematched256|FLUX|DINOv2,gpt55_fake_recall_uniform,0.9245,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_uniform
+sizematched,11:sizematched256|FLUX|DINOv2,gpt55_real_recall_dis,0.9380952380952381,tab_e8_cascade_sizematched.csv,gpt55_real_recall_dis
+sizematched,11:sizematched256|FLUX|DINOv2,gpt55_fake_recall_dis,0.9331574318381706,tab_e8_cascade_sizematched.csv,gpt55_fake_recall_dis
+sizematched,11:sizematched256|FLUX|DINOv2,mean_input_tokens_real,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_real
+sizematched,11:sizematched256|FLUX|DINOv2,mean_input_tokens_fake,119.0,tab_e8_cascade_sizematched.csv,mean_input_tokens_fake
 supp_baselines,0:verifier_comparison|GenBuster|Qwen2.5-VL-7B,table,verifier_comparison,tab_baselines.csv,table
 supp_baselines,0:verifier_comparison|GenBuster|Qwen2.5-VL-7B,config,GenBuster,tab_baselines.csv,config
 supp_baselines,0:verifier_comparison|GenBuster|Qwen2.5-VL-7B,verifier,Qwen2.5-VL-7B,tab_baselines.csv,verifier

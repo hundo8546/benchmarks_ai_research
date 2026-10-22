@@ -111,6 +111,79 @@ def t_positive_cells():
     return d, rows, "tab_positive_cell_audit"
 
 
+def _ci(lo, hi):
+    b = lambda x: (r"$-$" + q(x)[1:]) if q(x).startswith("-") else q(x)
+    return f"[{b(lo)}, {b(hi)}]"
+
+
+def t_sizematched():
+    """Table sizematched: native vs. 256 px size-matched SDXL/FLUX, GPT-5.5 cascade."""
+    d = csv("tab_e8_cascade_sizematched")
+    rows = []
+    for ds, sem in [("SDXL", "SigLIP2"), ("SDXL", "DINOv2"), ("FLUX", "SigLIP2"), ("FLUX", "DINOv2")]:
+        for variant, label in [("original", "Native"), ("sizematched256", "256~px")]:
+            r = d[(d.variant == variant) & (d.dataset == ds) & (d.semantic == sem)].iloc[0]
+            rows.append(row(ds, sem, label, q(r.stale_sem_acc), q(100 * r.disagree_rate, 0) + r"\%",
+                            q(r.cascade_acc), f"{sgn(r.gain_over_stale)} {_ci(r.gain_ci_lo, r.gain_ci_hi)}",
+                            f"{sgn(r.cascade_minus_random_routing)} "
+                            f"{_ci(r.cascade_minus_random_ci_lo, r.cascade_minus_random_ci_hi)}",
+                            q(r.uniform_gpt55_acc), q(100 * r.cascade_cost_share, 0) + r"\%"))
+    return d, rows, "tab_e8_cascade_sizematched"
+
+
+def _sm_checks():
+    """inline numbers of Section sizematched / abstract / C6 / Limitations / IV.B."""
+    d = csv("tab_e8_cascade_sizematched")
+    s256, s512, nat = (d[d.variant == v] for v in ("sizematched256", "sizematched", "original"))
+    ro = csv("resolution_only_control_sdxl_flux")
+    uni = lambda x: x.drop_duplicates("dataset").set_index("dataset").uniform_gpt55_acc
+    drop = 100 * (uni(nat) - uni(s256))
+    words = {0: "no", 1: "one", 2: "two", 3: "three", 4: "four"}
+    gp = lambda c: int((c > 0).sum())
+    vm = csv("tab_e8_cascade_sizematched")  # token counts per variant
+    tok = vm[vm.variant == "sizematched256"][["mean_input_tokens_real", "mean_input_tokens_fake"]].values
+    cons = pd.read_csv(os.path.join(RESULTS, "batch_requests", "CONSOLIDATED_full_sdxl_flux_sizematched.csv"))
+    cons256 = pd.read_csv(os.path.join(RESULTS, "batch_requests", "CONSOLIDATED_full_sdxl_flux_sizematched256.csv"))
+    rng1 = lambda v: f"{q(min(v), 1)}--{q(max(v), 1)}"
+    return [
+        ("Abstract", "at 3.9--7.1 points, when real and fake images are size-matched", "tab_e8_cascade_sizematched (256 px gain)",
+         f"at {rng1(100 * s256.gain_over_stale)} points, when real and fake images are size-matched"),
+        ("C6, VI.sizematched", "a size-only classifier reaches 98.9--100.0\\%", "resolution_only_control_sdxl_flux.accuracy",
+         f"a size-only classifier reaches {rng1(100 * ro.accuracy)}\\%"),
+        ("V.sizematched", "with 98.9--100.0\\% accuracy", "resolution_only_control_sdxl_flux.accuracy",
+         f"with {rng1(100 * ro.accuracy)}\\% accuracy"),
+        ("IV.B", "image size alone separates the two classes perfectly, as it\nalso does for the COCO source",
+         "resolution_only_control_sdxl_flux (voc, coco)",
+         "image size alone separates the two classes perfectly, as it\nalso does for the COCO source"
+         if (ro[ro.real_source.isin(["voc", "coco"])].accuracy == 1.0).all() else "NOT PERFECT"),
+        ("V.sizematched", "costs the same 119 input tokens", "tab_e8_cascade_sizematched.mean_input_tokens_*",
+         f"costs the same {q(tok.mean(), 0)} input tokens" if (tok == tok.flat[0]).all() else "TOKENS DIFFER"),
+        ("V.sizematched", "remains significant in all four cells", "tab_e8_cascade_sizematched.gain_ci_lo (256 px)",
+         f"remains significant in all {words[gp(s256.gain_ci_lo)]} cells"),
+        ("V.sizematched", "beats the best cheap detector on every disagreement subset", "dis_gap_ci_lo (256 px)",
+         "beats the best cheap detector on every disagreement subset" if gp(s256.dis_gap_ci_lo) == 4 else "NOT EVERY"),
+        ("V.sizematched", "better in three of the four size-matched cells", "cascade_minus_random_ci_lo (256 px)",
+         f"better in {words[gp(s256.cascade_minus_random_ci_lo)]} of the four size-matched cells"),
+        ("V.sizematched", "as in all four cells on the native images", "cascade_minus_random_ci_lo (native)",
+         f"as in all {words[gp(nat.cascade_minus_random_ci_lo)]} cells on the native images"),
+        ("V.sizematched, Limitations", "falls by 2.6--3.3 points", "uniform_gpt55_acc native - 256 px",
+         f"falls by {rng1(drop)} points"),
+        ("V.sizematched", "costs 39--47\\% of always-GPT-5.5", "tab_e8_cascade_sizematched.cascade_cost_share (256 px)",
+         f"costs {q(100 * s256.cascade_cost_share.min(), 0)}--{q(100 * s256.cascade_cost_share.max(), 0)}\\% of always-GPT-5.5"),
+        ("V.sizematched", "drives the stale FFT probe below chance on both datasets", "stale_fft_acc (512 px)",
+         "drives the stale FFT probe below chance on both datasets" if (s512.stale_fft_acc < 0.5).all() else "NOT BELOW CHANCE"),
+        ("V.sizematched", "no longer beats random routing in any cell", "cascade_minus_random_ci_lo (512 px)",
+         "no longer beats random routing in any cell" if gp(s512.cascade_minus_random_ci_lo) == 0 else "BEATS RANDOM SOMEWHERE"),
+        ("IV.B.1", "over the same 7{,}315 images", "CONSOLIDATED_full_sdxl_flux_sizematched{,256}.csv",
+         f"over the same {n_tex(len(cons256))} images" if len(cons) == len(cons256) else "SIZES DIFFER"),
+        ("IV.B.1", "14{,}630 calls, every one returning a valid answer", "CONSOLIDATED_full_sdxl_flux_sizematched{,256}.csv",
+         f"{n_tex(len(cons) + len(cons256))} calls, every one returning a valid answer"
+         if cons.y_verifier.notna().all() and cons256.y_verifier.notna().all() else "INVALID ANSWERS"),
+        ("IV.B.1", "and 4\nrequests that stalled", "CONSOLIDATED_full_sdxl_flux_sizematched.csv tier",
+         f"and {int((cons.tier == 'standard').sum()) + int((cons256.tier == 'standard').sum())}\nrequests that stalled"),
+    ]
+
+
 def t_e8_sizematched():
     """original vs. size-matched (512x512 PNG) SDXL/FLUX cascade; not printed in the paper yet."""
     return csv("tab_e8_cascade_sizematched"), [], "tab_e8_cascade_sizematched"
@@ -352,7 +425,7 @@ TABLES = [  # tables printed in the paper, in paper order; sheet name = LaTeX la
     ("verifier_subset", t_verifier_subset), ("e8_results", t_e8_merged),
     ("confidence_routing", t_confidence_routing), ("cheap_trigger", t_cheap_trigger),
     ("limited_data", t_limited_data), ("transfer", t_transfer), ("cross_family_deployment", t_cross_family),
-    ("case_mapping", t_case_mapping), ("gate", t_gate_merged),
+    ("case_mapping", t_case_mapping), ("gate", t_gate_merged), ("sizematched", t_sizematched),
 ]
 SUPPLEMENTARY = [  # not printed as tables (released as sheets; key numbers quoted in the text)
     ("supp_baselines", t_baselines), ("supp_threeway", t_threeway), ("supp_escalation", t_escalation),
@@ -433,7 +506,7 @@ def inline_checks():
          f"more than {q(100 * cr[cr.fallback == 'semantic'].acc_diff_conf_minus_dis.max(), 1)} points less accurate"),
         ("V.B.1", "The six configurations that clear", "tab_baselines.clears_best_cheap",
          {6: "The six configurations that clear"}.get(int(base.clears_best_cheap.sum()), "COUNT CHANGED")),
-    ]
+    ] + _sm_checks()
 
 
 FIGURES = [  # figures printed in the paper
@@ -464,6 +537,7 @@ PROVENANCE = {
     "sensitivity": "pipeline/tables/gate.py", "gate_holdout": "pipeline/tables/gate_holdout.py",
     "threeway": "pipeline/tables/gate.py", "case_mapping": "pipeline/tables/case_mapping.py",
     "cost_accuracy_tradeoff": "pipeline/tables/e8_cascade.py",
+    "sizematched": "pipeline/tables/e8_sizematched.py (native vs. 256 px rows)",
     "e8_sizematched": "pipeline/tables/e8_sizematched.py (size-matched images: pipeline/robustness/build_sizematched_sdxl_flux.py; features: pipeline/sizematched_features.py; GPT-5.5: pipeline/gpt55_sizematched.py)",
     "resolution_only_sdxl_flux": "pipeline/robustness/resolution_only_control.py (run_sdxl_flux)",
 }

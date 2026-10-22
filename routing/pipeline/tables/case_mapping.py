@@ -106,8 +106,12 @@ def _verifier_vs_cheap_row(dataset, configuration, verifier_acc, best_cheap_acc,
                             paper_section_reference, extra_note=""):
     """Shared Case-2-vs-Case-3 decision (used by every family except the
     p_D-driven Case-1 override and the Breakdown row)."""
-    sig_note = ("95% CI on (verifier - best_cheap) excludes 0" if clears_best_cheap
-                else "95% CI on (verifier - best_cheap) includes 0 (not significant)")
+    if clears_best_cheap:
+        sig_note = "95% CI on (verifier - best_cheap) lies above 0"
+    elif ci_hi is not None and float(ci_hi) < 0:
+        sig_note = "95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse)"
+    else:
+        sig_note = "95% CI on (verifier - best_cheap) includes 0 (not significant)"
     evidence = (f"acc_verifier|D={_fmt(verifier_acc)} vs "
                 f"acc_best_cheap|D={_fmt(best_cheap_acc)} ({best_cheap_source}), "
                 f"95% CI on diff=[{_fmt(ci_lo)}, {_fmt(ci_hi)}] ({sig_note})")

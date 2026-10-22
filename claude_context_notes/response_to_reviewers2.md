@@ -137,8 +137,12 @@ only 43–53%. The local FFT artifact detector alone misclassifies 83–85% of t
 photographs as fake, essentially matching GPT-5.5's own misclassification rate
 despite using an entirely different, non-VLM signal. This shows the substitution
 was not selected to flatter GPT-5.5 specifically: the original benchmark degrades
-every tested detector, consistent with a genuine confound in the archival,
-heavily-compressed source images rather than a VLM-specific calibration issue. We
+every tested detector, consistent with a genuine confound in the source images rather
+than a VLM-specific calibration issue. The confound is concrete: the bundled PASCAL VOC
+images are uniformly 256×256 while every fake is 1,024×1,024, so a classifier given only
+image width and height separates the two classes perfectly. The COCO source is separable
+by size in the same way, which is one reason we added the size-matched control described
+under Comment 9. We
 additionally evaluated an independently chosen source, COCO val2017 (Flickr-sourced,
 CC-licensed, sharing no images with PASCAL VOC or the ImageNet pool used elsewhere,
 with distinct compression and resolution characteristics), on which cascade accuracy
@@ -278,6 +282,14 @@ all at 100% GPT-5.5 coverage. The baseline and gate analyses now also use these 
 subsets with the uniform-run labels; previously they used only the samples that also
 had Qwen coverage.
 
+The size-matched control described under Comment 9 adds two further uniform GPT-5.5
+runs over the same 7,315 SDXL/FLUX images, at 512 and 256 pixels, with the same model,
+prompt, parser, output budget and Batch API settings (14,630 calls, all valid, run on
+2026-10-22). Batch requests that failed for lack of account credit were resubmitted
+unchanged, and 4 requests that stalled in the batch queue were completed through the
+synchronous path. Section IV.B.1 documents this, and the per-sample files record which
+path produced each answer.
+
 **Action:** New Section IV.B.1 with full audit detail, and new Table
 `positive_cells` (Section V). Per-sample prediction files with timestamp/retry/token
 columns released. 19 previously-mislabeled rows corrected.
@@ -376,8 +388,29 @@ the bottom-right 3×3 high-frequency submatrix pooled into 8 summary statistics;
 features with `LogisticRegression(C=0.1, max_iter=2000, random_state=42)`) is now
 documented in full in the Implementation section, checked against the extractor code.
 
+We also applied the same resolution control to the SDXL/FLUX deployment benchmark behind
+the paper's positive result, which the reviewer's concern applies to just as much. Every
+fake there is a 1,024×1,024 PNG while the real images are smaller JPEGs, and a
+width-and-height-only classifier separates the classes with 98.9–100.0% accuracy under
+all three real-image sources. We therefore built a size-matched copy of the benchmark in
+which every real and fake image is center-cropped and resized to 256×256 PNG (both classes
+downscaled), and repeated the evaluation with the same stale probes, nothing retrained,
+and a new uniform GPT-5.5 run in which every image costs the same 119 input tokens (new subsection
+"Size-Matched Control" in Section V, Table `sizematched`). The cascade's gain over the stale probe remains
+significant in all four configurations (3.9–7.1 points), GPT-5.5 still beats the best
+cheap detector on every disagreement subset, and disagreement routing still beats
+escalating a random subset of the same size in three of the four. GPT-5.5 itself partly
+used the size cue: its always-escalate accuracy falls by 2.6–3.3 points, mostly on real
+photographs. A 512-pixel version of the control, which upscales almost every real image,
+instead pushes the FFT probe below chance; the paper reports this and explains why
+256 pixels is the appropriate control. Real images still carry their original JPEG
+history, which we state as a limitation. The related-work discussion of dataset
+shortcuts now cites the analysis the reviewer pointed to (Grommelt et al., ECCV
+Workshops 2024).
+
 **Action:** Resolution-only control classifier and resolution-matching ablation
-(Limitations discussion). Compression robustness extended to all three detectors, and
+(Limitations discussion). Size-matched control of the SDXL/FLUX deployment results (new
+"Size-Matched Control" subsection and Table `sizematched`; C3, C6, abstract and Limitations updated). Compression robustness extended to all three detectors, and
 two new post-processing perturbations added; the key results are in the Limitations
 text and the full grid is in the released results file (`paper_results.xlsx`). Full FFT/DCT
 reproducibility documentation added. This finding is flagged as a direct caveat on
@@ -406,7 +439,8 @@ escalates, which use more tokens per call than the average image, so the cost sh
 is higher than the 36–42% escalation rate. We report this as an explicit, incomplete-but-substantial tradeoff —
 3.0–7.8 percentage points remain achievable by uniform escalation that the cascade
 does not recover — rather than implying the cascade matches uniform accuracy at
-lower cost.
+lower cost. Under the size-matched control (Comment 9), where every image costs the same
+number of tokens, the cascade costs 39–47% of uniform escalation.
 
 Section VI.J also reports mean tokens per GPT-5.5 call for every dataset (e.g. 783
 input / 96 output on SDXL, 783 / 177 on FLUX), with a citation for the pricing. The
@@ -425,10 +459,9 @@ We agree disagreement does not universally identify "difficulty" in a
 detector-agnostic sense; Section V.B now states explicitly that on GenBuster the
 semantic probe remains 96.1% accurate on disagreement cases, so the signal there
 flags artifact-detector-specific failure, not a case both detectors find hard
-(this also responds to Reviewer 2's Comment 2 below). The Limitations section now
-states plainly that this study evaluates frame-level forensic detection and does
-not validate temporal video forensics, and that claim should not be read more
-broadly than that single-frame scope.
+(this also responds to Reviewer 2's Comment 2 below). The Limitations section and the
+Conclusion now state plainly that this study evaluates isolated frames, i.e.
+frame-level forensic detection, and does not validate temporal video forensics.
 
 ---
 
@@ -486,7 +519,8 @@ qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and 
 - New analyses: held-out gate validation, significance-aware escalation rule,
   agreement-path audit, joint confidence-routing baseline, resolution-shortcut
   control and ablation, extended compression/post-processing robustness, complete
-  cost accounting with a direct cascade-vs-uniform comparison.
+  cost accounting with a direct cascade-vs-uniform comparison, and a size-matched
+  control of the SDXL/FLUX deployment results (14,630 further GPT-5.5 calls).
 - Entire experimental pipeline consolidated into two canonical, released scripts
   (`routing/run_pipeline.py`, `routing/generate_paper_results.py`) replacing
   approximately 150 previously scattered scripts, so every reported number has a
