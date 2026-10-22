@@ -1,8 +1,8 @@
-# Response to Reviewers — Second Revision
+# Response to Reviewers: Second Revision
 
 We thank both reviewers for another careful, specific reading. Reviewer 1's ten
 comments identified real issues in the previous revision, several of them genuine
-bugs rather than exposition gaps — most significantly, a provenance bug in which the
+bugs rather than exposition gaps. The most significant was a provenance bug in which the
 Limitations-section class-wise numbers and Table 5's cascade accuracy had been
 computed against two different trained-probe snapshots saved roughly two hours
 apart, and an incomplete-GPT-5.5-coverage issue in the same table that silently fell
@@ -18,7 +18,7 @@ re-analysis of existing data. We address each comment in turn.
 
 ## Reviewer 1
 
-### Comment 1 — Independent deployment-set evaluation of the validation gate
+### Comment 1: Independent deployment-set evaluation of the validation gate
 
 **Concern:** Section VI.I's gate validation evaluates bootstrap agreement against an
 oracle computed from the same disagreement pool used for calibration, establishing
@@ -50,7 +50,7 @@ close-margin configurations can remain unreliable even then. For the four SDXL/F
 GPT-5.5 configurations behind our positive result, the table also reports how often
 the significance-aware gate enables escalation. Three escalate in ≥85% of draws at
 every N. FLUX/SigLIP2, the smallest-margin case, escalates in only 38% of draws at
-N=50 and 64% at N=100 (94% at N=200), and the text says so.
+N=50 and 63% at N=100 (91% at N=200); the table reports this and the text notes it.
 
 **Action:** New Section VI.I.1, and a single gate-reliability Table `gate`. Its
 held-out rows report the capped-N footnote, missed-beneficial-escalation rates and
@@ -60,7 +60,7 @@ measuring resampling stability, since that remains a useful but secondary questi
 
 ---
 
-### Comment 2 — Statistical significance of the escalation decision
+### Comment 2: Statistical significance of the escalation decision
 
 **Concern:** The gate enables escalation whenever the verifier's empirical accuracy
 exceeds both cheap detectors by any positive margin, which can be sampling noise.
@@ -81,7 +81,7 @@ risk trade-off rather than one dominating the other. We
 also added an agreement-path audit across every evaluated dataset (not only
 GenBuster): in-domain agreement-path accuracy is 96.8–99.8% with 0.2–3.2%
 correlated-error rates; under SDXL/FLUX deployment shift it drops to 83.9–91.8%
-with correlated-error rates 4–8× higher (8.2–16.1%) — errors disagreement-based
+with correlated-error rates 4–8× higher (8.2–16.1%). These are errors disagreement-based
 routing structurally cannot catch, now quantified rather than asserted.
 
 **Action:** Significance-aware decision rule specified in pseudocode
@@ -90,7 +90,7 @@ Limitations discussion.
 
 ---
 
-### Comment 3 — Apparent equivalence of the binary gate and three-way selector
+### Comment 3: Apparent equivalence of the binary gate and three-way selector
 
 **Concern:** The binary gate (escalate iff the verifier beats both cheap detectors,
 else fall back to the stronger of the two) already selects the best of all three
@@ -102,7 +102,7 @@ We now give exact pseudocode for both rules (Section VI.I) and state plainly tha
 as decision procedures, they select the identical action in every case: the binary
 gate's fallback branch is, by its own stated definition, `argmax(A1, A2)`. What
 differed was not the gate's behavior but what our original sensitivity analysis
-measured — a Boolean escalate/fallback agreement check for the binary rule versus a
+measured: a Boolean escalate/fallback agreement check for the binary rule versus a
 full three-valued identity check for the three-way rule. We traced the one place
 this produces different reported numbers (N=10: 13/35 vs. 11/35) to two
 configurations (SD1.4/SigLIP2 at 100% training fraction, and FLUX/DINOv2, both with
@@ -118,12 +118,13 @@ configurations and the configuration set changed.) The discrepancy vanishes by N
 
 **Action:** Exact pseudocode for both rules added to Section VI.I. The "cannot
 represent" claim corrected to describe the three-way rule's actual contribution
-(reporting detector identity explicitly, not a different decision). Full
-mechanical explanation of the N=10 divergence added.
+(reporting detector identity explicitly, not a different decision). The paper
+explains the mechanism of the N=10 divergence; the full count-level accounting is
+given above.
 
 ---
 
-### Comment 4 — Real-image substitution in the deployment benchmark
+### Comment 4: Real-image substitution in the deployment benchmark
 
 **Concern:** Replacing AIGIBench's bundled PASCAL VOC real images after observing
 GPT-5.5 misclassify 82–97% of them is a selection-after-failure concern. Results on
@@ -131,7 +132,7 @@ the original benchmark, and on an independently chosen real-image source, should
 reported.
 
 **Response:** We now report both (new Table "real_image_sources," Section IV.B).
-Under the original PASCAL VOC images, the full cascade — not only GPT-5.5 — degrades
+Under the original PASCAL VOC images, the full cascade, not only GPT-5.5, degrades
 severely: accuracy collapses to 72.9–77.9%, driven by an agreement-path accuracy of
 only 43–53%. The local FFT artifact detector alone misclassifies 83–85% of these
 photographs as fake, essentially matching GPT-5.5's own misclassification rate
@@ -160,7 +161,7 @@ produce this table.
 
 ---
 
-### Comment 5 — Reconciling class-wise results with Table 5
+### Comment 5: Reconciling class-wise results with Table 5
 
 **Concern:** The reported SDXL real/fake recall figures and Table 5's overall
 cascade accuracy do not arithmetically reconcile.
@@ -175,7 +176,7 @@ GPT-5.5 coverage of the disagreement subset via the OpenAI Batch API (previously
 partial, which is why some disagreement rows had silently fallen back to the
 semantic probe's own prediction rather than a verifier answer). Under this
 corrected, internally consistent accounting, both real-class and fake-class recall
-increase under escalation in all four backbone/dataset cells — a stronger and
+increase under escalation in all four backbone/dataset cells. This is a stronger and
 simpler result than, and a correction of, the earlier claim that real-class recall
 declined. Full TP/FP/TN/FN confusion matrices for all four cells are released
 alongside the per-sample prediction files.
@@ -207,7 +208,7 @@ sets.
 
 ---
 
-### Comment 6 — Dataset splitting procedure
+### Comment 6: Dataset splitting procedure
 
 **Concern:** The stated 50%/20%/40% nested-split formula does not reproduce the
 paper's own reported evaluation-set sizes (1,000 GenBuster, 2,000 each for
@@ -217,7 +218,7 @@ duplicate checks for real images reused across benchmarks.
 **Response:** The previous description was aspirational rather than an accurate
 description of the code, and we have rewritten Section V.A to match what the
 pipeline actually does: a single stratified evaluation-set holdout at a fixed
-target size per dataset (1,000 for GenBuster — its full pool is only 2,000 samples,
+target size per dataset (1,000 for GenBuster, whose full pool is only 2,000 samples,
 disclosed as a ceiling; 2,000 each for SD1.4/BigGAN, drawn from 12,000-sample
 pools), with every detector trained on the complementary split (the full pool minus
 the evaluation set). No further nested validation holdout is used; a fixed-hyperparameter
@@ -229,7 +230,7 @@ now retrained cleanly under the documented split. We additionally checked, by ex
 path comparison, for real-image reuse across benchmarks: 100% of SDXL's and FLUX's
 real-class images are drawn from SD1.4's real pool, and 31.5%/33.1% of SD1.4's own
 evaluation-set real images are also present, unmodified, in the SDXL/FLUX real
-class — disclosed explicitly in the new Section V.A, distinct from (and not
+class. This is disclosed explicitly in the new Section V.A, distinct from (and not
 affecting) any individual benchmark's own train/evaluation separation. Split
 identifiers and the full overlap-check output are released alongside the code.
 
@@ -239,7 +240,7 @@ disclosed (new paragraph, Section V.A). Split identifiers released.
 
 ---
 
-### Comment 7 — Auditable account of the corrected verifier experiments
+### Comment 7: Auditable account of the corrected verifier experiments
 
 **Concern:** Exact model identifier, API configuration, reasoning settings, token
 limits (old and corrected), parsing rules, invalid-response handling, retry policy,
@@ -296,7 +297,7 @@ columns released. 19 previously-mislabeled rows corrected.
 
 ---
 
-### Comment 8 — Strengthen the routing comparisons
+### Comment 8: Strengthen the routing comparisons
 
 **Concern:** The entropy baseline uses artifact-only confidence at a fixed
 threshold, which does not establish superiority over confidence routing generally.
@@ -360,25 +361,25 @@ Table 11 numbers corrected and given a significance test under two protocols.
 
 ---
 
-### Comment 9 — Dataset shortcuts and reproducibility
+### Comment 9: Dataset shortcuts and reproducibility
 
 **Concern:** BigGAN's near-perfect FFT performance warrants controls for
 compression, resolution, and source differences; FFT/DCT feature definitions,
 preprocessing, and training details should be fully specified.
 
 **Response:** We directly tested and confirmed this concern for BigGAN. A
-classifier using only an image's native width and height — no pixel content —
+classifier using only an image's native width and height, with no pixel content,
 reaches 99.55% accuracy on BigGAN, within 0.15 points of the trained FFT detector's
 99.7%; forcing the real class through the same native-resolution downsampling the
 fake class structurally undergoes before the shared feature pipeline collapses the
 same trained detector to 50.1%, exact chance. We extended the compression-robustness
 check to the FFT/SigLIP2/DINOv2 detectors (previously CNNSpot/CLIP only), on the
 current (not stale) evaluation splits, and added two further common post-processing
-operations — Gaussian blur and downscale-then-upscale — at multiple severities. The
+operations, Gaussian blur and downscale-then-upscale, at multiple severities. The
 detector's BigGAN accuracy is nearly invariant to JPEG compression (99.7%→99.65% at
 quality 50) but collapses sharply, including below chance, under blur and
 aggressive resizing (99.7%→29.2% at blur σ=2; 99.7%→33.9% at a 4× downscale-upscale
-round-trip) — a pattern consistent with a detector keyed to a coarse, resize-related
+round-trip), a pattern consistent with a detector keyed to a coarse, resize-related
 signature rather than fine generative texture. SD1.4 shows a partial version of the
 same confound; GenBuster, where both classes share identical native resolution,
 shows none, serving as a clean negative control. The exact FFT/DCT feature
@@ -419,7 +420,7 @@ comparison (Section VI.B).
 
 ---
 
-### Comment 10 — Complete the cost analysis
+### Comment 10: Complete the cost analysis
 
 **Concern:** Token-cost reporting is promised but not substantiated in the main
 tables. The positive deployment settings should compare the cascade directly
@@ -436,9 +437,9 @@ not only the disagreement subset. Uniform escalation reaches 99.6%/97.1% accurac
 $13.61/$18.47 for the full benchmark. The cascade reaches 89.3–94.0% at 42–51% of
 that cost. This is priced from the tokens of the images the cascade actually
 escalates, which use more tokens per call than the average image, so the cost share
-is higher than the 36–42% escalation rate. We report this as an explicit, incomplete-but-substantial tradeoff —
+is higher than the 36–42% escalation rate. We report this as an explicit, incomplete but substantial tradeoff:
 3.0–7.8 percentage points remain achievable by uniform escalation that the cascade
-does not recover — rather than implying the cascade matches uniform accuracy at
+does not recover, and we do not imply that the cascade matches uniform accuracy at
 lower cost. Under the size-matched control (Comment 9), where every image costs the same
 number of tokens, the cascade costs 39–47% of uniform escalation.
 
@@ -476,7 +477,7 @@ the quality of that evidence.
 
 ## Reviewer 2
 
-### Comment 1 — Footnote the bootstrap-independence clarification on the sensitivity table
+### Comment 1: Footnote the bootstrap-independence clarification on the sensitivity table
 
 **Action:** The clarification ("for configurations whose disagreement subset
 contains fewer than 200 unique samples, the N=100/N=200 columns are bootstrap
@@ -484,16 +485,16 @@ resamples... not a stand-in for independent human-labeled examples") is now
 included directly in the caption of the gate-reliability table (Table `gate`), in
 addition to the body text.
 
-### Comment 2 — Rephrase "routing identifies difficult inputs, but the selected verifier cannot improve them"
+### Comment 2: Rephrase "routing identifies difficult inputs, but the selected verifier cannot improve them"
 
 **Action:** Rewritten exactly along the lines suggested: on GenBuster, the routed
-inputs are not intrinsically difficult for every cheap detector — the semantic
+inputs are not intrinsically difficult for every cheap detector, since the semantic
 probe remains 96.1% accurate on the same disagreement subset. Disagreement there
 primarily captures inputs where the artifact detector degrades while the semantic
 detector remains reliable, and escalating to a weaker verifier replaces a correct
 semantic prediction rather than resolving genuine difficulty.
 
-### Comment 3 — Precision on the "significantly outperforms random triggering" claim
+### Comment 3: Precision on the "significantly outperforms random triggering" claim
 
 **Action:** Rewritten to state the gain per dataset. Table `cheap_trigger` is now
 recomputed on the same evaluation sets as Table `main_results`, and its random baseline
@@ -503,7 +504,7 @@ random baseline's CI but small in absolute terms (0.995 vs. 0.990, consistent wi
 ceiling effect). On GenBuster the cascade does not outperform the random baseline
 (0.899 vs. 0.900).
 
-### Comment 4 — Unified Case 1/2/3/Breakdown summary table
+### Comment 4: Unified Case 1/2/3/Breakdown summary table
 
 **Action:** Added a compact table (Table `case_mapping`) in Section VI.B ("The Three
 Cascade Cases in Practice") giving Case 1/2/3/Breakdown counts for each experimental
