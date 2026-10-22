@@ -1,6 +1,8 @@
 # File inventory (Revision 3, Phase 7)
 
-Every tracked file outside `routing/_archive/`, with a proposed status. **Nothing has been moved or deleted.** This needs your approval first.
+> **Applied 2026-10-22.** Deleted 12 files (`git rm`) and archived 78 (`git mv`): 69 of the 70 in the archive section (`claude_context_notes/resubmissionplan.md` was left in place because docstrings in `routing/gate_analysis.py` and `routing/baseline_utils.py` still reference it) plus 9 figure D/E/F files that became unused. Destinations: `routing/_archive/{superseded_results,legacy_compression_csvs,root_one_off_scripts,vendored_unused,removed_figures}/` and `claude_context_notes/_round1/`; see `routing/_archive/MANIFEST.md`. Review and ask sections untouched. `generate_paper_results.py` output was byte-identical. Entries below marked **[deleted]** or **[archived]**.
+
+Every tracked file outside `routing/_archive/`, with a proposed status. (Originally proposed; see the Applied note.)
 
 How the status was decided:
 - **Runtime trace:** a Python audit hook logged every file opened while a full `generate_paper_results.py` run executed. Anything read is **keep**.
@@ -23,108 +25,108 @@ How the status was decided:
 
 **obvious junk (plan list); not read by any entry point** (12)
 
-- `routing/=0.46.1`
-- `routing/bandit_model.pkl.old_qwen_backup`
-- `routing/bandit_val_paths_old_small.npy`
-- `routing/biggan_bandit_model.pkl.old_qwen_backup`
-- `routing/biggan_bandit_val_paths_old_small.npy`
-- `routing/cross_family_deployment.csv.cnnspot_backup`
-- `routing/final_results_raw_file.txt`
-- `routing/prompt_test_altprompt_results.csv`
-- `routing/prompt_test_subsample.csv`
-- `routing/results/e6_limited_data.csv.cnnspot_backup`
-- `routing/sd14_bandit_model.pkl.old_qwen_backup`
-- `routing/sd14_bandit_val_paths_old_small.npy`
+- `routing/=0.46.1` **[deleted]**
+- `routing/bandit_model.pkl.old_qwen_backup` **[deleted]**
+- `routing/bandit_val_paths_old_small.npy` **[deleted]**
+- `routing/biggan_bandit_model.pkl.old_qwen_backup` **[deleted]**
+- `routing/biggan_bandit_val_paths_old_small.npy` **[deleted]**
+- `routing/cross_family_deployment.csv.cnnspot_backup` **[deleted]**
+- `routing/final_results_raw_file.txt` **[deleted]**
+- `routing/prompt_test_altprompt_results.csv` **[deleted]**
+- `routing/prompt_test_subsample.csv` **[deleted]**
+- `routing/results/e6_limited_data.csv.cnnspot_backup` **[deleted]**
+- `routing/sd14_bandit_model.pkl.old_qwen_backup` **[deleted]**
+- `routing/sd14_bandit_val_paths_old_small.npy` **[deleted]**
 
 ## archive (70)
 
 **differs from routing/hfgenbuster.py; checked: no hardcoded secret (HF_TOKEN from env)** (1)
 
-- `hfgenbuster.py`
+- `hfgenbuster.py` **[archived]**
 
 **old CNNSpot/CLIP compression CSVs, superseded by results/e7_compression_extended.csv** (18)
 
-- `routing/biggan_clip_q50.csv`
-- `routing/biggan_clip_q75.csv`
-- `routing/biggan_clip_q95.csv`
-- `routing/biggan_cnnspot_q50.csv`
-- `routing/biggan_cnnspot_q75.csv`
-- `routing/biggan_cnnspot_q95.csv`
-- `routing/clip_q50.csv`
-- `routing/clip_q75.csv`
-- `routing/clip_q95.csv`
-- `routing/cnnspot_q50.csv`
-- `routing/cnnspot_q75.csv`
-- `routing/cnnspot_q95.csv`
-- `routing/sd14_clip_q50.csv`
-- `routing/sd14_clip_q75.csv`
-- `routing/sd14_clip_q95.csv`
-- `routing/sd14_cnnspot_q50.csv`
-- `routing/sd14_cnnspot_q75.csv`
-- `routing/sd14_cnnspot_q95.csv`
+- `routing/biggan_clip_q50.csv` **[archived]**
+- `routing/biggan_clip_q75.csv` **[archived]**
+- `routing/biggan_clip_q95.csv` **[archived]**
+- `routing/biggan_cnnspot_q50.csv` **[archived]**
+- `routing/biggan_cnnspot_q75.csv` **[archived]**
+- `routing/biggan_cnnspot_q95.csv` **[archived]**
+- `routing/clip_q50.csv` **[archived]**
+- `routing/clip_q75.csv` **[archived]**
+- `routing/clip_q95.csv` **[archived]**
+- `routing/cnnspot_q50.csv` **[archived]**
+- `routing/cnnspot_q75.csv` **[archived]**
+- `routing/cnnspot_q95.csv` **[archived]**
+- `routing/sd14_clip_q50.csv` **[archived]**
+- `routing/sd14_clip_q75.csv` **[archived]**
+- `routing/sd14_clip_q95.csv` **[archived]**
+- `routing/sd14_cnnspot_q50.csv` **[archived]**
+- `routing/sd14_cnnspot_q75.csv` **[archived]**
+- `routing/sd14_cnnspot_q95.csv` **[archived]**
 
 **repo-root one-off evaluation script** (6)
 
-- `eval_cnnspot_genbuster.py`
-- `eval_genbuster.py`
-- `eval_genbuster_full_baseline.py`
-- `eval_genbuster_per_gen.py`
-- `eval_genbuster_per_gen_correct.py`
-- `eval_genbuster_table2.py`
+- `eval_cnnspot_genbuster.py` **[archived]**
+- `eval_genbuster.py` **[archived]**
+- `eval_genbuster_full_baseline.py` **[archived]**
+- `eval_genbuster_per_gen.py` **[archived]**
+- `eval_genbuster_per_gen_correct.py` **[archived]**
+- `eval_genbuster_table2.py` **[archived]**
 
 **round-1 material -> claude_context_notes/_round1/** (4)
 
-- `claude_context_notes/paper_updates.tex`
-- `claude_context_notes/response_to_reviewers.md`
+- `claude_context_notes/paper_updates.tex` **[archived]**
+- `claude_context_notes/response_to_reviewers.md` **[archived]**
 - `claude_context_notes/resubmissionplan.md`
-- `claude_context_notes/session_summary.md`
+- `claude_context_notes/session_summary.md` **[archived]**
 
 **superseded result version (now produced by a live generator or unused)** (9)
 
-- `routing/results/e8_cascade_accuracy.csv`
-- `routing/results/e8_qwen_cascade.csv`
-- `routing/results/tab_cost_accuracy_three_way.csv`
-- `routing/results/tab_e8_gpt55_FULL_coverage.csv`
-- `routing/results/tab_e8_gpt55_reconciled_v2.csv`
-- `routing/results/tab_e8_qwen_FINAL.csv`
-- `routing/results/tab_e8_qwen_reconciled.csv`
-- `routing/results/tab_real_image_source_benchmark.csv`
-- `routing/results/verifier_validation_gate_check.csv`
+- `routing/results/e8_cascade_accuracy.csv` **[archived]**
+- `routing/results/e8_qwen_cascade.csv` **[archived]**
+- `routing/results/tab_cost_accuracy_three_way.csv` **[archived]**
+- `routing/results/tab_e8_gpt55_FULL_coverage.csv` **[archived]**
+- `routing/results/tab_e8_gpt55_reconciled_v2.csv` **[archived]**
+- `routing/results/tab_e8_qwen_FINAL.csv` **[archived]**
+- `routing/results/tab_e8_qwen_reconciled.csv` **[archived]**
+- `routing/results/tab_real_image_source_benchmark.csv` **[archived]**
+- `routing/results/verifier_validation_gate_check.csv` **[archived]**
 
 **vendored repo; no non-archived code references it; not in the paper** (32)
 
-- `DeMamba/LICENSE`
-- `DeMamba/Preprocess/compress.py`
-- `DeMamba/Preprocess/folder2csv.py`
-- `DeMamba/Preprocess/video2frame.py`
-- `DeMamba/README.md`
-- `DeMamba/configs/XCLIP_DeMamba.yaml`
-- `DeMamba/dataloader.py`
-- `DeMamba/figs/.gitkeep`
-- `DeMamba/figs/VFOD.png`
-- `DeMamba/figs/logo.png`
-- `DeMamba/figs/tab_fig.jpg`
-- `DeMamba/figs/xty.jpg`
-- `DeMamba/models/DeMamba.py`
-- `DeMamba/models/F3Net.py`
-- `DeMamba/models/FTCN.py`
-- `DeMamba/models/MINTIME`
-- `DeMamba/models/NPR.py`
-- `DeMamba/models/STIL.py`
-- `DeMamba/models/TALL.py`
-- `DeMamba/models/VideoMAE.py`
-- `DeMamba/models/XCLIP.py`
-- `DeMamba/models/__init__.py`
-- `DeMamba/models/clip/__init__.py`
-- `DeMamba/models/clip/bpe_simple_vocab_16e6.txt.gz`
-- `DeMamba/models/clip/clip.py`
-- `DeMamba/models/clip/model.py`
-- `DeMamba/models/clip/simple_tokenizer.py`
-- `DeMamba/models/mamba_base.py`
-- `DeMamba/models/pscan.py`
-- `DeMamba/models/time_transformer`
-- `DeMamba/train.py`
-- `DeMamba/util.py`
+- `DeMamba/LICENSE` **[archived]**
+- `DeMamba/Preprocess/compress.py` **[archived]**
+- `DeMamba/Preprocess/folder2csv.py` **[archived]**
+- `DeMamba/Preprocess/video2frame.py` **[archived]**
+- `DeMamba/README.md` **[archived]**
+- `DeMamba/configs/XCLIP_DeMamba.yaml` **[archived]**
+- `DeMamba/dataloader.py` **[archived]**
+- `DeMamba/figs/.gitkeep` **[archived]**
+- `DeMamba/figs/VFOD.png` **[archived]**
+- `DeMamba/figs/logo.png` **[archived]**
+- `DeMamba/figs/tab_fig.jpg` **[archived]**
+- `DeMamba/figs/xty.jpg` **[archived]**
+- `DeMamba/models/DeMamba.py` **[archived]**
+- `DeMamba/models/F3Net.py` **[archived]**
+- `DeMamba/models/FTCN.py` **[archived]**
+- `DeMamba/models/MINTIME` **[archived]**
+- `DeMamba/models/NPR.py` **[archived]**
+- `DeMamba/models/STIL.py` **[archived]**
+- `DeMamba/models/TALL.py` **[archived]**
+- `DeMamba/models/VideoMAE.py` **[archived]**
+- `DeMamba/models/XCLIP.py` **[archived]**
+- `DeMamba/models/__init__.py` **[archived]**
+- `DeMamba/models/clip/__init__.py` **[archived]**
+- `DeMamba/models/clip/bpe_simple_vocab_16e6.txt.gz` **[archived]**
+- `DeMamba/models/clip/clip.py` **[archived]**
+- `DeMamba/models/clip/model.py` **[archived]**
+- `DeMamba/models/clip/simple_tokenizer.py` **[archived]**
+- `DeMamba/models/mamba_base.py` **[archived]**
+- `DeMamba/models/pscan.py` **[archived]**
+- `DeMamba/models/time_transformer` **[archived]**
+- `DeMamba/train.py` **[archived]**
+- `DeMamba/util.py` **[archived]**
 
 ## ask (2)
 
