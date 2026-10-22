@@ -106,7 +106,7 @@ This work makes the following contributions:
     
     \item \textbf{C3:} On deployment shift benchmarks (SDXL and FLUX), cascade escalation to GPT-5.5 recovers up to 7.9 percentage points of accuracy over a stale semantic probe while reducing verifier invocations by 58--64\%. A uniform always-escalate policy, evaluated on the full benchmark, shows this closes most but not all of the achievable gap (3--7.8 percentage points remain), making the accuracy-cost tradeoff explicit rather than presenting selective escalation as a cost-free win.
 
-    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, independently validating disagreement as the dominant routing signal while providing no measurable improvement over the parameter-free rule. We further show that the cascade's gain under deployment shift does not depend on the routing signal: routing by a calibrated joint artifact-and-semantic confidence rule yields a similar gain. Disagreement, which needs no threshold, no probability outputs and no tuning, stays within 1.7 points of that rule in every configuration, and unlike a confidence score it also identifies which cheap detector is failing.
+    \item \textbf{C4:} We show that a learned escalation classifier (a supervised logistic-regression router over detector-derived features) converges to the disagreement rule across multiple datasets, showing that disagreement is the dominant signal among the detector outputs it learns from, and provides no measurable improvement over the parameter-free rule. We further show that the cascade's gain under deployment shift does not depend on the routing signal: routing by a calibrated joint artifact-and-semantic confidence rule yields a similar gain. Disagreement, which needs no threshold, no probability outputs and no tuning, stays within 1.7 points of that rule in every configuration, and unlike a confidence score it also identifies which cheap detector is failing.
 
     \item \textbf{C5:} We introduce a verifier validation gate with a prespecified, paired-bootstrap significance test that determines whether disagreement-based escalation should be enabled before deployment, reducing harmful escalations by roughly an order of magnitude relative to a point-estimate rule at the cost of more missed beneficial escalations. Evaluated under genuine calibration/test separation, the gate reaches at least 90\% test-set agreement with the oracle decision in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$; a three-way detector selector is equivalent to the binary gate as a decision procedure.
 
@@ -130,7 +130,7 @@ Existing forensic detection and cost-aware inference literature leaves several g
 
 \textbf{Disagreement as a routing signal.} Inter-model disagreement has been studied extensively in active learning~\cite{seung1992query} and ensemble-based uncertainty estimation~\cite{lakshminarayanan2017simple}. In these settings, disagreement identifies informative samples or improves predictive uncertainty. Prior work treats disagreement as a mechanism for aggregation or data selection. Its role as a routing signal for cost-aware inference remains unexplored in forensic detection pipelines. Specifically, using disagreement as a diagnostic to indicate when low-cost detectors should not be trusted has not been studied.
 
-This work addresses these gaps in four ways. First, we combine heterogeneous artifact-based and semantic signals through a disagreement rule with no threshold or trained parameters. Second, we compare disagreement with a calibrated joint-confidence rule at matched operating points across multiple generator families, and find that it performs close to that rule, ahead in-domain and tied or behind under shift, while requiring no calibration. Third, we account for both latency and token cost when evaluating VLM-based escalation strategies. Fourth, we reinterpret disagreement as a diagnostic for selective invocation of more expensive models, not as a voting mechanism.
+This work addresses these gaps in four ways. First, we combine heterogeneous artifact-based and semantic signals through a disagreement rule with no threshold or trained parameters. Second, we compare disagreement with a calibrated joint-confidence rule at matched operating points across multiple generator families, and find that it performs close to that rule, ahead in-domain and tied or behind under shift, while needing no threshold or probability outputs. Third, we account for both latency and token cost when evaluating VLM-based escalation strategies. Fourth, we reinterpret disagreement as a diagnostic for selective invocation of more expensive models, not as a voting mechanism.
 
 \textbf{Dataset shortcuts.} Published analysis has shown that detectors trained on
 GenImage-family benchmarks can exploit JPEG compression and image-resolution biases
@@ -1799,7 +1799,7 @@ For RQ2, the disagreement rule needs no threshold or trained parameters to selec
 inputs, but deciding whether to escalate them still requires labeled calibration data
 (the validation gate). A learned
 escalation classifier using the same detector outputs does not provide a consistent advantage, which
-supports binary disagreement as the dominant routing signal in this setting. A joint
+shows that disagreement is the dominant signal among those outputs. A joint
 artifact-and-semantic confidence-routing baseline with held-out thresholds qualifies
 this. The disagreement rule is more accurate on SD~1.4 and BigGAN in-domain, but under
 the SDXL/FLUX shift the calibrated confidence rule is tied or better in every
@@ -1810,7 +1810,7 @@ cheap detector is failing.
 
 For RQ3, disagreement-based escalation reduces verifier cost, but its accuracy benefit is
 conditional. It recovers accuracy under the SDXL and FLUX shifts when paired with a
-strong verifier, yet fails under cross-family transfer and the distant BigGAN shift.
+strong verifier, yet fails in five of the six cross-family pairings and under the distant BigGAN shift.
 Escalation should be enabled only when calibration confirms that the verifier exceeds
 both cheap detectors on the routed subset.
 
