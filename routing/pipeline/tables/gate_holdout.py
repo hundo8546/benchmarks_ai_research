@@ -150,8 +150,11 @@ def _one_repeat(y_true, y1, y2, y3, n_half, n_boot, rng):
             "regret": best_test_acc - test_acc,          # >=0 by construction
             "escalate": escalate,
             "harmful": bool(escalate and (a3t < best_cheap_test_acc)),
+            # test oracle escalates (verifier strictly best) but the frozen rule fell back
+            "missed": bool(oracle_idx == 2 and not escalate),
             "match": (idx == oracle_idx),
         }
+    out["rules_differ"] = naive_idx != sig_idx
     return out
 
 
@@ -177,22 +180,22 @@ def _run_cell(cell, rng):
                 "table": cell["table"], "config": cell["config"], "verifier": cell["verifier"],
                 "n_disagree": n_dis, "split": label, "calib_n": n_half, "test_n": n_half,
                 "n_repeats": 0, "pool_too_small": True, "capped_below_target": capped,
-                "naive_mean_test_acc": float("nan"), "naive_mean_regret": float("nan"),
-                "naive_harmful_escalation_rate": float("nan"), "naive_escalation_rate": float("nan"),
-                "naive_test_oracle_match_rate": float("nan"),
-                "sig_mean_test_acc": float("nan"), "sig_mean_regret": float("nan"),
-                "sig_harmful_escalation_rate": float("nan"), "sig_escalation_rate": float("nan"),
-                "sig_test_oracle_match_rate": float("nan"),
+                **{f"{tag}_{m}": float("nan") for tag in ("naive", "sig") for m in (
+                    "mean_test_acc", "mean_regret", "harmful_escalation_rate",
+                    "missed_beneficial_escalation_rate", "escalation_rate", "test_oracle_match_rate")},
+                "rule_disagreement_rate": float("nan"),
             })
             continue
 
-        agg = {tag: {"test_acc": [], "regret": [], "escalate": [], "harmful": [], "match": []}
+        agg = {tag: {"test_acc": [], "regret": [], "escalate": [], "harmful": [], "missed": [], "match": []}
                for tag in ("naive", "sig")}
+        differ = []
         for _ in range(N_REPEATS):
             out = _one_repeat(y_true, y1, y2, y3, n_half, N_BOOT, rng)
             for tag in ("naive", "sig"):
                 for k, v in out[tag].items():
                     agg[tag][k].append(v)
+            differ.append(out["rules_differ"])
 
         row = {
             "table": cell["table"], "config": cell["config"], "verifier": cell["verifier"],
@@ -203,8 +206,10 @@ def _run_cell(cell, rng):
             row[f"{tag}_mean_test_acc"] = float(np.mean(agg[tag]["test_acc"]))
             row[f"{tag}_mean_regret"] = float(np.mean(agg[tag]["regret"]))
             row[f"{tag}_harmful_escalation_rate"] = float(np.mean(agg[tag]["harmful"]))
+            row[f"{tag}_missed_beneficial_escalation_rate"] = float(np.mean(agg[tag]["missed"]))
             row[f"{tag}_escalation_rate"] = float(np.mean(agg[tag]["escalate"]))
             row[f"{tag}_test_oracle_match_rate"] = float(np.mean(agg[tag]["match"]))
+        row["rule_disagreement_rate"] = float(np.mean(differ))
         rows.append(row)
     return rows
 

@@ -1,0 +1,10 @@
+OpenAI API pricing page (source of the gpt-5.5 rates used in Section VI.J)
+
+URL: https://developers.openai.com/api/docs/pricing
+Accessed: 2026-10-22
+
+Verified on that date: gpt-5.5 (<272K context), per 1M tokens
+  Standard: input $5.00, cached input $0.50, output $30.00
+  Batch:    input $2.50, cached input $0.25, output $15.00   <- used in the paper
+
+A capture of the page is in openaitokentable.txt. The bib entry is in references_additions.bib (key: openai_pricing).

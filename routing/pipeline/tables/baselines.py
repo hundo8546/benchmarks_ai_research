@@ -57,6 +57,7 @@ def compute_baselines_raw():
     # module-level lists that bc's run_*() functions append to).
     bc.ROWS.clear()
     bc.SUBSETS.clear()
+    bc.CASCADE_ROWS.clear()
 
     bc.run_verifier_comparison()
     bc.run_e8_results()
