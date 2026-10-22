@@ -27,8 +27,8 @@ recommendation is not adequately established (11/35 configurations miss the
 criterion at that size).
 
 **Response:** We agree, and have added a fully independent evaluation
-(Section VI.I.1, "Independent (Held-Out) Gate Evaluation," new
-Table "gate_holdout"). For each of the 35 configurations and each calibration
+(Section VI.I.1, "Independent (Held-Out) Gate Evaluation," held-out rows of the
+gate-reliability Table `gate`). For each of the 35 configurations and each calibration
 size N ∈ {50, 100, 200}, we draw 250 random splits of the disagreement subset into
 disjoint calibration and test sets of N samples each, plus 250 half/half splits of
 the full pool. We freeze the gate's decision on calibration only and apply it
@@ -52,12 +52,11 @@ the significance-aware gate enables escalation. Three escalate in ≥85% of draw
 every N. FLUX/SigLIP2, the smallest-margin case, escalates in only 38% of draws at
 N=50 and 64% at N=100 (94% at N=200), and the text says so.
 
-**Action:** New Section VI.I.1 and Table "gate_holdout" (with capped-N footnote,
-missed-beneficial-escalation rates and positive-cell escalation rates). Revised
-sample-size recommendation throughout. Old same-pool sensitivity table retained alongside
-(retitled "Same-Pool-Oracle Sensitivity") since it answers a genuinely different
-question (resampling stability) that remains useful, but is now clearly
-subordinate to the held-out result.
+**Action:** New Section VI.I.1, and a single gate-reliability Table `gate`. Its
+held-out rows report the capped-N footnote, missed-beneficial-escalation rates and
+positive-cell escalation rates. Revised sample-size recommendation throughout. The
+earlier same-pool results are kept as the first rows of the same table, labelled as
+measuring resampling stability, since that remains a useful but secondary question.
 
 ---
 
@@ -270,7 +269,8 @@ coverage, GPT-5.5 on GenBuster is 0.907 vs. 0.961 for the best cheap detector (b
 it), and on SD1.4 it is 0.814 vs. 0.784 (a +0.030 numerical edge whose paired 95% CI
 [−0.019, +0.079] includes zero), so neither cell clears the baseline and no case
 assignment changed.
-For the four favorable SDXL/FLUX configurations, new Table `positive_cells` reports
+For the four favorable SDXL/FLUX configurations, the second block of new Table
+`verifier_subset` reports
 the full disagreement-subset size (1,452–1,675), its real/fake composition (about
 two-thirds fake), GPT-5.5 and best-cheap accuracy on the subset, and a
 paired-bootstrap 95% CI on the gap (+8.1 to +20.4 points, every interval above zero),
@@ -367,9 +367,9 @@ features with `LogisticRegression(C=0.1, max_iter=2000, random_state=42)`) is no
 documented in full in the Implementation section, checked against the extractor code.
 
 **Action:** Resolution-only control classifier and resolution-matching ablation
-(new figure and Limitations discussion). Compression robustness extended to all
-three detectors, and two new post-processing perturbations added, reported in new
-Table `robustness` (Limitations). Full FFT/DCT
+(Limitations discussion). Compression robustness extended to all three detectors, and
+two new post-processing perturbations added; the key results are in the Limitations
+text and the full grid is in the released results file (`paper_results.xlsx`). Full FFT/DCT
 reproducibility documentation added. This finding is flagged as a direct caveat on
 the in-domain BigGAN artifact-detector baseline used in the cross-family deployment
 comparison (Section VI.B).
@@ -403,9 +403,9 @@ input / 96 output on SDXL, 783 / 177 on FLUX), with a citation for the pricing. 
 formulation section now says that C_tok is reported wherever the verifier is an API
 model, rather than for every method.
 
-**Action:** New Section VI.J with a cost-accuracy table and figure directly
-comparing cheap-only, cascade, and uniform GPT-5.5 policies on SDXL/FLUX, plus
-per-dataset token means.
+**Action:** New Section VI.J comparing cheap-only, cascade, and uniform GPT-5.5
+policies on SDXL/FLUX (cost columns added to Table `e8_results`), plus per-dataset
+token means.
 
 ---
 
@@ -429,7 +429,8 @@ broadly than that single-frame scope.
 **Action:** The clarification ("for configurations whose disagreement subset
 contains fewer than 200 unique samples, the N=100/N=200 columns are bootstrap
 resamples... not a stand-in for independent human-labeled examples") is now
-included directly in the sensitivity table's caption, in addition to the body text.
+included directly in the caption of the gate-reliability table (Table `gate`), in
+addition to the body text.
 
 ### Comment 2 — Rephrase "routing identifies difficult inputs, but the selected verifier cannot improve them"
 
@@ -452,10 +453,10 @@ ceiling effect). On GenBuster the cascade does not outperform the random baselin
 
 ### Comment 4 — Unified Case 1/2/3/Breakdown summary table
 
-**Action:** Added a compact table (Table `case_mapping`) next to a figure in Section
-VI.B ("The Three Cascade Cases in Practice"). The table gives Case 1/2/3/Breakdown
-counts for each experimental setting; the figure maps every tested configuration
-individually. Case 3 is assigned mechanically: the verifier must beat the best cheap
+**Action:** Added a compact table (Table `case_mapping`) in Section VI.B ("The Three
+Cascade Cases in Practice") giving Case 1/2/3/Breakdown counts for each experimental
+setting. The per-configuration assignment, with the evidence for each, is in the
+released results file. Case 3 is assigned mechanically: the verifier must beat the best cheap
 detector on the disagreement subset with a 95% CI above zero. Six configurations
 qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and the
 1% SigLIP2 probe-degradation cell.
@@ -501,5 +502,13 @@ qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and 
   outranks GPT-5.5). Since the ranking depends on input size, the paper draws no
   conclusion about model scale. No verifier approaches stale SigLIP2 (0.907) in
   either condition, so the negative result (escalation hurts under this shift) holds
-  in all runs. Table `biggan_resolution` reports accuracy, real/fake recall and
-  predicted-fake rate for both resolutions.
+  in all runs. The BigGAN rows of Table `verifier_subset` report accuracy at both
+  resolutions; real/fake recall and the predicted-fake rate are in the text.
+- Presentation: tables and figures consolidated. The paper keeps the previous
+  version's six figures (all redrawn from current data) and has 12 tables, the same
+  count as before, despite the new analyses. Related tables are merged: verifier vs.
+  best-cheap results in one table, SDXL/FLUX accuracy and cost in one, and gate
+  reliability in one. Small tables (baseline counts, escalation breakdown,
+  per-generator, robustness grid) became sentences in the text. Every number,
+  including those summarized in prose, is released in `paper_results.xlsx`, which
+  maps each value to the script and data that produce it.

@@ -10,7 +10,7 @@ figure can never again silently drift from the pipeline's current source of trut
 
 Data sources:
   In-domain (GenBuster/SD14/BigGAN, train_fraction=0.5)
-    — routing/results/e1_semantic_results.csv
+    — routing/results/tab_main_results.csv (in-domain, canonical evaluation sets)
   Cross-family SigLIP2/DINOv2 (SDXL/FLUX), reconciled "stale" stage
     — routing/pipeline/confusion_matrices/sdxl_flux_confusion_matrices.csv
       (see RECONCILIATION_REPORT.md in that directory: the SD1.4-trained probes were
@@ -42,21 +42,22 @@ HERE = os.path.dirname(__file__)
 RESULTS_DIR = os.path.join(HERE, "..", "results")
 CONFUSION_DIR = os.path.join(HERE, "..", "pipeline", "confusion_matrices")
 
-E1_PATH = os.path.join(RESULTS_DIR, "e1_semantic_results.csv")
+E1_PATH = os.path.join(RESULTS_DIR, "tab_main_results.csv")
 E8_MODERN_PATH = os.path.join(RESULTS_DIR, "e8_modern_diffusion.csv")
 CONFUSION_PATH = os.path.join(CONFUSION_DIR, "sdxl_flux_confusion_matrices.csv")
 
 
 def load_indomain(path):
-    """In-domain accuracy at train_fraction=0.5, read live from e1_semantic_results.csv."""
+    """In-domain semantic-probe accuracy, read live from tab_main_results.csv (the canonical
+    evaluation sets of Table main_results)."""
     display_to_csv_name = {"GenBuster": "GenBuster", "SD1.4": "SD14", "BigGAN": "BigGAN"}
     with open(path, newline="") as f:
         rows = list(csv.DictReader(f))
     indomain = {display: {} for display in display_to_csv_name}
     for display, csv_name in display_to_csv_name.items():
         for row in rows:
-            if row["dataset"] == csv_name and float(row["train_fraction"]) == 0.5:
-                indomain[display][row["backbone"]] = float(row["accuracy"])
+            if row["dataset"] == csv_name and row["method"] in ("CLIP", "SigLIP2", "DINOv2"):
+                indomain[display][row["method"]] = float(row["accuracy"])
     return indomain
 
 

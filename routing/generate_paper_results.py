@@ -202,7 +202,8 @@ def main():
             _fail(label, e, log)
 
     print("\n=== figures ===")
-    for script in ("plot_main_results_figures.py", "plot_fig_d_cost_accuracy_tradeoff.py"):
+    for script in ("plot_main_results_figures.py", "plot_fig_c_disagreement_rate.py",
+                   "plot_fig_a_semantic_degradation.py", "plot_fig_b_cascade_gain_scatter.py"):
         out = subprocess.run([sys.executable, os.path.join(ROUTING_BASE, "experiments", script)],
                              capture_output=True, text=True)
         status = "OK" if out.returncode == 0 else f"FAIL: {out.stderr.strip()[-500:]}"

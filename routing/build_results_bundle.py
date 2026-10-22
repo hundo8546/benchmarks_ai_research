@@ -113,13 +113,10 @@ def t_positive_cells():
 
 def t_real_image_sources():
     d = csv("tab_real_image_sources")
-    e8 = csv("tab_e8_cascade")
     name = {"original": "PASCAL VOC (original)", "coco": "COCO (independent)"}
     rows = [row(name[r.source], r.dataset, r.semantic, q(r.agreement_path_acc), q(r.cascade_acc_gpt55),
                 sgn(r.gain_over_stale_semantic, math=False)) for r in d.itertuples()]
-    rows += [row("ImageNet (used throughout)", r.dataset, r.semantic, "--", q(r.cascade_acc_gpt55),
-                 sgn(r.gain_gpt55, math=False)) for r in e8.itertuples()]
-    return d, rows, "tab_real_image_sources + tab_e8_cascade"
+    return d, rows, "tab_real_image_sources"
 
 
 def t_escalation():
@@ -285,17 +282,73 @@ def t_robustness():
     return d, rows, "tab_robustness"
 
 
-TABLES = [  # paper order; sheet name = LaTeX label
-    ("main_results", t_main_results), ("verifier_comparison", t_verifier_comparison),
-    ("baselines", t_baselines), ("e8_results", t_e8_results), ("positive_cells", t_positive_cells),
-    ("real_image_sources", t_real_image_sources), ("escalation", t_escalation),
-    ("per_generator", t_per_generator), ("confidence_routing", t_confidence_routing),
-    ("case_mapping", t_case_mapping),
-    ("cheap_path", t_cheap_path), ("cheap_trigger", t_cheap_trigger), ("limited_data", t_limited_data),
-    ("transfer", t_transfer), ("cross_family_deployment", t_cross_family), ("biggan_shift", t_biggan_shift),
-    ("biggan_resolution", t_biggan_resolution),
-    ("robustness", t_robustness), ("sensitivity", t_sensitivity), ("gate_holdout", t_gate_holdout),
-    ("threeway", t_threeway), ("cost_accuracy_tradeoff", t_cost),
+
+VER = {"Qwen2.5-VL-7B": "Qwen-7B", "Qwen2.5-VL-72B": "Qwen-72B", "GPT-5.5": "GPT-5.5"}
+
+
+def _gap(point, lo, hi):
+    return f"{sgn(point)}{r'$^\ast$' if lo > 0 else ''} [{sgn(lo)}, {sgn(hi)}]"
+
+
+def t_verifier_subset():
+    """verifier_comparison + positive_cells + biggan_shift + biggan_resolution."""
+    vc, pc = csv("tab_verifier_comparison"), csv("tab_positive_cell_audit")
+    br, bs = csv("tab_biggan_resolution"), csv("tab_biggan_shift")
+    rows = [row(DS[r.config], VER[r.verifier], n_tex(r.n), q(r.verifier_acc), q(r.best_cheap_acc),
+                _gap(r.verifier_acc - r.best_cheap_acc, r.verifier_minus_best_cheap_ci_lo,
+                     r.verifier_minus_best_cheap_ci_hi)) for r in vc.itertuples()]
+    rows += [row(f"{r.dataset}/{r.semantic}", "GPT-5.5", n_tex(r.n_disagree), q(r.gpt55_acc), q(r.best_cheap_acc),
+                 _gap(r.gap, r.gap_ci_lo, r.gap_ci_hi)) for r in pc.itertuples()]
+    for r in br.itertuples():
+        rows.append(row(f"BigGAN ({'native' if r.resolution == 'native' else '512 px'})", VER[r.verifier],
+                        n_tex(r.n), q(r.acc), q(r.stale_siglip2_acc), _gap(r.gap_vs_stale_siglip2, r.gap_ci_lo, r.gap_ci_hi)))
+    for r in bs[bs.verifier == "Qwen2.5-VL-72B"].itertuples():
+        rows.append(row("BigGAN (native)", VER[r.verifier], n_tex(r.n), q(r.verifier_acc), q(r.best_cheap_acc),
+                        _gap(r.verifier_acc - r.best_cheap_acc, r.verifier_minus_best_cheap_ci_lo,
+                             r.verifier_minus_best_cheap_ci_hi)))
+    return vc, rows, "tab_verifier_comparison + tab_positive_cell_audit + tab_biggan_resolution + tab_biggan_shift"
+
+
+def t_e8_merged():
+    """e8_results + cost_accuracy_tradeoff."""
+    e8 = csv("tab_e8_cascade").set_index(["dataset", "semantic"])
+    cost = csv("tab_cost_accuracy_tradeoff").set_index(["dataset", "semantic"])
+    rows = []
+    for key in [("SDXL", "SigLIP2"), ("SDXL", "DINOv2"), ("FLUX", "SigLIP2"), ("FLUX", "DINOv2")]:
+        r, c = e8.loc[key], cost.loc[key]
+        rows.append(row(key[0], key[1], q(r.stale_sem_acc), f"{q(r.cascade_acc_qwen)} ({sgn(r.gain_qwen)})",
+                        f"{q(r.cascade_acc_gpt55)} ({sgn(r.gain_gpt55)})", f"\\${q(c.cascade_cost_usd, 2)}",
+                        f"{q(c.uniform_acc)} (\\${q(c.uniform_cost_usd, 2)})",
+                        q(100 * c.cascade_cost_frac_of_uniform, 0) + r"\%"))
+    return e8.reset_index(), rows, "tab_e8_cascade + tab_cost_accuracy_tradeoff"
+
+
+def t_gate_merged():
+    """sensitivity (same pool) + gate_holdout (held out), on one N grid."""
+    s, t = csv("tab_sensitivity"), csv("tab_threeway")
+    n35 = s[["table", "config", "verifier"]].drop_duplicates().shape[0]
+    same = [10, 20, 50, 100, 200]
+    rows = [row("Binary gate", *[f"{int((s[s.calib_N == N].binary_agreement_rate >= .9).sum())}/{n35}" for N in same], "--"),
+            row("Three-way selector", *[f"{int((t[t.calib_N == N].three_way_agreement_rate >= .9).sum())}/{n35}" for N in same], "--")]
+    _, held, _ = t_gate_holdout()
+    for r in held:  # held-out rows have 4 cells (N=50,100,200,half); pad N=10,20
+        label, rest = r.split(" & ", 1)
+        rows.append(f"{label} & -- & -- & {rest}")
+    return csv("tab_gate_holdout"), rows, "tab_sensitivity + tab_threeway + tab_gate_holdout"
+
+
+TABLES = [  # tables printed in the paper, in paper order; sheet name = LaTeX label
+    ("real_image_sources", t_real_image_sources), ("main_results", t_main_results),
+    ("verifier_subset", t_verifier_subset), ("e8_results", t_e8_merged),
+    ("confidence_routing", t_confidence_routing), ("cheap_trigger", t_cheap_trigger),
+    ("limited_data", t_limited_data), ("transfer", t_transfer), ("cross_family_deployment", t_cross_family),
+    ("case_mapping", t_case_mapping), ("gate", t_gate_merged),
+]
+SUPPLEMENTARY = [  # not printed as tables (released as sheets; key numbers quoted in the text)
+    ("supp_baselines", t_baselines), ("supp_threeway", t_threeway), ("supp_escalation", t_escalation),
+    ("supp_cheap_path", t_cheap_path), ("supp_per_generator", t_per_generator), ("supp_robustness", t_robustness),
+    ("supp_positive_cells", t_positive_cells), ("supp_biggan_resolution", t_biggan_resolution),
+    ("supp_cost_accuracy", t_cost),
 ]
 
 
@@ -309,7 +362,30 @@ def inline_checks():
     n_el = gh[["table", "config", "verifier"]].drop_duplicates().shape[0]
     cnt = lambda sp, tag: int((gh[gh.split == sp][f"{tag}_test_oracle_match_rate"] >= .9).sum())
     rng = lambda s, k, p=0: f"{q(k * s.min(), p)}--{q(k * s.max(), p)}"
+    cp = csv("tab_cheap_path").set_index("dataset")
+    esc = csv("tab_escalation").set_index("case").n
+    tw = csv("tab_threeway").drop_duplicates(["table", "config", "verifier"]).oracle_three_way_choice.value_counts()
+    fft_wrong = int(esc["FFT wrong, models agree"] + esc["FFT wrong, models disagree"])
+    fft_right = int(esc["FFT correct, models agree"] + esc["FFT correct, models disagree"])
     return [
+        ("V.C (was Table cheap_path)", r"disagreement routes 25.9\% of GenBuster inputs, 26.6\% of SD~1.4",
+         "tab_cheap_path.esc_rate",
+         f"disagreement routes {q(100 * cp.esc_rate['GenBuster'], 1)}\\% of GenBuster inputs, "
+         f"{q(100 * cp.esc_rate['SD14'], 1)}\\% of SD~1.4"),
+        ("V.C (was Table cheap_path)", r"96.8\%, 97.8\% and 99.8\% accuracy", "tab_cheap_path.cheap_acc",
+         ", ".join(f"{q(100 * cp.cheap_acc[d], 1)}\\%" for d in ["GenBuster", "SD14"]).replace(", ", "\\%, ", 0)
+         + f" and {q(100 * cp.cheap_acc['BigGAN'], 1)}\\% accuracy"),
+        ("V.C (was Table escalation)", "249 of FFT's 273 errors", "tab_escalation",
+         f"{int(esc['FFT wrong, models disagree'])} of FFT's {fft_wrong} errors"),
+        ("V.C (was Table escalation)", "10 of its 727 correct predictions", "tab_escalation",
+         f"{int(esc['FFT correct, models disagree'])} of its {fft_right} correct predictions"),
+        ("V.B.1 (was Table baselines)", "random baseline in 28 of the 35 configurations", "tab_baselines",
+         f"random baseline in {int(base.clears_random.sum())} of the {len(base)} configurations"),
+        ("V.B.1 (was Table baselines)", "majority-class baseline in 22, and the best cheap detector in only 6",
+         "tab_baselines", f"majority-class baseline in {int(base.clears_majority.sum())}, and the best cheap "
+         f"detector in only {int(base.clears_best_cheap.sum())}"),
+        ("VI.I.2 (was Table threeway)", "it selects the semantic probe in 17 of the 35 configurations",
+         "tab_threeway", f"it selects the semantic probe in {tw['cheap2']} of the {int(tw.sum())} configurations"),
         ("Abstract, C3", "up to 7.9 percentage points", "tab_e8_cascade.gain_gpt55 (max)",
          f"up to {q(100 * e8.gain_gpt55.max(), 1)} percentage points"),
         ("Abstract, VI.J, Fig. D", r"42--51\% of", "tab_cost_accuracy_tradeoff.cascade_cost_frac_of_uniform",
@@ -340,19 +416,21 @@ def inline_checks():
     ]
 
 
-FIGURES = [
+FIGURES = [  # figures printed in the paper
     ("plot_accuracy_comparison.png", "experiments/plot_main_results_figures.py", "tab_main_results"),
+    ("plot_fig_c_disagreement_rate.png", "experiments/plot_fig_c_disagreement_rate.py", "tab_main_results, tab_e8_cascade"),
     ("plot_cost_accuracy_all.png", "experiments/plot_main_results_figures.py", "tab_main_results, tab_e8_cascade"),
-    ("plot_fig_d_cost_accuracy_tradeoff.png", "experiments/plot_fig_d_cost_accuracy_tradeoff.py", "tab_cost_accuracy_tradeoff"),
-    ("plot_fig_f_case_mapping.png", "experiments/plot_fig_f_case_mapping.py", "tab_case_mapping"),
     ("plot_fig_a_semantic_degradation.png", "experiments/plot_fig_a_semantic_degradation.py",
-     "results/e1_semantic_results.csv, pipeline/confusion_matrices/sdxl_flux_confusion_matrices.csv"),
-    ("plot_fig_b_cascade_gain_scatter.png", "experiments/plot_fig_b_cascade_gain_scatter.py", "see script docstring"),
-    ("plot_fig_e_resolution_shortcut.png", "experiments/plot_fig_e_resolution_shortcut.py",
-     "resolution_only_control, resolution_matched_ablation"),
+     "tab_main_results, pipeline/confusion_matrices/sdxl_flux_confusion_matrices.csv"),
+    ("plot_fig_b_cascade_gain_scatter.png", "experiments/plot_fig_b_cascade_gain_scatter.py",
+     "pipeline/confusion_matrices/sdxl_flux_confusion_matrices.csv"),
 ]
 
 PROVENANCE = {
+    "verifier_subset": "baseline_comparison.py (verifier_comparison, biggan_shift); pipeline/tables/e8_cascade.py "
+                       "(positive cells); pipeline/tables/biggan_resolution.py",
+    "gate": "pipeline/tables/gate.py (same pool); pipeline/tables/gate_holdout.py (held out)",
+    "case_mapping": "pipeline/tables/case_mapping.py",
     "main_results": "pipeline/tables/main_results.py", "verifier_comparison": "baseline_comparison.py via pipeline/tables/baselines.py",
     "baselines": "baseline_comparison.py via pipeline/tables/baselines.py", "e8_results": "pipeline/tables/e8_cascade.py",
     "positive_cells": "pipeline/tables/e8_cascade.py", "real_image_sources": "pipeline/tables/e8_cascade.py",
@@ -381,10 +459,11 @@ def _git_commit():
 def build():
     tex = _norm(open(TEX).read())
     sheets, audit, long_rows = {}, [], []
-    for label, fn in TABLES:
+    printed = {label for label, _ in TABLES}
+    for label, fn in TABLES + SUPPLEMENTARY:
         df, rows, src = fn()
         sheets[label] = df
-        for r in rows:
+        for r in (rows if label in printed else []):
             audit.append({"table": label, "source_csv": src, "expected_tex_row": r, "found_in_tex": _norm(r) in tex})
         for i, rec in enumerate(df.to_dict("records")):
             key = "|".join(str(rec[c]) for c in df.columns[:3])
