@@ -42,7 +42,8 @@ GPT55_CSV = {
     "sizematched": os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux_sizematched.csv"),
     "sizematched256": os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux_sizematched256.csv"),
 }
-VARIANTS = ["original", "sizematched", "sizematched256"]
+# sizematched256 joins VARIANTS only once its GPT-5.5 labels exist (staged check: features first)
+VARIANTS = ["original", "sizematched"]
 N_BOOT, SEED = 10000, 42
 
 
