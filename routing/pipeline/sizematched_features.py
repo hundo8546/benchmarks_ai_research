@@ -8,13 +8,14 @@ extractors, experiments/e8_modern_diffusion.extract_features, unchanged. The
 only difference from the original E8 configs is the index (size-matched
 copies) and the output prefix:
 
-  routing/{sdxl,flux}_sizematched_{fft,siglip2,dinov2,clip}_features.csv
+  routing/{sdxl,flux}_sizematched_{fft,siglip2,dinov2,clip}_features.csv      (--size 512, default)
+  routing/{sdxl,flux}_sizematched256_{fft,siglip2,dinov2,clip}_features.csv   (--size 256)
 
 (e8.extract_features also writes CLIP features; they are not used by the
 size-matched tables.) Feature rows keep the size-matched path in "path";
 results/sizematched_image_map.csv maps it back to the original image.
 
-GPU. Usage: python pipeline/sizematched_features.py [--datasets SDXL FLUX]
+GPU. Usage: python pipeline/sizematched_features.py [--datasets SDXL FLUX] [--size 512|256]
 """
 import argparse
 import os
@@ -26,10 +27,11 @@ sys.path.insert(0, os.path.join(ROUTING_BASE, "extractors"))
 sys.path.insert(0, os.path.join(ROUTING_BASE, "experiments"))
 
 
-def sizematched_config(e8, ds_name):
+def sizematched_config(e8, ds_name, size=512):
+    from pipeline.robustness.build_sizematched_sdxl_flux import tag
     cfg = dict(e8.E8_DATASETS[ds_name])
-    cfg["index"] = os.path.join(ROUTING_BASE, f"sizematched_{ds_name.lower()}_index.csv")
-    cfg["prefix"] = f"{ds_name.lower()}_sizematched_"
+    cfg["index"] = os.path.join(ROUTING_BASE, f"{tag(size)}_{ds_name.lower()}_index.csv")
+    cfg["prefix"] = f"{ds_name.lower()}_{tag(size)}_"
     return cfg
 
 
@@ -37,8 +39,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--datasets", nargs="+", default=["SDXL", "FLUX"])
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--size", type=int, default=512)
     a = ap.parse_args()
     import e8_modern_diffusion as e8
     for ds_name in a.datasets:
-        print(f"=== {ds_name} (size-matched) ===")
-        e8.extract_features(ds_name, sizematched_config(e8, ds_name), device=a.device)
+        print(f"=== {ds_name} (size-matched {a.size}px) ===")
+        e8.extract_features(ds_name, sizematched_config(e8, ds_name, a.size), device=a.device)

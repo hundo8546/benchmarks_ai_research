@@ -14,6 +14,9 @@ completion window) and parsed by batch_gpt55.parse_batch_results (same strict
 _is_valid_answer parser). custom_ids are sha1(size-matched path), so they can
 never collide with the original run's ids.
 
+--size N (default 512) selects which size-matched copy to use; file stems are
+build_sizematched_sdxl_flux.tag(N): "sizematched" for 512, "sizematched256" for 256.
+
 Subcommands (each network step needs OPENAI_API_KEY; batch_gpt55 enforces it):
   build  --set smoke|full     write results/batch_requests/sizematched_<set>.jsonl
                               (+ .custom_id_map.csv); no network
@@ -40,15 +43,19 @@ import pandas as pd
 ROUTING_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROUTING_BASE)
 from pipeline import batch_gpt55 as bg
-from pipeline.robustness.build_sizematched_sdxl_flux import sm_path_for
+from pipeline.robustness.build_sizematched_sdxl_flux import sm_path_for, tag
 
 BATCH_DIR = os.path.join(ROUTING_BASE, "results", "batch_requests")
 UNIFORM_CSV = os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux.csv")
-OUT_CONSOLIDATED = os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux_sizematched.csv")
+SIZE = 512  # set from --size; 512 keeps the original file names (see build_sizematched_sdxl_flux.tag)
+
+
+def _out_consolidated():
+    return os.path.join(BATCH_DIR, f"CONSOLIDATED_full_sdxl_flux_{tag(SIZE)}.csv")
 
 
 def _paths(set_name):
-    stem = os.path.join(BATCH_DIR, f"sizematched_{set_name}")
+    stem = os.path.join(BATCH_DIR, f"{tag(SIZE)}_{set_name}")
     return {"jsonl": stem + ".jsonl", "map": stem + ".custom_id_map.csv",
             "ids": stem + ".batch_ids", "raw_dir": stem + "_outputs",
             "mopup": stem + "_mopup_standard.csv", "results": stem + "_results.csv"}
@@ -62,7 +69,7 @@ def source_rows(set_name):
         flux = fake[~fake.orig_path.str.contains("/sdxl/")].sample(5, random_state=42)
         real = df[df.y_true == 0].sample(10, random_state=42)
         df = pd.concat([sdxl, flux, real], ignore_index=True)
-    df["sm_path"] = df["orig_path"].map(sm_path_for)
+    df["sm_path"] = df["orig_path"].map(lambda o: sm_path_for(o, SIZE))
     missing = ~df["sm_path"].map(os.path.exists)
     if missing.any():
         raise FileNotFoundError(f"{int(missing.sum())} size-matched images missing, e.g. "
@@ -89,7 +96,7 @@ def cmd_submit(set_name):
     parts = bg.split_batch_request_file(p["jsonl"])
     ids = []
     for i, part in enumerate(parts, start=1):
-        desc = f"sizematched_{set_name} SDXL/FLUX 512px resolution control" + (f" (part {i})" if len(parts) > 1 else "")
+        desc = f"{tag(SIZE)}_{set_name} SDXL/FLUX {SIZE}px resolution control" + (f" (part {i})" if len(parts) > 1 else "")
         ids.append(bg.submit_batch(part, description=desc))
     with open(p["ids"], "w") as f:
         f.write("\n".join(ids) + "\n")
@@ -174,8 +181,8 @@ def cmd_parse(set_name):
           f"tiers: {res['tier'].value_counts().to_dict()}")
     if set_name == "full" and len(missing) == 0:
         res[["path", "orig_path", "y_true", "y_verifier", "raw", "input_tokens", "output_tokens",
-             "custom_id", "tier"]].to_csv(OUT_CONSOLIDATED, index=False)
-        print(f"wrote {OUT_CONSOLIDATED}")
+             "custom_id", "tier"]].to_csv(_out_consolidated(), index=False)
+        print(f"wrote {_out_consolidated()}")
     elif len(missing):
         print("run `mopup` before writing CONSOLIDATED")
 
@@ -191,6 +198,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["build", "submit", "poll", "mopup", "parse", "tokens"])
     ap.add_argument("--set", choices=["smoke", "full"], required=True)
+    ap.add_argument("--size", type=int, default=512)
     a = ap.parse_args()
+    SIZE = a.size
     {"build": cmd_build, "submit": cmd_submit, "poll": cmd_poll, "mopup": cmd_mopup,
      "parse": cmd_parse, "tokens": cmd_tokens}[a.cmd](a.set)

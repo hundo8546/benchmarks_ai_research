@@ -3,7 +3,8 @@ routing.pipeline.tables.e8_sizematched — SDXL/FLUX deployment-shift cascade on
 size-matched images (remainingupdates1.md Step 4), side by side with the original run.
 
   compute_e8_sizematched()   tab_e8_cascade_sizematched: one row per
-                             (variant in {original, sizematched}) x (SDXL, FLUX) x (SigLIP2, DINOv2)
+                             (variant in {original, sizematched, sizematched256}) x (SDXL, FLUX) x
+                             (SigLIP2, DINOv2)
 
 Both variants go through the same code. "original" reads the original E8 feature CSVs and
 results/batch_requests/CONSOLIDATED_full_sdxl_flux.csv, so its stale-probe, disagreement and
@@ -11,6 +12,9 @@ cascade values reproduce tab_e8_cascade / tab_positive_cell_audit; "sizematched"
 {sdxl,flux}_sizematched_*_features.csv (pipeline/sizematched_features.py) and
 CONSOLIDATED_full_sdxl_flux_sizematched.csv (pipeline/gpt55_sizematched.py). Every image
 was center-cropped and resized to 512x512 PNG (pipeline/robustness/build_sizematched_sdxl_flux.py).
+"sizematched256" is the same control at 256x256 ({sdxl,flux}_sizematched256_* features,
+CONSOLIDATED_full_sdxl_flux_sizematched256.csv): at 512, 96% of the ImageNet reals are
+upscaled; at 256 only ~3% are, so both classes are downscaled.
 
 The SAME stale SD1.4-trained probes are applied (e8.E8_DATASETS paths); nothing is retrained.
 
@@ -36,8 +40,9 @@ BATCH_DIR = os.path.join(ROUTING_BASE, "results", "batch_requests")
 GPT55_CSV = {
     "original": os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux.csv"),
     "sizematched": os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux_sizematched.csv"),
+    "sizematched256": os.path.join(BATCH_DIR, "CONSOLIDATED_full_sdxl_flux_sizematched256.csv"),
 }
-VARIANTS = ["original", "sizematched"]
+VARIANTS = ["original", "sizematched", "sizematched256"]
 N_BOOT, SEED = 10000, 42
 
 
@@ -53,7 +58,7 @@ def _modules():
 
 def _prefix(e8, ds_name, variant):
     base = e8.E8_DATASETS[ds_name]["prefix"]
-    return base if variant == "original" else f"{ds_name.lower()}_sizematched_"
+    return base if variant == "original" else f"{ds_name.lower()}_{variant}_"
 
 
 def load_frame(ds_name, sem_name, variant, e8):

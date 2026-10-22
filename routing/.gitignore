@@ -4,3 +4,5 @@ flux_clip_features.csv
 sdxl_clip_features.csv
 sdxl_sizematched_clip_features.csv
 flux_sizematched_clip_features.csv
+sdxl_sizematched256_clip_features.csv
+flux_sizematched256_clip_features.csv
