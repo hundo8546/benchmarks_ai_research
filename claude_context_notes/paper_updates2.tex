@@ -100,17 +100,17 @@ This work is guided by the following research questions:
 This work makes the following contributions:
 
 \begin{itemize}
-    \item \textbf{C1:} Disagreement between artifact-based and semantic detectors identifies inputs where cheap detectors are less reliable, across generator families and under deployment shift to unseen generators, while correlated errors on the agreement path rise 4--8$\times$ under that shift.
+    \item \textbf{C1:} We show that disagreement between artifact-based and semantic detectors flags inputs on which a cheap detector is unreliable, in-domain and under generator shift, although errors both detectors share rise 4--8$\times$ under shift.
 
-    \item \textbf{C2:} We evaluate a simple disagreement rule for choosing which inputs to escalate, with no confidence threshold or trained policy. Whether to enable escalation at all is decided separately by the validation gate (C5) from a small labeled sample.
+    \item \textbf{C2:} We evaluate a simple routing rule that escalates disagreements to a verifier, with no confidence threshold or trained policy.
 
-    \item \textbf{C3:} On SDXL and FLUX, escalating disagreements to GPT-5.5 recovers up to 7.9 percentage points over a stale semantic probe while cutting verifier invocations by 58--64\%, and the gain remains significant when real and fake images are size-matched (Section~\ref{sec:sizematched}). A uniform always-escalate policy shows how much accuracy selective escalation leaves behind.
+    \item \textbf{C3:} On SDXL and FLUX, escalating disagreements to GPT-5.5 recovers up to 7.9 percentage points over a stale semantic probe while cutting verifier invocations by 58--64\%, and the gain holds when real and fake images are size-matched.
 
-    \item \textbf{C4:} A learned escalation classifier over the same detector outputs converges to the disagreement rule and gives no measurable improvement. A calibrated joint confidence rule yields a similar gain under shift, so the gain does not depend on the routing signal, and disagreement stays within 1.7 points of that rule without a threshold or probability outputs. Disagreement cannot say which detector is wrong on a single input, but with a labeled calibration sample the disagreement subset shows which cheap detector is failing there, which is what the gate's three-way selection uses.
+    \item \textbf{C4:} We show that a learned escalation classifier converges to the disagreement rule, and that a calibrated confidence rule gives a similar gain under shift, so disagreement is the simplest signal rather than the most accurate one.
 
-    \item \textbf{C5:} We introduce a verifier validation gate with a prespecified paired-bootstrap significance test that decides, before deployment, whether to enable escalation. On held-out calibration/test splits it reaches at least 90\% agreement with the test oracle in 21 of 33 eligible configurations at $N=100$ and 25 of 33 at $N=200$. It cuts harmful escalations by about an order of magnitude relative to a point-estimate rule, at the cost of more missed beneficial escalations, and a three-way detector selector is equivalent to it as a decision procedure.
+    \item \textbf{C5:} We introduce a verifier validation gate that uses a significance test on a small labeled sample to decide whether to enable escalation. On held-out splits it agrees with the oracle decision in 25 of 33 configurations at $N{=}200$.
 
-    \item \textbf{C6:} BigGAN's near-ceiling in-domain artifact-detector accuracy is largely a native-resolution shortcut: a classifier using only image width and height matches the trained detector, and resolution-matching the two classes drops the detector to chance. The SDXL/FLUX benchmark carries the same kind of shortcut (a size-only classifier reaches 98.9--100.0\%), so we also report its results with real and fake images size-matched.
+    \item \textbf{C6:} We show that BigGAN's near-ceiling artifact-detector accuracy is largely a native-resolution shortcut, and that SDXL/FLUX carries a similar one (a size-only classifier reaches 98.9--100.0\%), so we also report size-matched results.
 \end{itemize}
 
 
