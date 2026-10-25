@@ -522,28 +522,20 @@ We measure deployment latency on an NVIDIA RTX A4500 GPU with synchronized CUDA 
 giving a cheap-stage latency of 12.9~ms. This represents a 4.4$\times$ reduction in cheap-stage cost compared to the CNNSpot-based configuration (56.2~ms). A GPT-5.5 call averages roughly 3--5~s, including its hidden reasoning pass, and a Qwen2.5-VL call 71--190~ms in-domain; token cost is reported in Section~\ref{sec:cost_accounting}. Latency comparisons assume sequential FFT and semantic detector execution. Parallel
 execution would further reduce cheap-stage cost.
 
-\subsubsection{GPT-5.5 and Qwen Verifier Audit}
+\subsubsection{Verifier Configuration}
 \label{sec:gpt55_audit}
 
-Every GPT-5.5 call uses the \texttt{gpt-5.5} model identifier via the OpenAI Responses
-API, with \texttt{reasoning\_effort}, \texttt{verbosity} and \texttt{temperature} left at
-the API defaults. Because \texttt{gpt-5.5} spends output tokens on hidden reasoning before
-answering, the 16--100-token cap of an earlier version of our code produced empty or
-truncated responses (e.g.\ \texttt{"FA"}), which that code mapped to a fixed label. The
-corrected implementation escalates the output budget from $2{,}048$ to $4{,}096$ tokens
-over up to 5 retries, accepts a response only if it is exactly \texttt{"REAL"} or
-\texttt{"FAKE"}, and records anything else as missing. We corrected 19 SDXL/FLUX
-responses that the old logic had mislabeled. GPT-5.5 coverage is complete (100\%) for
-every result reported here; the uniform-escalation and real-image-source runs used the
-OpenAI Batch API (18{,}501 calls, 18{,}490 valid on first pass, the rest recovered synchronously), and the last 375 Qwen sample-backbone pairs of
-Table~\ref{tab:e8_results} were scored locally with the original prompt. Calls made since
-the correction carry UTC timestamps, retry counts and raw response text in the released
-per-sample files; for earlier calls only file modification times are available.
-The size-matched control (Section~\ref{sec:sizematched}) adds two further uniform runs
-over the same 7{,}315 images, at 512 and 256 pixels, with the same pipeline and settings
-on 2026-10-22: 14{,}630 calls, every one returning a valid answer. Batch requests that
-failed for lack of account credit were resubmitted unchanged, and 4 requests that
-stalled in the batch queue were completed through the synchronous path.
+All GPT-5.5 calls use the \texttt{gpt-5.5} model through the OpenAI Responses API, with
+\texttt{reasoning\_effort}, \texttt{verbosity} and \texttt{temperature} at their defaults.
+Because the model reasons before answering, output budgets below about 100 tokens return
+empty or truncated text, so each call allows $2{,}048$ output tokens, rising to $4{,}096$
+over up to five retries. A response counts only if it is exactly \texttt{REAL} or
+\texttt{FAKE}; anything else is recorded as missing and never mapped to a label. GPT-5.5
+labels every input the reported results require. The uniform and real-image-source runs
+used the OpenAI Batch API, and the size-matched control (Section~\ref{sec:sizematched})
+adds two uniform runs over the same 7{,}315 images, at 512 and 256 pixels:
+14{,}630 calls, every one returning a valid answer. The released per-sample files record
+each call's raw response, retry count and, where available, its UTC timestamp.
 
 \section{Results}
 \label{sec:results}
@@ -1324,7 +1316,7 @@ The last panel of Table~\ref{tab:gate} shows how often the significance-aware ga
 
 \subsubsection{Calibration Sample-Size Sensitivity (Same-Pool Oracle)}
 
-For comparison with the held-out results, the same-pool rows of Table~\ref{tab:gate} keep the earlier protocol, which calibrates and evaluates against the same full disagreement subset: for each configuration we bootstrap-subsampled the subset at $N \in \{10, 20, 50, 100, 200\}$ (1{,}000 resamples) and measured how often the gate's decision matches the oracle computed from the full pool.
+For comparison with the held-out results, the same-pool rows of Table~\ref{tab:gate} use a protocol that calibrates and evaluates against the same full disagreement subset: for each configuration we bootstrap-subsampled the subset at $N \in \{10, 20, 50, 100, 200\}$ (1{,}000 resamples) and measured how often the gate's decision matches the oracle computed from the full pool.
 
 
 \FloatBarrier

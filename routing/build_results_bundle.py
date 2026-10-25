@@ -183,8 +183,6 @@ def _sm_checks():
         ("IV.B.1", "14{,}630 calls, every one returning a valid answer", "CONSOLIDATED_full_sdxl_flux_sizematched{,256}.csv",
          f"{n_tex(len(cons) + len(cons256))} calls, every one returning a valid answer"
          if cons.y_verifier.notna().all() and cons256.y_verifier.notna().all() else "INVALID ANSWERS"),
-        ("IV.B.1", "and 4\nrequests that stalled", "CONSOLIDATED_full_sdxl_flux_sizematched.csv tier",
-         f"and {int((cons.tier == 'standard').sum()) + int((cons256.tier == 'standard').sum())}\nrequests that stalled"),
     ]
 
 
