@@ -486,7 +486,7 @@ general; this particular benchmark carries a confound that affects any detector.
 \begin{table}[h]
 \centering
 \footnotesize
-\caption{Cascade accuracy on SDXL/FLUX under the original PASCAL VOC and an independent COCO real-image source; results with the ImageNet source used elsewhere are in Table~\ref{tab:e8_results}. Agree.\ Acc.\ is agreement-path accuracy (both cheap detectors agree); n=4{,}000 per cell (2{,}000 real, 2{,}000 fake).}
+\caption{Cascade accuracy on SDXL/FLUX with the original PASCAL VOC and an independent COCO real-image source ($n{=}4{,}000$ each). Agree.\ Acc.: accuracy where both cheap detectors agree.}
 \label{tab:real_image_sources}
 \begin{tabular}{llcccc}
 \toprule
@@ -628,7 +628,7 @@ detector's training artifacts and the target generator family.
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.5pt}
-\caption{Detection accuracy and latency on the in-domain evaluation sets (GenBuster $N{=}1{,}000$; SD~1.4 and BigGAN $N{=}2{,}000$ each).}
+\caption{Accuracy and latency (ms) on the in-domain evaluation sets.}
 \label{tab:main_results}
 \begin{tabular}{lcccccc}
 \toprule
@@ -654,7 +654,7 @@ Always esc.  & 0.713 & 190.2 & 0.576 & 83.2 & 0.690 & 70.6 \\
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2pt}
-\caption{Verifier accuracy versus the best cheap detector on each disagreement subset. Gap = verifier $-$ best cheap, with a paired-bootstrap 95\% CI (10{,}000 resamples); $^\ast$ CI above zero. Best cheap is SigLIP2 (in-domain), the stale semantic probe (SDXL/FLUX, BigGAN shift), or FFT (BigGAN in-domain). BigGAN shift rows use a stratified 1{,}500-image sample, with images sent at native size or upscaled to 512\,px.}
+\caption{Verifier versus best cheap detector on each disagreement subset. Gap with paired-bootstrap 95\% CI; $^\ast$ CI above zero. BigGAN shift: 1{,}500-image sample, at native size or upscaled to 512\,px.}
 \label{tab:verifier_subset}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{llcccc}
@@ -700,7 +700,7 @@ The six configurations that clear the best-cheap-detector baseline are the four 
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{Deployment-shift results on SDXL and FLUX ($n{=}4{,}000$ each, stale SD~1.4 probes). Cascade accuracy with its change from the stale semantic probe in parentheses; both verifiers cover the full disagreement subset. GPT-5.5 cost is the Batch-API cost of the escalated calls; always-GPT-5.5 sends every image to the verifier; cost share is cascade cost as a share of always-GPT-5.5 cost (Section~\ref{sec:cost_accounting}).}
+\caption{Deployment shift to SDXL and FLUX with stale SD~1.4 probes ($n{=}4{,}000$ each). Cascade accuracy, with the change from the stale probe in parentheses. Cost share: cascade cost relative to always-GPT-5.5 (Batch API).}
 \label{tab:e8_results}
 \begin{tabular}{llcccccc}
 \toprule
@@ -756,7 +756,7 @@ images' original JPEG compression history.
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{Size-matched control on SDXL and FLUX (stale SD~1.4 probes, GPT-5.5 verifier, $n{=}4{,}000$ each). Native: the images of Table~\ref{tab:e8_results}. 256~px: every real and fake image center-cropped and resized to $256{\times}256$ PNG. Disagree: escalation rate. Gain: cascade minus stale probe. vs.\ random: cascade minus sending a random subset of the same size to GPT-5.5. Brackets: paired-bootstrap 95\% CIs. Cost share: cascade cost as a share of always-GPT-5.5 cost.}
+\caption{SDXL/FLUX with native images and with every image cropped and resized to $256{\times}256$. Gain: cascade minus stale probe. vs.\ random: cascade minus escalating a random subset of the same size. 95\% CIs in brackets.}
 \label{tab:sizematched}
 \begin{tabular}{lllccccccc}
 \toprule
@@ -812,7 +812,7 @@ more accurate than escalation, separating routing efficiency from verifier utili
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2pt}
-\caption{Disagreement routing versus joint confidence routing. Accuracy with escalation rate in parentheses; $\Delta$ = joint confidence $-$ disagreement, with a paired-bootstrap 95\% CI (10{,}000 resamples). $^\ast$ CI excludes zero.}
+\caption{Disagreement versus joint confidence routing: accuracy (escalation rate). $\Delta$: confidence minus disagreement, with 95\% CI; $^\ast$ CI excludes zero.}
 \label{tab:confidence_routing}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{llcccc}
@@ -859,14 +859,14 @@ exactly this, and the case analysis of Section~\ref{sec:three_cases} rests on it
 We test whether the cascade's value comes from the disagreement signal itself or simply from escalating that many inputs. We compare the
 disagreement-routed cascade with a random-trigger baseline. For each dataset, the random
 baseline escalates the same fraction of inputs as the FFT+SigLIP2 disagreement rule, but
-chooses those inputs uniformly at random. We repeat this process over 2{,}000 draws and
+chooses those inputs uniformly at random; inputs it does not escalate keep the SigLIP2 prediction. We repeat this process over 2{,}000 draws and
 report a 95\% confidence interval for the random baseline's cascade accuracy.
 
 Table~\ref{tab:cheap_trigger} shows that the gain over random triggering depends on the dataset. It is practically substantial on SD~1.4. On BigGAN it lies outside the random baseline's confidence interval but is small, since both are near ceiling. On GenBuster the cascade does \emph{not} beat the random baseline, because the semantic probe stays reliable on the disagreement cases (Case~2, Section~\ref{sec:detector_performance}). Disagreement selects a more useful subset than chance only when that subset contains inputs both cheap detectors struggle with.
 
 \begin{table}[h]
 \centering
-\caption{Disagreement routing versus a matched-rate random trigger on the evaluation sets of Table~\ref{tab:main_results} (2{,}000 draws; 95\% CI). Inputs the random trigger does not escalate keep the SigLIP2 prediction.}
+\caption{Disagreement routing versus a random trigger at the same escalation rate (95\% CI over 2{,}000 draws).}
 \label{tab:cheap_trigger}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -895,7 +895,7 @@ backbones.
 
 \begin{table}[h]
 \centering
-\caption{Probe-degradation sweep on SD~1.4. Cascade gain is reported relative to the semantic-only probe at the same training fraction.}
+\caption{Probe-degradation sweep on SD~1.4. Gain: cascade minus semantic-only at the same training fraction.}
 \label{tab:limited_data}
 \small
 \begin{tabular}{lcccc}
@@ -942,7 +942,7 @@ advantage.
 
 \begin{table}[h]
 \centering
-\caption{Cross-dataset learned-escalation-classifier transfer on the evaluation sets of Table~\ref{tab:main_results}, using FFT+SigLIP2+Qwen features. Rows give the training dataset, columns the test dataset.}
+\caption{Learned escalation classifier trained on one dataset (rows) and tested on another (columns).}
 \label{tab:transfer}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lccc}
@@ -1004,7 +1004,7 @@ different Case~3 configuration.
 
 \begin{table}[h]
 \centering
-\caption{Cross-family deployment results. Cascade uses a cross-family SigLIP2 probe with Qwen escalation on disagreement, while FFT is trained in-domain on each evaluation dataset. $\Delta_{\text{stale}}$ denotes improvement over the stale SigLIP2 probe, and $\Delta_{\text{FFT}}$ denotes improvement over FFT-only. $^\dagger$ marks $\Delta_{\text{FFT}}$ cells whose paired-bootstrap 95\% CI includes zero (10,000 resamples per cell).}
+\caption{Cross-family deployment: SigLIP2 probe from the training dataset, FFT trained on the test dataset, Qwen escalation. $\Delta$: cascade minus stale probe or FFT; $^\dagger$ 95\% CI includes zero.}
 \label{tab:cross_family_deployment}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -1029,7 +1029,7 @@ BigGAN & SD~1.4 & 0.775 & 0.515 & 0.608 & $+$0.093 & $-$0.168 \\
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.7\textwidth]{plot_fig_a_semantic_degradation.png}
-    \caption{Semantic probe accuracy under in-domain (solid) and deployment-shift evaluation (striped) on SDXL and FLUX.}
+    \caption{Semantic probe accuracy in-domain (solid) and under deployment shift to SDXL and FLUX (striped).}
     \label{fig:semantic_degradation}
 \end{figure*}
 
@@ -1139,7 +1139,7 @@ Table~\ref{tab:case_mapping} summarizes the case assignment for every tested con
 \begin{table}[h]
 \centering
 \footnotesize
-\caption{Case assignment by experimental setting (counts of configurations; the per-configuration assignment and its evidence are in the released results file). Case~3 requires the verifier to beat the best cheap detector on the disagreement subset with a paired-bootstrap 95\% CI above zero.}
+\caption{Number of configurations in each case, by setting. Case~3: the verifier beats the best cheap detector on the disagreement subset (95\% CI above zero).}
 \label{tab:case_mapping}
 \begin{tabular}{lccccc}
 \toprule
@@ -1206,7 +1206,7 @@ distribution-dependent.
 \begin{figure}[h]
     \centering
     \includegraphics[width=.95\columnwidth]{plot_fig_b_cascade_gain_scatter.png}
-    \caption{Cascade gain over the stale semantic probe versus stale semantic accuracy on SDXL and FLUX. Each point corresponds to one semantic backbone and deployment dataset.}
+    \caption{Cascade gain versus stale semantic probe accuracy on SDXL and FLUX, one point per backbone and dataset.}
     \label{fig:cascade_gain}
 \end{figure}
 
@@ -1329,7 +1329,7 @@ For comparison with the held-out results, the same-pool rows of Table~\ref{tab:g
 \begin{table}[t]
 \centering
 \small
-\caption{Gate reliability: configurations reaching $\geq$90\% agreement with the oracle decision. \emph{Same pool}: bootstrap resamples of size $N$ compared with an oracle computed on the same full disagreement subset (35 configurations; for subsets under 200 samples, larger $N$ resample with replacement); this measures resampling stability, not generalization. \emph{Held out}: 250 disjoint calibration/test draws per configuration and $N$, scored against the test set's own oracle (33 configurations; 2 with pools under 40 excluded; $N$ capped at half the pool, 129 at $N{=}200$, for GenBuster). Below each held-out count: mean rates of harmful escalation (escalated, verifier below best cheap detector on test) and missed beneficial escalation (fell back, verifier strictly best on test), and mean regret. Last panel: share of draws in which the significance-aware gate escalates on the SDXL/FLUX GPT-5.5 configurations.}
+\caption{Configurations reaching $\geq$90\% agreement with the oracle decision. \emph{Same pool}: subsamples scored against the full-subset oracle (for subsets under 200 samples, larger $N$ resample with replacement rather than add independent labeled samples). \emph{Held out}: disjoint calibration/test splits scored against the test-set oracle ($N$ capped at half the pool). Last panel: share of draws in which the significance-aware gate escalates.}
 \label{tab:gate}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccccc}
