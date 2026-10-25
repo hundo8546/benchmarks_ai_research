@@ -43,8 +43,10 @@ def compute_transfer():
         models[ds_name] = (model, scaler)
 
     df_gb, val_paths_gb = data["GenBuster"]
-    model_gb, scaler_gb, _, _ = bt.train_bandit(df_gb, val_paths_gb)
+    model_gb, scaler_gb, gb_internal_split, _ = bt.train_bandit(df_gb, val_paths_gb)
     models["GenBuster"] = (model_gb, scaler_gb)
+    gb_note = ("fit on an internal split of the GenBuster val set (no train-split Qwen coverage)"
+               if gb_internal_split else "fit on the GenBuster training rows with Qwen coverage")
 
     rows = []
     for train_name in DATASET_NAMES:
@@ -56,7 +58,17 @@ def compute_transfer():
                 "train": train_name, "test": test_name,
                 "accuracy": acc, "escalation_rate": esc,
                 "in_domain": train_name == test_name,
-                "note": ("GenBuster learned escalation classifier fit on internal split of its own "
-                          "val set (no train-split Qwen coverage)") if train_name == "GenBuster" else "",
+                "note": gb_note if train_name == "GenBuster" else "",
             })
     return pd.DataFrame(rows)
+
+
+def compute_transfer_reconciliation():
+    """GenBuster in-domain learned classifier vs. disagreement rule under the current
+    protocol and the legacy internal-split protocol, with paired-bootstrap CIs
+    (confidence_routing.reconcile_table11_gap)."""
+    sys.path.insert(0, ROUTING_BASE)
+    from pipeline.tables.confidence_routing import reconcile_table11_gap
+    res = reconcile_table11_gap()
+    return pd.DataFrame([{"protocol": k, **{c: v for c, v in r.items() if c != "label"}, "label": r["label"]}
+                         for k, r in res.items() if k != "manuscript_reported"])

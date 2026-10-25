@@ -91,3 +91,99 @@ root `.py` files).
 | Path | Why it was left in place |
 |---|---|
 | `routing/retrain_bandits.py` | Not covered by the original classification at all. Inspection showed it is the sole producer of `bandit_model.pkl` and `biggan_bandit_model.pkl`, both of which `analysis2.py` directly loads (`joblib.load`) to generate current tables. Archiving it would have silently broken the authoritative pipeline, so per the "if something doesn't match, don't move it" instruction, it was left in `routing/` root. It should probably be added to the explicit keep list in any future audit.
+
+---
+
+# 2026-10-22 Revision 3 Phase 7 cleanup
+
+Files below were `git mv`'d here (history recoverable with `git log --follow`). See `claude_context_notes/file_inventory.md` for the trace that classified them. Regeneration of every `tab_*.csv` was byte-identical afterwards.
+
+## `legacy_compression_csvs/`
+
+Old CNNSpot/CLIP-only JPEG-compression CSVs at `routing/` root. Not read by any current script or table.
+
+| Original path | Archived to | Reason | Superseded by |
+|---|---|---|---|
+| `routing/biggan_clip_q50.csv` | `_archive/legacy_compression_csvs/biggan_clip_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/biggan_clip_q75.csv` | `_archive/legacy_compression_csvs/biggan_clip_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/biggan_clip_q95.csv` | `_archive/legacy_compression_csvs/biggan_clip_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/biggan_cnnspot_q50.csv` | `_archive/legacy_compression_csvs/biggan_cnnspot_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/biggan_cnnspot_q75.csv` | `_archive/legacy_compression_csvs/biggan_cnnspot_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/biggan_cnnspot_q95.csv` | `_archive/legacy_compression_csvs/biggan_cnnspot_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/clip_q50.csv` | `_archive/legacy_compression_csvs/clip_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/clip_q75.csv` | `_archive/legacy_compression_csvs/clip_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/clip_q95.csv` | `_archive/legacy_compression_csvs/clip_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/cnnspot_q50.csv` | `_archive/legacy_compression_csvs/cnnspot_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/cnnspot_q75.csv` | `_archive/legacy_compression_csvs/cnnspot_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/cnnspot_q95.csv` | `_archive/legacy_compression_csvs/cnnspot_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_clip_q50.csv` | `_archive/legacy_compression_csvs/sd14_clip_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_clip_q75.csv` | `_archive/legacy_compression_csvs/sd14_clip_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_clip_q95.csv` | `_archive/legacy_compression_csvs/sd14_clip_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_cnnspot_q50.csv` | `_archive/legacy_compression_csvs/sd14_cnnspot_q50.csv` | Old CNNSpot/CLIP-only JPEG q50 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_cnnspot_q75.csv` | `_archive/legacy_compression_csvs/sd14_cnnspot_q75.csv` | Old CNNSpot/CLIP-only JPEG q75 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+| `routing/sd14_cnnspot_q95.csv` | `_archive/legacy_compression_csvs/sd14_cnnspot_q95.csv` | Old CNNSpot/CLIP-only JPEG q95 compression result (LFS-tracked CSV). | `results/e7_compression_extended.csv` |
+
+## `superseded_results/`
+
+Duplicate or superseded result versions from `routing/results/`; live generators write the current tables.
+
+| Original path | Archived to | Reason | Superseded by |
+|---|---|---|---|
+| `routing/results/e8_cascade_accuracy.csv` | `_archive/superseded_results/e8_cascade_accuracy.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/e8_qwen_cascade.csv` | `_archive/superseded_results/e8_qwen_cascade.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_cost_accuracy_three_way.csv` | `_archive/superseded_results/tab_cost_accuracy_three_way.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_e8_gpt55_FULL_coverage.csv` | `_archive/superseded_results/tab_e8_gpt55_FULL_coverage.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_e8_gpt55_reconciled_v2.csv` | `_archive/superseded_results/tab_e8_gpt55_reconciled_v2.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_e8_qwen_FINAL.csv` | `_archive/superseded_results/tab_e8_qwen_FINAL.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_e8_qwen_reconciled.csv` | `_archive/superseded_results/tab_e8_qwen_reconciled.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/tab_real_image_source_benchmark.csv` | `_archive/superseded_results/tab_real_image_source_benchmark.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+| `routing/results/verifier_validation_gate_check.csv` | `_archive/superseded_results/verifier_validation_gate_check.csv` | Superseded/unused result version, not read by `generate_paper_results.py`. | `results/tab_e8_results.csv` / `tab_cost_accounting.csv` (live generators) |
+
+## `root_one_off_scripts/`
+
+Repo-root one-off GenBuster evaluation scripts, not imported or invoked by any pipeline stage.
+
+| Original path | Archived to | Reason | Superseded by |
+|---|---|---|---|
+| `hfgenbuster.py` | `_archive/root_one_off_scripts/hfgenbuster.py` | Differs from `routing/hfgenbuster.py`; checked, no hardcoded secret (HF_TOKEN from env); unused. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_cnnspot_genbuster.py` | `_archive/root_one_off_scripts/eval_cnnspot_genbuster.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_genbuster.py` | `_archive/root_one_off_scripts/eval_genbuster.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_genbuster_full_baseline.py` | `_archive/root_one_off_scripts/eval_genbuster_full_baseline.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_genbuster_per_gen.py` | `_archive/root_one_off_scripts/eval_genbuster_per_gen.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_genbuster_per_gen_correct.py` | `_archive/root_one_off_scripts/eval_genbuster_per_gen_correct.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+| `eval_genbuster_table2.py` | `_archive/root_one_off_scripts/eval_genbuster_table2.py` | Repo-root one-off evaluation script, not used by the pipeline. | `routing/` pipeline (`run_pipeline.py`) |
+
+## `removed_figures/`
+
+Figure scripts and outputs for figures C, D, E, F, which were removed from the paper.
+
+| Original path | Archived to | Reason | Superseded by |
+|---|---|---|---|
+| `routing/experiments/plot_fig_c_disagreement_rate.py` | `_archive/removed_figures/plot_fig_c_disagreement_rate.py` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
+| `routing/plot_fig_c_disagreement_rate.png` | `_archive/removed_figures/plot_fig_c_disagreement_rate.png` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
+| `routing/plot_fig_c_disagreement_rate.pdf` | `_archive/removed_figures/plot_fig_c_disagreement_rate.pdf` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
+| `routing/experiments/plot_fig_d_cost_accuracy_tradeoff.py` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.py` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_d_cost_accuracy_tradeoff.png` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.png` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_d_cost_accuracy_tradeoff.pdf` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.pdf` | Figure removed from the paper; no longer referenced. | none |
+| `routing/experiments/plot_fig_e_resolution_shortcut.py` | `_archive/removed_figures/plot_fig_e_resolution_shortcut.py` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_e_resolution_shortcut.png` | `_archive/removed_figures/plot_fig_e_resolution_shortcut.png` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_e_resolution_shortcut.pdf` | `_archive/removed_figures/plot_fig_e_resolution_shortcut.pdf` | Figure removed from the paper; no longer referenced. | none |
+| `routing/experiments/plot_fig_f_case_mapping.py` | `_archive/removed_figures/plot_fig_f_case_mapping.py` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_f_case_mapping.png` | `_archive/removed_figures/plot_fig_f_case_mapping.png` | Figure removed from the paper; no longer referenced. | none |
+| `routing/plot_fig_f_case_mapping.pdf` | `_archive/removed_figures/plot_fig_f_case_mapping.pdf` | Figure removed from the paper; no longer referenced. | none |
+
+## `vendored_unused/`
+
+Vendored upstream repo, not referenced by non-archived code and not in the paper.
+
+| Original path | Archived to | Reason | Superseded by |
+|---|---|---|---|
+| `DeMamba/` (32 files, whole folder) | `_archive/vendored_unused/DeMamba/` | Vendored DeMamba video-detector repo; unreferenced by any current code, not in the paper. | none |
+
+## `claude_context_notes/_round1/`
+
+Round-1 revision notes moved out of the notes root (not under `routing/_archive/`):
+
+- `claude_context_notes/paper_updates.tex`
+- `claude_context_notes/response_to_reviewers.md`
+- `claude_context_notes/session_summary.md`

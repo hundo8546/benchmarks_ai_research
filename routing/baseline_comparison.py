@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(ROUTING_BASE, "extractors"))
 sys.path.insert(0, os.path.join(ROUTING_BASE, "experiments"))
 
 from extractors.common import DATASETS, RESULTS_DIR, ensure_results_dir, load_val_paths
-from baseline_utils import compare_verifier_to_baselines
+from baseline_utils import compare_verifier_to_baselines, paired_bootstrap_diff_ci
 
 import cross_family_deployment as cfd
 import e8_modern_diffusion as e8
@@ -27,6 +27,11 @@ import e6_limited_data as e6
 
 ROWS = []
 SUBSETS = []  # raw per-cell arrays, for gate_analysis.py to reuse
+CASCADE_ROWS = []  # full-eval-set cheap/cascade accuracies printed in tab:limited_data / tab:cross_family_deployment
+
+# Uniform (every-image) GPT-5.5 Batch run: covers every SDXL/FLUX sample, so the
+# GPT-5.5 cells use the full disagreement subset, as tab:e8_results' cascade does.
+UNIFORM_GPT55_CSV = os.path.join(ROUTING_BASE, "results", "batch_requests", "CONSOLIDATED_full_sdxl_flux.csv")
 
 
 def add_row(table, config, verifier, y_true, y_verifier, y_cheap1, y_cheap2,
@@ -142,17 +147,15 @@ def run_e8_results():
             df["disagree"] = (df["y_fft"] != df["y_sem"]).astype(bool)
             df_dis = df[df["disagree"]].reset_index(drop=True)
 
-            for verifier_tag, file_tag, col in [
-                ("Qwen2.5-VL-7B", "qwen", "y_qwen"),
-                ("GPT-5.5", "gpt55", None),
+            for verifier_tag, preds_csv, verifier_col in [
+                ("Qwen2.5-VL-7B",
+                 os.path.join(ROUTING_BASE, f"{prefix}qwen_{sem_name.lower()}_disagree_preds.csv"), "y_qwen"),
+                ("GPT-5.5", UNIFORM_GPT55_CSV, "y_verifier"),
             ]:
-                preds_csv = os.path.join(
-                    ROUTING_BASE, f"{prefix}{file_tag}_{sem_name.lower()}_disagree_preds.csv")
                 if not os.path.exists(preds_csv):
                     print(f"  [e8] {ds_name}/{sem_name}/{verifier_tag}: no preds file, skip")
                     continue
                 df_v = pd.read_csv(preds_csv)
-                verifier_col = col or ("y_gpt55" if "y_gpt55" in df_v.columns else "y_verifier")
                 merged = df_dis.merge(df_v[["path", verifier_col]], on="path", how="inner")
                 if len(merged) == 0:
                     continue
@@ -187,6 +190,16 @@ def run_cross_family_deployment():
 
             if disagree.sum() == 0:
                 continue
+            y_casc = np.where(disagree, y_qwen, y_fft)
+            fft_acc, stale_acc, casc_acc = (float(np.mean(p == y_true)) for p in (y_fft, y_stale, y_casc))
+            _, lo, hi = paired_bootstrap_diff_ci(y_true, y_casc, y_fft, n_boot=10000, seed=42)
+            CASCADE_ROWS.append({
+                "table": "cross_family_deployment", "train": train_name, "test": test_name,
+                "n_eval": len(y_true), "esc_rate": float(disagree.mean()),
+                "fft_acc": fft_acc, "stale_siglip2_acc": stale_acc, "cascade_acc": casc_acc,
+                "delta_stale": casc_acc - stale_acc, "delta_fft": casc_acc - fft_acc,
+                "delta_fft_ci_lo": lo, "delta_fft_ci_hi": hi,
+            })
             add_row("cross_family_deployment", f"{train_name}->{test_name}", "Qwen2.5-VL-7B",
                     y_true[disagree], y_qwen[disagree], y_fft[disagree], y_stale[disagree],
                     "FFT", "StaleSigLIP2")
@@ -263,6 +276,14 @@ def run_limited_data():
 
             if disagree.sum() == 0:
                 continue
+            yt, ys = y_true_all[valid], y_pred[valid]
+            y_casc = np.where(disagree[valid], y_qwen_all[valid], ys)
+            sem_acc, casc_acc = float(np.mean(ys == yt)), float(np.mean(y_casc == yt))
+            CASCADE_ROWS.append({
+                "table": "limited_data", "backbone": bb_name, "train_frac": frac, "n_train": n_train,
+                "n_eval": int(valid.sum()), "esc_rate": float(disagree[valid].mean()),
+                "sem_only_acc": sem_acc, "cascade_acc": casc_acc, "gain": casc_acc - sem_acc,
+            })
             add_row("limited_data", f"{ds_name}/{bb_name}/frac={frac:.0%}", "Qwen2.5-VL-7B",
                     y_true_all[disagree], y_qwen_all[disagree], y_fft_all[disagree],
                     y_pred[disagree], "FFT", bb_name)

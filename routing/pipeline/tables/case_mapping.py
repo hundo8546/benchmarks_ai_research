@@ -106,8 +106,12 @@ def _verifier_vs_cheap_row(dataset, configuration, verifier_acc, best_cheap_acc,
                             paper_section_reference, extra_note=""):
     """Shared Case-2-vs-Case-3 decision (used by every family except the
     p_D-driven Case-1 override and the Breakdown row)."""
-    sig_note = ("95% CI on (verifier - best_cheap) excludes 0" if clears_best_cheap
-                else "95% CI on (verifier - best_cheap) includes 0 (not significant)")
+    if clears_best_cheap:
+        sig_note = "95% CI on (verifier - best_cheap) lies above 0"
+    elif ci_hi is not None and float(ci_hi) < 0:
+        sig_note = "95% CI on (verifier - best_cheap) lies below 0 (verifier significantly worse)"
+    else:
+        sig_note = "95% CI on (verifier - best_cheap) includes 0 (not significant)"
     evidence = (f"acc_verifier|D={_fmt(verifier_acc)} vs "
                 f"acc_best_cheap|D={_fmt(best_cheap_acc)} ({best_cheap_source}), "
                 f"95% CI on diff=[{_fmt(ci_lo)}, {_fmt(ci_hi)}] ({sig_note})")
@@ -200,52 +204,25 @@ def compute_case_mapping():
             rows.append(row)
 
     # ------------------------------------------------------------------
-    # 3. Cross-family deployment (tab_cross_family_deployment) -- the paper's
-    #    text (Sec. V.D.6, Sec. VI.B) calls ALL SIX pairings Case 2 uniformly,
-    #    based on a DIFFERENT comparison (cascade accuracy vs. in-domain
-    #    FFT-only accuracy, i.e. Delta_FFT in the tex table, which crosses
-    #    zero for the two GenBuster-target pairings). Flagging explicitly:
-    #    by THIS table's disagreement-subset verifier-vs-best-cheap metric,
-    #    BigGAN->GenBuster's point estimate has the verifier beating BOTH
-    #    cheap detectors with a 95% CI that excludes 0 (mechanically Case 3),
-    #    but FFT is the "best_cheap" winner there (not the semantic probe),
-    #    FFT is NOT itself degraded (it is the in-domain detector), and the
-    #    paper's own broader accuracy comparison (Delta_FFT) for that same
-    #    pairing is statistically indistinguishable from zero. This is a
-    #    genuine case where the two ways of operationalizing "does escalation
-    #    help" disagree -- it is reported as Case 2 (deferring to the paper's
-    #    explicit narrative classification) with the conflict spelled out in
-    #    `evidence` rather than silently resolved either way.
+    # 3. Cross-family deployment: classified mechanically, like every other cell
+    #    (Case 3 iff the verifier beats the best cheap detector on the disagreement
+    #    subset with a 95% CI excluding zero). BigGAN->GenBuster is the one Case 3
+    #    pairing; it also beats in-domain FFT overall (tab_cross_family_deployment_cascade).
     # ------------------------------------------------------------------
     df_cfd = _read("tab_cross_family_deployment")
     if df_cfd is not None:
         for _, r in df_cfd.iterrows():
             configuration = f"cross-family {r['config']} (stale SigLIP2 + in-domain FFT, verifier={r['verifier']})"
             test_ds = r["config"].split("->")[1]
-            sig_excludes_zero = (r["verifier_minus_best_cheap_ci_lo"] > 0) or (r["verifier_minus_best_cheap_ci_hi"] < 0)
-            mechanical_case3 = bool(r["clears_best_cheap"]) and sig_excludes_zero
-            is_biggan_to_genbuster_flag = (r["config"] == "BigGAN->GenBuster")
+            case3 = bool(r["clears_best_cheap"]) and r["verifier_minus_best_cheap_ci_lo"] > 0
             evidence = (f"acc_verifier|D={_fmt(r['verifier_acc'])} vs "
                         f"acc_best_cheap|D={_fmt(r['best_cheap_acc'])} ({r['best_cheap_source']}), "
                         f"95% CI on diff=[{_fmt(r['verifier_minus_best_cheap_ci_lo'])}, "
-                        f"{_fmt(r['verifier_minus_best_cheap_ci_hi'])}], n={int(r['n'])}. "
-                        f"Paper (Sec. V.D.6/VI.B) classifies ALL 6 cross-family pairings as Case 2: "
-                        f"the transferred semantic probe is weak, so the cascade looks good only "
-                        f"against the stale-probe-alone baseline, not against in-domain FFT.")
-            if is_biggan_to_genbuster_flag:
-                evidence += (" FLAG (could not classify cleanly): this is the one pairing where "
-                             "best_cheap_source=FFT (not the semantic probe) and the "
-                             "verifier-vs-best-cheap 95% CI on THIS disagreement-subset metric "
-                             "excludes 0 in the verifier's favor (mechanically Case-3-shaped), "
-                             "yet the paper's own overall-accuracy comparison for this pairing "
-                             "(cascade vs. in-domain FFT, Delta_FFT=+0.003 in the tex table) has a "
-                             "95% CI that includes 0. Reported as Case 2 to match the paper's "
-                             "explicit narrative; the disagreement-subset-only statistic alone "
-                             "would suggest Case 3.")
+                        f"{_fmt(r['verifier_minus_best_cheap_ci_hi'])}], n={int(r['n'])}.")
             rows.append({
                 "dataset": test_ds,
                 "configuration": configuration,
-                "case": "2",
+                "case": "3" if case3 else "2",
                 "evidence": evidence,
                 "paper_section_reference": "Sec. V.D.6 / Table cross_family_deployment; Sec. VI.B",
             })

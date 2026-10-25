@@ -60,67 +60,57 @@ rate-matched comparison per config and derive the implied latency for both rules
 those same constants (columns `latency_disagreement_ms` / `latency_confidence_ms`), rather
 than inventing a separate "cost-matched" variant that would coincide with it exactly.
 
-## 4. Verifier-coverage caveat (SDXL/FLUX only)
+## 4. Non-escalated prediction and verifier labels
 
-GPT-5.5 was only ever run on the FFT-vs-semantic **disagreement subset** for the e8
-SDXL/FLUX configs — there is no cached GPT-5.5 prediction for agreement-region samples
-(`y_fft == y_sem`). Because the joint-confidence rule can select a different subset than
-the disagreement rule, it can flag some agreement-region samples for escalation with no
-cached verifier label (`n_escalate_agree_no_verifier` in the output). We fall back to the
-shared cheap value there (a neutral, not optimistic, fallback: the disagreement rule also
-uses exactly that value for every agreement-region sample, escalated or not). **We bound
-how much this biases the result** by computing, per config, the FFT accuracy already
-achieved on that exact gap subset and the best-case accuracy if GPT-5.5 corrected
-*every* error there:
+**Correction (Revision 3).** The earlier version of this analysis gave every sample the
+confidence rule did *not* escalate the FFT prediction, the weakest cheap detector. That
+handicapped the baseline: on SDXL/FLUX it scored 0.68–0.75, below cheap-only, despite
+escalating ~35% of inputs to a verifier that is 97–99.6% accurate on everything. The
+"disagreement wins 7/7 by 0.6–24 pp" result came from that bug and is withdrawn.
 
-| Config | n_gap (frac of 4000) | FFT acc on gap subset | Max possible accuracy credit |
-|---|---|---|---|
-| SDXL/SigLIP2 | 776 (19.4%) | 0.802 | +3.8 pp |
-| SDXL/DINOv2  | 760 (19.0%) | 0.817 | +3.5 pp |
-| FLUX/SigLIP2 | 662 (16.6%) | 0.873 | +2.1 pp |
-| FLUX/DINOv2  | 711 (17.8%) | 0.740 | +4.6 pp |
-
-Observed deficits (confidence-rule acc vs. disagreement-rule acc) are −17 to −24 pp — far
-larger than the maximum possible credit from closing the coverage gap in the best case.
-We also recomputed the comparison with an **exact** rate match (ranking `H_joint` within
-the eval set itself to select exactly as many samples as the disagreement rule escalates,
-using no label information, only counts) and get the same conclusion (gaps of −17 to
-−21 pp). The result is not an artifact of coverage or of imperfect rate transfer from the
-validation split.
-
-In-domain GenBuster/SD14/BigGAN have **no such gap**: Qwen2.5-VL-7B predictions are cached
-for the full eval set there, not just the disagreement subset.
+Now:
+- **Non-escalated samples** keep the semantic probe's prediction (primary, `fallback =
+  semantic`) or the lower-entropy probe's prediction (`fallback = more_confident`).
+- **SDXL/FLUX verifier labels** come from the uniform GPT-5.5 Batch run
+  (`results/batch_requests/CONSOLIDATED_full_sdxl_flux.csv`), which covers all 4,000
+  samples per benchmark. The old "no cached verifier label" fallback and its bounding
+  table are gone. Both rules read the same labels, and the disagreement rule reproduces
+  `tab_e8_results`' GPT-5.5 cascade accuracy exactly (0.9248 / 0.9295 / 0.9402 / 0.8925).
+- **In-domain τ** is fit on the full sub-validation split. Previously the frame was
+  inner-joined to Qwen predictions first, which cut GenBuster's sub-val to 99 samples;
+  it's now 500.
 
 ## 5. Results
 
-`routing/results/tab_confidence_routing.csv`, all 7 configs (3 in-domain + 4 e8
-SDXL/FLUX×{SigLIP2,DINOv2} — the paper's positive-result cells, `tab:e8_results`):
+`routing/results/tab_confidence_routing.csv`, 7 configs × 2 rate-matching protocols ×
+2 fallbacks. Primary rows (`rate_matching = val_tau`, `fallback = semantic`):
 
-| Config | Verifier | n | Disagreement acc (esc. rate) | Joint-confidence acc (esc. rate) | Δ (conf − dis), 95% CI |
+| Config | Verifier | n | Disagreement acc (esc.) | Joint-confidence acc (esc.) | Δ (conf − dis), 95% CI |
 |---|---|---|---|---|---|
-| GenBuster (in-domain) | Qwen2.5-VL-7B | 1000 | 0.899 (0.259) | 0.760 (0.337) | −0.139 [−0.162, −0.117] |
-| SD14 (in-domain) | Qwen2.5-VL-7B | 2000 | 0.874 (0.266) | 0.765 (0.250) | −0.109 [−0.126, −0.093] |
-| BigGAN (in-domain) | Qwen2.5-VL-7B | 2000 | 0.995 (0.007) | 0.990 (0.016) | −0.0055 [−0.009, −0.0025] |
-| SDXL / SigLIP2 | GPT-5.5 | 4000 | 0.923 (0.363) | 0.747 (0.357) | −0.173 [−0.185, −0.161] |
-| SDXL / DINOv2 | GPT-5.5 | 4000 | 0.927 (0.385) | 0.746 (0.354) | −0.180 [−0.192, −0.168] |
-| FLUX / SigLIP2 | GPT-5.5 | 4000 | 0.940 (0.419) | 0.698 (0.318) | −0.242 [−0.255, −0.229] |
-| FLUX / DINOv2 | GPT-5.5 | 4000 | 0.891 (0.415) | 0.681 (0.335) | −0.208 [−0.220, −0.195] |
+| GenBuster | Qwen2.5-VL-7B | 1000 | 0.899 (0.259) | 0.894 (0.267) | −0.005 [−0.025, +0.014] |
+| SD14 | Qwen2.5-VL-7B | 2000 | 0.874 (0.266) | 0.852 (0.250) | −0.022 [−0.037, −0.007] |
+| BigGAN | Qwen2.5-VL-7B | 2000 | 0.995 (0.007) | 0.988 (0.016) | −0.007 [−0.011, −0.004] |
+| SDXL / SigLIP2 | GPT-5.5 | 4000 | 0.925 (0.363) | 0.938 (0.357) | +0.014 [+0.006, +0.022] |
+| SDXL / DINOv2 | GPT-5.5 | 4000 | 0.930 (0.385) | 0.923 (0.354) | −0.007 [−0.015, +0.002] |
+| FLUX / SigLIP2 | GPT-5.5 | 4000 | 0.940 (0.419) | 0.942 (0.318) | +0.002 [−0.006, +0.009] |
+| FLUX / DINOv2 | GPT-5.5 | 4000 | 0.893 (0.415) | 0.894 (0.335) | +0.002 [−0.008, +0.012] |
 
-**Every single one of the 7 configurations** shows the disagreement rule beating the
-joint-confidence rule at a matched escalation rate/cost, by 0.6–24 percentage points, all
-with 95% paired-bootstrap CIs that exclude zero. Mechanistically: the artifact probe's and
-semantic probe's *disagreement* is a much tighter proxy for "the cheap FFT prediction is
-wrong" than either probe's own entropy is. On GenBuster, for example, SigLIP2 alone is
-already 96.6% accurate and Qwen2.5-VL-7B alone is only 71.3% accurate (`tab_main_results.csv`);
-the disagreement rule escalates almost exclusively the ~26% of samples where FFT is
-actually wrong (so swapping in mediocre-overall Qwen is still a net win there), while the
-joint-confidence rule escalates a broader, less-targeted ~34% "either probe is unsure"
-subset that includes many samples FFT already gets right — swapping those correct FFT
-answers for a weaker-overall verifier actively hurts accuracy. This is a clean, direct,
-matched-rate empirical answer to Reviewer 1 Point 8: disagreement is not just *a*
-confidence signal dressed up differently, it is a *better* one than the best principled
-joint-confidence alternative we could construct, including in the exact SDXL/FLUX+GPT-5.5
-configurations that support the paper's positive disagreement-routing claim.
+Disagreement is significantly better in 2/7 (SD14, BigGAN), indistinguishable in 4/7, and
+significantly worse in 1/7 (SDXL/SigLIP2). On FLUX the confidence rule matches the
+disagreement rule's accuracy while escalating ~10 pp fewer inputs.
+
+**Exact rate match** (`exact_count`, semantic fallback): disagreement better in 2/7 (SD14
+−0.030, BigGAN −0.004), tied in 2/7 (GenBuster, SDXL/DINOv2), and the confidence rule
+better in 3/7 (SDXL/SigLIP2 +0.015, FLUX/SigLIP2 +0.009, FLUX/DINOv2 +0.017).
+
+**Reading.** In-domain, disagreement is as good as or better than a properly built joint
+confidence rule. Under the SDXL/FLUX deployment shift, which is the setting behind the
+paper's positive result, it is not: joint confidence is tied or better in every
+configuration. Disagreement's practical advantages are that it needs no threshold and no
+calibration data. It does not have an accuracy edge over confidence routing in general.
+The `more_confident` variant is weaker than the `semantic` one under shift (its FFT
+fallbacks hurt), which suggests the gain comes from relying on the semantic probe, not
+from the entropy signal itself.
 
 ## 6. Table 11 (`tab:transfer`) reconciliation — 0.917 vs. 0.898
 
