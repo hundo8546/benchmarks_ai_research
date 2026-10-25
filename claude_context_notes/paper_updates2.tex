@@ -618,7 +618,7 @@ detector's training artifacts and the target generator family.
 \begin{figure*}[t]
     \centering
     \includegraphics[width=.7\textwidth]{plot_accuracy_comparison.png}
-   \caption{Detector accuracy across the three in-domain benchmarks (values in Table~\ref{tab:main_results}). Bars are colored by method family: artifact detectors, semantic probes, FFT+semantic disagreement cascades with Qwen2.5-VL-7B, and reference policies (artifact-entropy routing and always escalating).}
+   \caption{Detector accuracy across the three in-domain benchmarks. Results compare artifact detectors, semantic probes, and the FFT+SigLIP2+Qwen disagreement cascade.}
 
     \label{fig:accuracy_comparison}
 \end{figure*}
@@ -789,12 +789,12 @@ With FFT+SigLIP2, disagreement routes 25.9\% of GenBuster inputs, 26.6\% of SD~1
 inputs and only 0.7\% of BigGAN inputs, where FFT is already near ceiling
 (Figure~\ref{fig:disagreement_rate}). Most inputs therefore stay on the cheap agreement path. The rate rises to 36--42\% under the SDXL and FLUX shifts, a larger candidate subset that the verifier may or may not improve.
 
-\begin{figure}[h]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=.95\columnwidth]{plot_fig_c_disagreement_rate.png}
+    \includegraphics[width=.7\textwidth]{plot_fig_c_disagreement_rate.png}
     \caption{Artifact-semantic disagreement rates across the five evaluation datasets, for FFT paired with each semantic probe. Disagreement defines the subset routed to the verifier. SDXL and FLUX use the stale SD~1.4 probes; CLIP is not evaluated there.}
     \label{fig:disagreement_rate}
-\end{figure}
+\end{figure*}
 
 When the FFT artifact detector and semantic probe agree, the agreement subset achieves
 96.8\%, 97.8\% and 99.8\% accuracy on GenBuster, SD~1.4 and BigGAN.
@@ -853,7 +853,7 @@ exactly this, and the case analysis of Section~\ref{sec:three_cases} rests on it
 \begin{figure*}[h]
     \centering
     \includegraphics[width=.85\textwidth]{plot_cost_accuracy_all.png}
-    \caption{Effect of disagreement escalation for each semantic backbone. Left: in-domain, the cascade (filled) adds latency and lowers accuracy relative to the semantic probe alone (hollow). Right: under the SDXL/FLUX shift, escalating 36--42\% of inputs to GPT-5.5 raises accuracy over the stale probe.}
+    \caption{Cost-accuracy tradeoff for each semantic backbone under in-domain shown left and deployment-shift evaluation shown on right.}
     \label{fig:cost_accuracy}
 \end{figure*}
 

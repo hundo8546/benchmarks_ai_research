@@ -12,6 +12,7 @@ import os
 
 import matplotlib
 matplotlib.use("Agg")
+matplotlib.rcParams["font.family"] = "DejaVu Sans"  # the submitted figures' font
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np

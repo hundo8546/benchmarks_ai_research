@@ -9,104 +9,104 @@ import os
 
 import matplotlib
 matplotlib.use("Agg")
+matplotlib.rcParams["font.family"] = "DejaVu Sans"  # the submitted figures' font
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+import matplotlib.ticker
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUTING = os.path.dirname(HERE)
 RESULTS = os.path.join(ROUTING, "results")
 
-BLUE, ORANGE, AQUA, YELLOW = "#2a78d6", "#eb6834", "#1baf7a", "#eda100"
-INK, MUTED, GRID = "#1f1f1e", "#6b6a63", "#e4e3de"
-
-METHODS = ["FFT", "CNNSpot", "UnivFD", "CLIP", "SigLIP2", "DINOv2",
-           "Entropy", "Casc.(C)", "Casc.(S)", "Casc.(D)", "Always esc."]
-FAMILY = {"FFT": "Artifact detector", "CNNSpot": "Artifact detector", "UnivFD": "Artifact detector",
-          "CLIP": "Semantic probe", "SigLIP2": "Semantic probe", "DINOv2": "Semantic probe",
-          "Casc.(C)": "Disagreement cascade", "Casc.(S)": "Disagreement cascade",
-          "Casc.(D)": "Disagreement cascade", "Entropy": "Reference", "Always esc.": "Reference"}
-FAMILY_COLOR = {"Artifact detector": BLUE, "Semantic probe": ORANGE,
-                "Disagreement cascade": AQUA, "Reference": YELLOW}
-DATASET_TITLE = {"GenBuster": "GenBuster", "SD14": "SD 1.4", "BigGAN": "BigGAN"}
-BACKBONE_COLOR = {"CLIP": BLUE, "SigLIP2": ORANGE, "DINOv2": AQUA}
-DATASET_MARKER = {"GenBuster": "o", "SD14": "s", "BigGAN": "^", "SDXL": "D", "FLUX": "v"}
+# Original (submitted-version) figure styles; numbers are read live from the CSVs.
+GREY, NAVY, BLUE, ORANGE, GREEN, RED, PURPLE = "#aaaaaa", "#2d3e50", "#2f77c6", "#f0932e", "#3fa75e", "#d9372e", "#8e44ad"
+pct = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:.0%}")
+CHEAP_LATENCY_MS = 2.5 + 10.4  # FFT + one semantic probe
 
 
-def _style(ax):
-    for side in ("top", "right"):
-        ax.spines[side].set_visible(False)
-    for side in ("left", "bottom"):
-        ax.spines[side].set_color(MUTED)
-    ax.tick_params(colors=MUTED, labelcolor=INK, labelsize=8)
-    ax.grid(color=GRID, linewidth=0.6)
-    ax.set_axisbelow(True)
+def _acc(main, ds, method):
+    return float(main[(main.dataset == ds) & (main.method == method)].accuracy.iloc[0])
+
+
+def _lat(main, ds, method):
+    return float(main[(main.dataset == ds) & (main.method == method)].latency_ms.iloc[0])
 
 
 def plot_accuracy_comparison(main):
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4.2), sharey=True)
-    for ax, ds in zip(axes, ["GenBuster", "SD14", "BigGAN"]):
-        d = main[main.dataset == ds].set_index("method").loc[METHODS]
-        ax.barh(range(len(METHODS)), d["accuracy"], height=0.7,
-                color=[FAMILY_COLOR[FAMILY[m]] for m in METHODS], edgecolor="white", linewidth=2)
-        ax.set_yticks(range(len(METHODS)))
-        ax.set_yticklabels([m.replace("Casc.", "Cascade ") for m in METHODS])
-        ax.invert_yaxis()
-        ax.set_xlim(0.4, 1.0)
-        ax.set_title(DATASET_TITLE[ds], fontsize=10, color=INK)
-        ax.set_xlabel("Accuracy", fontsize=9, color=INK)
-        _style(ax)
-        ax.grid(axis="y", visible=False)
-    handles = [mlines.Line2D([], [], color=c, marker="s", linestyle="", markersize=9, label=f)
-               for f, c in FAMILY_COLOR.items()]
-    fig.legend(handles=handles, loc="lower center", ncol=4, frameon=False, fontsize=9,
-               bbox_to_anchor=(0.5, -0.02))
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    bars = [("CNNSpot", "CNNSpot", GREY), ("FFT", "FFT", NAVY), ("CLIP", "CLIP", BLUE),
+            ("SigLIP2", "SigLIP2", ORANGE), ("DINOv2", "DINOv2", GREEN),
+            ("Casc.(S)", "Cascade (FFT+SigLIP2+Qwen)", RED)]
+    datasets = [("GenBuster", "GenBuster"), ("SD14", "SD 1.4"), ("BigGAN", "BigGAN")]
+    width = 0.13
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+    for k, (method, label, color) in enumerate(bars):
+        xs = [i + (k - (len(bars) - 1) / 2) * width for i in range(len(datasets))]
+        ax.bar(xs, [_acc(main, ds, method) for ds, _ in datasets], width, color=color,
+               edgecolor="white", linewidth=0.5, label=label)
+    ax.axhline(0.9, color="grey", linestyle="--", linewidth=0.8, alpha=0.8)
+    ax.set_xticks(range(len(datasets)))
+    ax.set_xticklabels([t for _, t in datasets], fontsize=12)
+    ax.set_ylim(0.4, 1.03)
+    ax.yaxis.set_major_formatter(pct)
+    ax.set_ylabel("Accuracy", fontsize=12)
+    ax.set_title("Detector accuracy by dataset (in-domain)", fontsize=13)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    ax.legend(loc="lower right", ncol=3, fontsize=9, framealpha=0.9)
+    fig.tight_layout()
     out = os.path.join(ROUTING, "plot_accuracy_comparison.png")
     fig.savefig(out, dpi=200, bbox_inches="tight")
     plt.close(fig)
     return out
 
 
-def _pair(ax, x0, y0, x1, y1, color, marker):
-    ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
-                arrowprops=dict(arrowstyle="-|>", color=color, lw=1.5, shrinkA=5, shrinkB=5))
-    ax.plot([x0], [y0], marker=marker, markersize=8, markerfacecolor="white",
-            markeredgecolor=color, markeredgewidth=2, linestyle="")
-    ax.plot([x1], [y1], marker=marker, markersize=8, color=color, markeredgecolor="white",
-            markeredgewidth=1.5, linestyle="")
+def _gpt55_latency_ms(dataset, semantic):
+    """Mean GPT-5.5 wall-clock per call on that configuration's disagreement subset."""
+    preds = pd.read_csv(os.path.join(ROUTING, f"{dataset.lower()}_gpt55_{semantic.lower()}_disagree_preds.csv"))
+    return float(preds.latency_ms.mean())
 
 
 def plot_cost_accuracy(main, e8):
-    fig, (left, right) = plt.subplots(1, 2, figsize=(11, 4.4))
-    for ds in ["GenBuster", "SD14", "BigGAN"]:
-        d = main[main.dataset == ds].set_index("method")
-        for bb in ["CLIP", "SigLIP2", "DINOv2"]:
-            sem, casc = d.loc[bb], d.loc[f"Casc.({bb[0]})"]
-            _pair(left, sem.latency_ms, sem.accuracy, casc.latency_ms, casc.accuracy,
-                  BACKBONE_COLOR[bb], DATASET_MARKER[ds])
-    left.set_xlabel("Mean latency per input (ms)", fontsize=9, color=INK)
-    left.set_ylabel("Accuracy", fontsize=9, color=INK)
-    left.set_title("In-domain: semantic probe → cascade (Qwen2.5-VL-7B)", fontsize=10, color=INK)
-    _style(left)
+    sem_color = {"CLIP": ORANGE, "SigLIP2": GREEN, "DINOv2": PURPLE}
+    fig, (left, right) = plt.subplots(1, 2, figsize=(12, 5.2))
 
-    for _, r in e8.iterrows():
-        _pair(right, 0.0, r.stale_sem_acc, r.esc_rate, r.cascade_acc_gpt55,
-              BACKBONE_COLOR[r.semantic], DATASET_MARKER[r.dataset])
-    right.set_xlabel("Share of inputs escalated to GPT-5.5", fontsize=9, color=INK)
-    right.set_title("Deployment shift: stale probe → cascade (GPT-5.5)", fontsize=10, color=INK)
-    right.set_xlim(-0.03, 0.5)
-    _style(right)
+    ds = "GenBuster"
+    left.scatter(_lat(main, ds, "FFT"), _acc(main, ds, "FFT"), marker="s", s=180, color=NAVY, zorder=3)
+    left.scatter(_lat(main, ds, "CNNSpot"), _acc(main, ds, "CNNSpot"), marker="s", s=180, color=GREY, zorder=3)
+    for sem, color in sem_color.items():
+        left.scatter(_lat(main, ds, sem), _acc(main, ds, sem), marker="o", s=180, color=color, zorder=3)
+        casc = f"Casc.({sem[0]})"
+        left.scatter(_lat(main, ds, casc), _acc(main, ds, casc), marker="^", s=180, color=color, zorder=3)
+    left.scatter(_lat(main, ds, "Always esc."), _acc(main, ds, "Always esc."), marker="X", s=180, color=RED, zorder=3)
+    left.set_ylim(0.5, 1.02)
+    left.set_xlim(-8, 222)
+    left.set_ylabel("Accuracy", fontsize=11)
+    left.set_title("In-domain (GenBuster)", fontsize=12)
 
-    hollow = mlines.Line2D([], [], marker="o", markerfacecolor="white", markeredgecolor=MUTED,
-                           markeredgewidth=2, linestyle="", markersize=8, label="Hollow: probe alone")
-    filled = mlines.Line2D([], [], marker="o", color=MUTED, linestyle="", markersize=8, label="Filled: cascade")
-    colors = [mlines.Line2D([], [], color=c, lw=3, label=b) for b, c in BACKBONE_COLOR.items()]
-    markers = [mlines.Line2D([], [], marker=m, color=MUTED, linestyle="", markersize=7,
-                             label=DATASET_TITLE.get(ds, ds)) for ds, m in DATASET_MARKER.items()]
-    fig.legend(handles=[hollow, filled] + colors + markers, loc="lower center", ncol=10,
-               frameon=False, fontsize=8, bbox_to_anchor=(0.5, -0.04), handletextpad=0.3, columnspacing=1.0)
-    fig.tight_layout(rect=(0, 0.07, 1, 1))
+    for r in e8[e8.dataset == "SDXL"].itertuples():
+        color = sem_color[r.semantic]
+        right.scatter(10.4, r.stale_sem_acc, marker="o", s=180, color=color, zorder=3)
+        lat = CHEAP_LATENCY_MS + r.esc_rate * _gpt55_latency_ms("SDXL", r.semantic)
+        right.scatter(lat, r.cascade_acc_gpt55, marker="^", s=180, color=color, zorder=3)
+    right.set_xlim(-50, 1400)
+    right.set_title("Deployment shift (SDXL)", fontsize=12)
+
+    for ax in (left, right):
+        ax.yaxis.set_major_formatter(pct)
+        ax.set_xlabel("Mean latency per sample (ms)", fontsize=11)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+
+    def m(marker, color, label, size=9):
+        return mlines.Line2D([], [], marker=marker, color=color, linestyle="", markersize=size, label=label)
+    handles = [m("s", "grey", "Artifact detector", 7), m("o", "grey", "Semantic-only", 7),
+               m("^", "grey", "Cascade (disagree routing)", 7),
+               m("X", RED, "Always-escalate"), m("s", ORANGE, "CLIP"), m("s", GREEN, "SigLIP2"),
+               m("s", PURPLE, "DINOv2"), m("s", NAVY, "FFT"), m("s", GREY, "CNNSpot")]
+    fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=11,
+               bbox_to_anchor=(0.5, -0.02))
+    fig.tight_layout(rect=(0, 0.15, 1, 1))
     out = os.path.join(ROUTING, "plot_cost_accuracy_all.png")
     fig.savefig(out, dpi=200, bbox_inches="tight")
     plt.close(fig)
