@@ -513,10 +513,9 @@ Because the model reasons before answering, output budgets below about 100 token
 empty or truncated text, so each call allows $2{,}048$ output tokens, rising to $4{,}096$
 over up to five retries. A response counts only if it is exactly \texttt{REAL} or
 \texttt{FAKE}; anything else is recorded as missing and never mapped to a label. GPT-5.5
-labels every input the reported results require. The uniform and real-image-source runs
-used the OpenAI Batch API, and the size-matched control (Section~\ref{sec:sizematched})
-adds two uniform runs over the same 7{,}315 images, at 512 and 256 pixels:
-14{,}630 calls, every one returning a valid answer. The released per-sample files record
+labels every input the reported results require; the size-matched control
+(Section~\ref{sec:sizematched}) adds two uniform runs over the same 7{,}315 images, at 512
+and 256 pixels: 14{,}630 calls, every one returning a valid answer. The released per-sample files record
 each call's raw response, retry count and, where available, its UTC timestamp.
 
 \section{Results}
@@ -670,7 +669,7 @@ The six configurations that clear the best-cheap-detector baseline are the four 
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{Deployment shift to SDXL and FLUX with stale SD~1.4 probes ($n{=}4{,}000$ each). Cascade accuracy, with the change from the stale probe in parentheses. Cost share: cascade cost relative to always-GPT-5.5 (Batch API).}
+\caption{Deployment shift to SDXL and FLUX with stale SD~1.4 probes ($n{=}4{,}000$ each). Cascade accuracy, with the change from the stale probe in parentheses. Cost share: cascade cost relative to always-GPT-5.5.}
 \label{tab:e8_results}
 \begin{tabular}{llcccccc}
 \toprule
@@ -1298,7 +1297,7 @@ verifier in 10 and the artifact detector in 8. The artifact detector is preferre
 \subsection{Cost Accounting and Cascade vs.\ Uniform Escalation}
 \label{sec:cost_accounting}
 
-To compare the cascade with both a standalone cheap detector and a uniform always-escalate policy, we ran GPT-5.5 on every SDXL and FLUX image through the OpenAI Batch API (\$2.50/\$15.00 per million input/output tokens for gpt-5.5~\cite{openai_pricing}, half the synchronous price): 8{,}000 calls, all valid on first pass. A call used on average 783 input tokens on both datasets and 96 (SDXL) or 177 (FLUX) output tokens; on the in-domain disagreement subsets the averages were 1{,}271/251 (GenBuster), 335/215 (SD~1.4) and 192/184 (BigGAN) input/output tokens.
+To compare the cascade with both a standalone cheap detector and a uniform always-escalate policy, we ran GPT-5.5 on every SDXL and FLUX image (8{,}000 calls). Dollar figures use the OpenAI Batch price of \$2.50/\$15.00 per million input/output tokens~\cite{openai_pricing}. A call used on average 783 input tokens on both datasets and 96 (SDXL) or 177 (FLUX) output tokens; on the in-domain disagreement subsets the averages were 1{,}271/251 (GenBuster), 335/215 (SD~1.4) and 192/184 (BigGAN) input/output tokens.
 
 The last three columns of Table~\ref{tab:e8_results} report the comparison. Uniform escalation reaches 99.6\% accuracy on SDXL and 97.1\% on FLUX, and the cascade costs 42--51\% of that while escalating 36--42\% of inputs. The cost share exceeds the escalation share because the cascade is priced from the tokens of the images it escalates, which use more tokens than the average image. The cascade leaves 3.0 to 7.8 percentage points of the uniform policy's accuracy unrecovered.
 
