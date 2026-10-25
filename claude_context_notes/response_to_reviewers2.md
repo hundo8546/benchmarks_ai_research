@@ -39,8 +39,8 @@ is too small for N, N is capped at half the pool: GenBuster/GPT-5.5 and
 GenBuster/Qwen at 129 for N=200. The table caption lists both. Two
 configurations (BigGAN/Qwen and BigGAN/GPT-5.5, n=14) have disagreement pools under
 40 samples and cannot support a meaningful split; we report the remaining 33.
-(SD1.4/GPT-5.5 is no longer excluded: its pool grew from 23 to 532 once its
-GPT-5.5 coverage was completed.) Under this held-out protocol, our
+(SD1.4/GPT-5.5 is included because its GPT-5.5 coverage is now complete, growing its
+pool from 23 to 532 samples; see Comment 7.) Under this held-out protocol, our
 significance-aware rule (Comment 2) reaches ≥90% test-set agreement in 17/33 at
 N=50, 21/33 at N=100, and 25/33 at N=200. That is visibly lower than the same-pool
 figures (22/35, 23/35, 28/35). We have revised our practical recommendation
@@ -112,9 +112,10 @@ cheap detector ties the stronger one's (19 and 25 of 1,000 resamples) or exceeds
 counts and the binary check does not. The arithmetic closes exactly for both: for
 SD1.4, 93 shared mismatches plus 18 wrong-cheap-detector mismatches equals 111/1,000,
 matching the observed 90.7% vs. 88.9% gap; for FLUX/DINOv2, 99 plus 19 equals
-118/1,000, matching 90.1% vs. 88.2%. (The earlier draft reported one configuration
-and 14/35 vs. 13/35; the counts moved because the resampling stream is shared across
-configurations and the configuration set changed.) The discrepancy vanishes by N=20.
+118/1,000, matching 90.1% vs. 88.2%. (The previous version reported 13/35 vs. 12/35,
+a one-configuration gap; the counts moved because several configurations' data changed
+in this revision, such as completed GPT-5.5 coverage, and the resampling stream is shared
+across configurations.) The discrepancy vanishes by N=20.
 
 **Action:** Exact pseudocode for both rules added to Section VI.I. The "cannot
 represent" claim corrected to describe the three-way rule's actual contribution
@@ -192,12 +193,10 @@ Every table and figure is now produced by one entry point
 (`routing/generate_paper_results.py`) from the same canonical evaluation sets as the
 main results table. Wherever two tables report the same quantity they now agree
 exactly. For example, the cross-family FFT column equals the in-domain FFT accuracy,
-and the 100% row of the probe-degradation sweep equals the main results. Two
-conclusions changed in the process, and the text says so:
-- One cross-family pairing (BigGAN→GenBuster) is now a small, significant gain over
-  in-domain FFT.
-- The cascade's cost share in the cost analysis is 42–51% of uniform escalation,
-  because it is now priced from the tokens of the escalated images.
+and the 100% row of the probe-degradation sweep equals the main results. One
+conclusion changed in the process, and the text says so: the BigGAN→GenBuster
+cross-family pairing, previously +0.003 over in-domain FFT and not significant, is now
+a small, significant gain (+0.030, 95% CI [+0.005, +0.055]).
 
 **Action:** Table 5 and the Limitations-section class-wise paragraph rebuilt from
 one consistent, 100%-coverage probe snapshot. Confusion matrices released.
@@ -372,10 +371,9 @@ classifier using only an image's native width and height, with no pixel content,
 reaches 99.55% accuracy on BigGAN, within 0.15 points of the trained FFT detector's
 99.7%; forcing the real class through the same native-resolution downsampling the
 fake class structurally undergoes before the shared feature pipeline collapses the
-same trained detector to 50.1%, exact chance. We extended the compression-robustness
-check to the FFT/SigLIP2/DINOv2 detectors (previously CNNSpot/CLIP only), on the
-current (not stale) evaluation splits, and added two further common post-processing
-operations, Gaussian blur and downscale-then-upscale, at multiple severities. The
+same trained detector to 50.1%, exact chance. We added a robustness check of the
+FFT/SigLIP2/DINOv2 detectors on the current evaluation splits under JPEG compression,
+Gaussian blur and downscale-then-upscale, each at multiple severities. The
 detector's BigGAN accuracy is nearly invariant to JPEG compression (99.7%→99.65% at
 quality 50) but collapses sharply, including below chance, under blur and
 aggressive resizing (99.7%→29.2% at blur σ=2; 99.7%→33.9% at a 4× downscale-upscale
@@ -540,31 +538,31 @@ qualify: the four SDXL/FLUX GPT-5.5 cells, BigGAN→GenBuster cross-family, and 
   approximately 150 previously scattered scripts, so every reported number has a
   single, traceable, reproducible source.
 - Claims revised after correcting our own analyses:
-  - The joint confidence-routing baseline no longer loses in every configuration
-    (R1 Comment 8).
-  - The cascade's cost share is 42–51% of uniform escalation, priced from the
-    escalated images' own tokens.
+  - Real-class recall on SDXL/FLUX increases under escalation, correcting the previous
+    version's statement that it declined (R1 Comment 5).
   - BigGAN→GenBuster cross-family deployment is a small significant gain over
     in-domain FFT.
-- Disclosure, BigGAN distant shift (Section V.D.7). The previous version reported
-  verifier accuracies of 0.801 / 0.689 / 0.467 (GPT-5.5 / Qwen-7B / Qwen-72B). The
-  rebuilt experiment gives 0.582 / 0.515 / 0.623, a different ranking. We ruled out
-  three explanations (the prompt, probe retraining, the routed subset's class mix) and
-  then tested input resolution: BigGAN fakes are natively 128x128 and had been sent
-  to the verifiers at that size. Resizing every image (real and fake) to a 512 px
-  longest edge, with nothing else changed, raises GPT-5.5 to 0.710 (fake recall 0.175
-  to 0.435) and Qwen-7B to 0.761 (fake recall 0.045 to 0.700); Qwen-72B does not fit
-  on our GPU and was not rerun. Resolution is therefore a major, likely the main,
-  cause of the discrepancy, but it does not reproduce the earlier numbers or ranking
-  (GPT-5.5 stays below its earlier 0.801; Qwen-7B now exceeds its earlier 0.689 and
-  outranks GPT-5.5). Since the ranking depends on input size, the paper draws no
-  conclusion about model scale. No verifier approaches stale SigLIP2 (0.907) in
-  either condition, so the negative result (escalation hurts under this shift) holds
-  in all runs. The BigGAN rows of Table `verifier_subset` report accuracy at both
-  resolutions; real/fake recall and the predicted-fake rate are in the text.
+  - Under joint confidence routing (new), disagreement is not more accurate than a
+    calibrated confidence rule under shift; the paper no longer implies it is
+    (R1 Comment 8).
+- BigGAN distant shift (Section V.D.7). The verifier accuracies are unchanged from the
+  previous version (GPT-5.5 / Qwen-7B / Qwen-72B: 0.582 / 0.515 / 0.623). At native
+  resolution the verifiers are strongly biased toward "real", and BigGAN fakes are
+  natively 128x128, so we added a resolution test: resizing every image (real and fake)
+  to a 512 px longest edge, with nothing else changed, raises GPT-5.5 to 0.710 (fake
+  recall 0.175 to 0.435) and Qwen-7B to 0.761 (fake recall 0.045 to 0.700); Qwen-72B
+  does not fit on our GPU and was not rerun. Because Qwen-7B then outranks GPT-5.5, the
+  verifier ranking depends on input size, and we withdraw the previous version's
+  statement that the 72B model performs best and that suitability cannot be inferred
+  from scale; the paper now draws no conclusion about model scale. No verifier
+  approaches stale SigLIP2 (0.907) in either condition, so the negative result
+  (escalation hurts under this shift) holds in all runs. The BigGAN rows of Table
+  `verifier_subset` report accuracy at both resolutions.
 - Presentation: tables and figures consolidated. The paper keeps the previous
-  version's six figures (all redrawn from current data) and has 12 tables, the same
-  count as before, despite the new analyses. Related tables are merged: verifier vs.
+  version's five figures (redrawn from current data) and adds one, a bar chart of
+  disagreement rates by dataset and semantic backbone that replaces the previous
+  agreement-subset coverage table. It has 12 results tables, down from 14, despite the
+  new analyses. Related tables are merged: verifier vs.
   best-cheap results in one table, SDXL/FLUX accuracy and cost in one, and gate
   reliability in one. Small tables (baseline counts, escalation breakdown,
   per-generator, robustness grid) became sentences in the text. Every number,
