@@ -200,7 +200,7 @@ def t_resolution_only_sdxl_flux():
 
 def t_real_image_sources():
     d = csv("tab_real_image_sources")
-    name = {"original": "PASCAL VOC (original)", "coco": "COCO (independent)"}
+    name = {"original": "VOC (orig.)", "coco": "COCO (indep.)"}
     rows = [row(name[r.source], r.dataset, r.semantic, q(r.agreement_path_acc), q(r.cascade_acc_gpt55),
                 sgn(r.gain_over_stale_semantic, math=False)) for r in d.itertuples()]
     return d, rows, "tab_real_image_sources"

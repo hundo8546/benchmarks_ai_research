@@ -486,21 +486,22 @@ general; this particular benchmark carries a confound that affects any detector.
 \begin{table}[h]
 \centering
 \footnotesize
+\setlength{\tabcolsep}{4pt}
 \caption{Cascade accuracy on SDXL/FLUX with the original PASCAL VOC and an independent COCO real-image source ($n{=}4{,}000$ each). Agree.\ Acc.: accuracy where both cheap detectors agree.}
 \label{tab:real_image_sources}
 \begin{tabular}{llcccc}
 \toprule
 Source & Dataset & Sem. & Agree.\ Acc. & Casc.\ Acc. & $\Delta$ vs.\ stale \\
 \midrule
-PASCAL VOC (original) & SDXL & SigLIP2 & 0.533 & 0.767 & +0.052 \\
-PASCAL VOC (original) & SDXL & DINOv2  & 0.532 & 0.768 & +0.055 \\
-PASCAL VOC (original) & FLUX & SigLIP2 & 0.525 & 0.779 & +0.025 \\
-PASCAL VOC (original) & FLUX & DINOv2  & 0.431 & 0.729 & +0.052 \\
+VOC (orig.) & SDXL & SigLIP2 & 0.533 & 0.767 & +0.052 \\
+VOC (orig.) & SDXL & DINOv2  & 0.532 & 0.768 & +0.055 \\
+VOC (orig.) & FLUX & SigLIP2 & 0.525 & 0.779 & +0.025 \\
+VOC (orig.) & FLUX & DINOv2  & 0.431 & 0.729 & +0.052 \\
 \midrule
-COCO (independent)    & SDXL & SigLIP2 & 0.888 & 0.927 & +0.067 \\
-COCO (independent)    & SDXL & DINOv2  & 0.886 & 0.929 & +0.090 \\
-COCO (independent)    & FLUX & SigLIP2 & 0.921 & 0.941 & +0.041 \\
-COCO (independent)    & FLUX & DINOv2  & 0.844 & 0.896 & +0.090 \\
+COCO (indep.) & SDXL & SigLIP2 & 0.888 & 0.927 & +0.067 \\
+COCO (indep.) & SDXL & DINOv2  & 0.886 & 0.929 & +0.090 \\
+COCO (indep.) & FLUX & SigLIP2 & 0.921 & 0.941 & +0.041 \\
+COCO (indep.) & FLUX & DINOv2  & 0.844 & 0.896 & +0.090 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1139,11 +1140,12 @@ Table~\ref{tab:case_mapping} summarizes the case assignment for every tested con
 \begin{table}[h]
 \centering
 \footnotesize
+\setlength{\tabcolsep}{4pt}
 \caption{Number of configurations in each case, by setting. Case~3: the verifier beats the best cheap detector on the disagreement subset (95\% CI above zero).}
 \label{tab:case_mapping}
 \begin{tabular}{lccccc}
 \toprule
-Setting & $n$ & Case 1 & Case 2 & Case 3 & Breakdown \\
+Setting & $n$ & C1 & C2 & C3 & Breakdown\\
 \midrule
 In-domain GenBuster, SD~1.4 & 4 & -- & 4 & -- & -- \\
 In-domain BigGAN & 2 & 2 & -- & -- & -- \\
