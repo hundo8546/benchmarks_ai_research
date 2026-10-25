@@ -1284,26 +1284,26 @@ a verifier $V$ on a new target distribution, evaluate $V$ on a small labeled cal
 sample drawn from the disagreement set, and freeze the resulting decision before
 applying it to new, unlabeled inputs.
 
-\textbf{Decision rule.} We specify two versions of the gate in pseudocode to make
-their relationship precise.
-
-\begin{verbatim}
-# Binary gate: escalate-or-fallback
-def binary_gate(acc1, acc2, acc3, ci_lower):
-    if acc3 > max(acc1, acc2):           # naive (point-estimate)
-    # or: if ci_lower(acc3 - max(acc1,acc2)) > 0:  # significance-aware
-        return ESCALATE_TO_VERIFIER
-    else:
-        return USE_STRONGER_CHEAP_DETECTOR  # i.e. argmax(acc1, acc2)
-
-# Three-way selector
-def three_way_selector(acc1, acc2, acc3):
-    return argmax([acc1, acc2, acc3])    # f1, f2, or f3
-\end{verbatim}
+\textbf{Decision rule.} Let $\hat A_1$, $\hat A_2$ and $\hat A_3$ be the accuracies of the
+artifact detector, the semantic probe and the verifier on the labeled calibration sample.
+The binary gate either escalates or falls back to the stronger cheap detector,
+\begin{equation}
+g_{\text{bin}} =
+\begin{cases}
+f_3, & \text{if } \hat A_3 > \max(\hat A_1, \hat A_2),\\
+f_{\arg\max_{i \in \{1,2\}} \hat A_i}, & \text{otherwise,}
+\end{cases}
+\label{eq:gate_binary}
+\end{equation}
+and the three-way selector picks the most accurate of the three detectors,
+\begin{equation}
+g_{\text{3way}} = f_{\arg\max_{i \in \{1,2,3\}} \hat A_i}.
+\label{eq:gate_threeway}
+\end{equation}
 
 As decision procedures the two rules select the same action in every case, because the binary gate's fallback branch is $\arg\max(A_1, A_2)$, so the binary rule also chooses between the artifact and semantic detectors on fallback. They differ only in what the evaluation below records: the binary analysis checks the escalate/fallback decision against the oracle, while the three-way analysis checks the full three-valued choice, which explains the one place their reported numbers diverge ($N{=}10$).
 
-We use a prespecified, uncertainty-aware escalate condition: escalate only if the paired-bootstrap 95\% CI (10{,}000 resamples) on $(A_{V} - \max(A_1, A_2))$, computed on the calibration sample, lies entirely above zero, so a small gap that could be sampling noise does not trigger escalation.
+We use a prespecified, uncertainty-aware version of the escalate condition in Eq.~\eqref{eq:gate_binary}: escalate only if the paired-bootstrap 95\% CI (10{,}000 resamples) on $\hat A_3 - \max(\hat A_1, \hat A_2)$, computed on the calibration sample, lies entirely above zero, so a small gap that could be sampling noise does not trigger escalation.
 
 The gate is evaluated on the same 35 verifier-on-disagreement configurations as the baseline comparison of Section~\ref{sec:baseline_comparison}.
 
