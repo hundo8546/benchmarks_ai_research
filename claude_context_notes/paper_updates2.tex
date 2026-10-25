@@ -735,13 +735,18 @@ GPT-5.5 still beats the best cheap detector on every disagreement subset, so the
 assignment is unchanged. To check that disagreement picks useful inputs rather than
 merely escalating many, we compare the cascade with sending a random subset of the same
 size to GPT-5.5. Disagreement routing is better in three of the four size-matched cells
-(FLUX/DINOv2 is not significant), as in all four cells on the native images. GPT-5.5
+(FLUX/DINOv2 is not significant), as in all four cells on the native images. The margin
+over random routing is small, 0.4--2.3 points across native and size-matched images, so
+most of the cascade's gain under shift comes from sending a large share of inputs to a
+much stronger verifier, not from which inputs disagreement selects. GPT-5.5
 itself used the size cue to some extent: always-GPT-5.5 accuracy falls by 2.6--3.3
 points, mostly on real photographs. Because escalated images no longer cost more tokens
 than the rest, the cascade costs 39--47\% of always-GPT-5.5.
 
 A 512-pixel version of the control upscales almost every real image while downscaling
-every fake. The upscaling drives the stale FFT probe below chance on both datasets,
+every fake. The cascade's gain over the stale probe stays significant in all four cells
+there as well (3.4--7.6 points); only the comparison with random routing depends on the
+image size chosen. The upscaling drives the stale FFT probe below chance on both datasets,
 mostly by labeling real images fake, and disagreement then no longer beats random
 routing in any cell, so we use 256 pixels, where neither class is upscaled; the
 512-pixel results are in the released results file. No resizing removes the real

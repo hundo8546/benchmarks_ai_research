@@ -400,11 +400,15 @@ and a new uniform GPT-5.5 run in which every image costs the same 119 input toke
 "Size-Matched Control" in Section V, Table `sizematched`). The cascade's gain over the stale probe remains
 significant in all four configurations (3.9–7.1 points), GPT-5.5 still beats the best
 cheap detector on every disagreement subset, and disagreement routing still beats
-escalating a random subset of the same size in three of the four. GPT-5.5 itself partly
+escalating a random subset of the same size in three of the four, although by only
+0.4–2.3 points, which the paper now states: most of the gain comes from the verifier's
+strength on the escalated inputs rather than from which inputs disagreement selects. GPT-5.5 itself partly
 used the size cue: its always-escalate accuracy falls by 2.6–3.3 points, mostly on real
 photographs. A 512-pixel version of the control, which upscales almost every real image,
-instead pushes the FFT probe below chance; the paper reports this and explains why
-256 pixels is the appropriate control. Real images still carry their original JPEG
+instead pushes the FFT probe below chance. The cascade's gain over the stale probe is
+still significant in all four configurations at 512 pixels (3.4–7.6 points); only the
+comparison with random routing depends on the size chosen. The paper reports this and
+explains why 256 pixels is the appropriate control. Real images still carry their original JPEG
 history, which we state as a limitation. The related-work discussion of dataset
 shortcuts now cites the analysis the reviewer pointed to (Grommelt et al., ECCV
 Workshops 2024).
