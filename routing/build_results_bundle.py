@@ -515,7 +515,6 @@ def inline_checks():
 
 FIGURES = [  # figures printed in the paper
     ("plot_accuracy_comparison.png", "experiments/plot_main_results_figures.py", "tab_main_results"),
-    ("plot_fig_c_disagreement_rate.png", "experiments/plot_fig_c_disagreement_rate.py", "tab_main_results, tab_e8_cascade"),
     ("plot_cost_accuracy_all.png", "experiments/plot_main_results_figures.py", "tab_main_results, tab_e8_cascade"),
     ("plot_fig_a_semantic_degradation.png", "experiments/plot_fig_a_semantic_degradation.py",
      "tab_main_results, pipeline/confusion_matrices/sdxl_flux_confusion_matrices.csv"),

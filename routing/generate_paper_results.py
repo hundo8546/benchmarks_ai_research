@@ -204,7 +204,7 @@ def main():
             _fail(label, e, log)
 
     print("\n=== figures ===")
-    for script in ("plot_main_results_figures.py", "plot_fig_c_disagreement_rate.py",
+    for script in ("plot_main_results_figures.py",
                    "plot_fig_a_semantic_degradation.py", "plot_fig_b_cascade_gain_scatter.py"):
         out = subprocess.run([sys.executable, os.path.join(ROUTING_BASE, "experiments", script)],
                              capture_output=True, text=True)

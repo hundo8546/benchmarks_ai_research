@@ -786,15 +786,7 @@ the semantic probe provides a reliable routing signal, and how selective escalat
 affects the cost-accuracy tradeoff across in-domain and deployment-shift conditions.
 
 With FFT+SigLIP2, disagreement routes 25.9\% of GenBuster inputs, 26.6\% of SD~1.4
-inputs and only 0.7\% of BigGAN inputs, where FFT is already near ceiling
-(Figure~\ref{fig:disagreement_rate}). Most inputs therefore stay on the cheap agreement path. The rate rises to 36--42\% under the SDXL and FLUX shifts, a larger candidate subset that the verifier may or may not improve.
-
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=.7\textwidth]{plot_fig_c_disagreement_rate.png}
-    \caption{Artifact-semantic disagreement rates across the five evaluation datasets, for FFT paired with each semantic probe. Disagreement defines the subset routed to the verifier. SDXL and FLUX use the stale SD~1.4 probes; CLIP is not evaluated there.}
-    \label{fig:disagreement_rate}
-\end{figure*}
+inputs and only 0.7\% of BigGAN inputs, where FFT is already near ceiling. Most inputs therefore stay on the cheap agreement path. The rate rises to 36--42\% under the SDXL and FLUX shifts, a larger candidate subset that the verifier may or may not improve.
 
 When the FFT artifact detector and semantic probe agree, the agreement subset achieves
 96.8\%, 97.8\% and 99.8\% accuracy on GenBuster, SD~1.4 and BigGAN.

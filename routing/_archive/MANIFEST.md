@@ -155,10 +155,13 @@ Repo-root one-off GenBuster evaluation scripts, not imported or invoked by any p
 
 ## `removed_figures/`
 
-Figure scripts and outputs for figures D, E, F, which were removed from the paper.
+Figure scripts and outputs for figures C, D, E, F, which were removed from the paper.
 
 | Original path | Archived to | Reason | Superseded by |
 |---|---|---|---|
+| `routing/experiments/plot_fig_c_disagreement_rate.py` | `_archive/removed_figures/plot_fig_c_disagreement_rate.py` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
+| `routing/plot_fig_c_disagreement_rate.png` | `_archive/removed_figures/plot_fig_c_disagreement_rate.png` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
+| `routing/plot_fig_c_disagreement_rate.pdf` | `_archive/removed_figures/plot_fig_c_disagreement_rate.pdf` | Figure removed from the paper (not in the reviewed version; rates are stated in Section V.C). | none |
 | `routing/experiments/plot_fig_d_cost_accuracy_tradeoff.py` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.py` | Figure removed from the paper; no longer referenced. | none |
 | `routing/plot_fig_d_cost_accuracy_tradeoff.png` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.png` | Figure removed from the paper; no longer referenced. | none |
 | `routing/plot_fig_d_cost_accuracy_tradeoff.pdf` | `_archive/removed_figures/plot_fig_d_cost_accuracy_tradeoff.pdf` | Figure removed from the paper; no longer referenced. | none |
